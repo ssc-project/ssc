@@ -48,7 +48,9 @@ pub struct ParserReturn<'a> {
 #[derive(Default)]
 struct ParserState {
     pub inside_head: bool,
-    pub is_valid_for_self: bool,
+    pub is_inside_if_block: bool,
+    pub is_inside_each_block: bool,
+    pub is_inside_snippet_block: bool,
 }
 
 pub struct Parser<'a> {
@@ -227,7 +229,9 @@ impl<'a> Parser<'a> {
     }
 
     fn match_str(&self, str: &str) -> bool {
-        &self.source_text[self.index..(self.index + str.len())] == str
+        &self.source_text[self.index.min(self.source_text.len())
+            ..(self.index + str.len()).min(self.source_text.len())]
+            == str
     }
 
     fn match_regex(&self, reg: &Regex) -> Option<&str> {
@@ -236,8 +240,10 @@ impl<'a> Parser<'a> {
 
     fn allow_whitespace(&mut self) {
         while self.index < self.source_text.len()
-            && REGEX_WHITESPACE
-                .is_match(&self.source_text[self.index..(self.index + 1)])
+            && REGEX_WHITESPACE.is_match(
+                &self.source_text[self.index.min(self.source_text.len())
+                    ..(self.index + 1).min(self.source_text.len())],
+            )
         {
             self.index += 1;
         }
