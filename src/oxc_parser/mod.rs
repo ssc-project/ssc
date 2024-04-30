@@ -64,7 +64,7 @@ mod cursor;
 mod list;
 mod state;
 
-mod js;
+pub(crate) mod js;
 mod jsx;
 mod ts;
 
@@ -181,7 +181,10 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
-    use oxc_ast::ast::Expression;
+    use oxc_allocator::Box;
+    use oxc_ast::ast::{Expression, Modifiers, VariableDeclaration};
+
+    use self::js::declaration::VariableDeclarationContext;
 
     use super::*;
 
@@ -266,7 +269,29 @@ mod parser_parse {
                 position,
                 unique,
             );
+            parser.bump_any();
             parser.parse_expression()
+        }
+
+        pub fn parse_variable_declaration_at(
+            self,
+            position: usize,
+            decl_ctx: VariableDeclarationContext,
+        ) -> Result<Box<'a, VariableDeclaration<'a>>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_at_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                position,
+                unique,
+            );
+            parser.parse_variable_declaration(
+                Span::new(position as u32, 0),
+                decl_ctx,
+                Modifiers::empty(),
+            )
         }
     }
 }
@@ -466,7 +491,7 @@ impl<'a> ParserImpl<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is
-    ///     returned
+    ///     retrned
     fn unexpected(&mut self) -> Error {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
