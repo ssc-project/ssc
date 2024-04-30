@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use oxc_allocator::{Allocator, Box, Vec};
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{
     ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern,
     BooleanLiteral, CallExpression, CatchClause, Class, ClassBody,
@@ -150,7 +150,7 @@ pub struct RenderTag<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum RenderTagExpression<'a> {
     Call(CallExpression<'a>),
-    Chain(Box<'a, RenderTagExpression<'a>>),
+    Chain(CallExpression<'a>),
 }
 
 #[derive(Debug)]
