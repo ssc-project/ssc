@@ -106,9 +106,6 @@ impl<'a> Parser<'a> {
             self.allow_whitespace();
             println!("---------------------------------------");
             println!("nodes: {:#?}", nodes);
-            // println!("css: {:#?}", css);
-            // println!("instance: {:#?}", instance);
-            // println!("module: {:#?}", module);
             println!("---------------------------------------");
             if let Some(comment) = self.parse_comment() {
                 nodes.push(FragmentNodeKind::Comment(comment));
@@ -238,18 +235,10 @@ impl<'a> Parser<'a> {
     }
 
     fn allow_whitespace(&mut self) {
-        println!(
-            "Checking for whitespace: \"{}\"",
-            &self.source_text[self.index..(self.index + 1)]
-        );
         while self.index < self.source_text.len()
             && REGEX_WHITESPACE
                 .is_match(&self.source_text[self.index..(self.index + 1)])
         {
-            println!(
-                "Skipping: \"{}\"",
-                &self.source_text[self.index..(self.index + 1)]
-            );
             self.index += 1;
         }
     }
@@ -310,8 +299,6 @@ impl<'a> Parser<'a> {
         let start = self.index;
         let mat = reg.find(&self.source_text[self.index..]);
 
-        println!("Mat: {:#?}", mat);
-
         if let Some(mat) = mat {
             self.index += mat.start();
             return &self.source_text[start..self.index];
@@ -333,12 +320,9 @@ impl<'a> Parser<'a> {
     }
 
     fn allow_comment_or_whitespace(&mut self) {
-        println!("Skipping whitespaces and comments");
         self.allow_whitespace();
         while self.match_str("/*") || self.match_str("<!--") {
-            println!("comment");
             if self.eat("/*", false) {
-                println!("js comment");
                 self.read_until(&REGEX_COMMENT_CLOSE);
                 self.eat("*/", true);
             } else {
