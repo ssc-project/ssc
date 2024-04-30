@@ -169,53 +169,55 @@ impl<'a> Parser<'a> {
             if name == "svelte:head" {
                 self.state.inside_head = true;
             }
-            while self.index < self.source_text.len() {
-                let end_tag_start = self.index;
-                if self.eat("</", false) {
-                    let end_tag_name = self.parse_tag_name();
-                    if name == end_tag_name {
-                        self.allow_whitespace();
-                        self.eat(">", true);
-                    } else {
-                        self.index = end_tag_start;
+            'content: {
+                while self.index < self.source_text.len() {
+                    let end_tag_start = self.index;
+                    if self.eat("</", false) {
+                        let end_tag_name = self.parse_tag_name();
+                        if name == end_tag_name {
+                            self.allow_whitespace();
+                            self.eat(">", true);
+                        } else {
+                            self.index = end_tag_start;
+                        }
+                        break 'content;
                     }
-                    break;
+
+                    self.allow_whitespace();
+
+                    if let Some(comment) = self.parse_comment() {
+                        nodes.push(FragmentNodeKind::Comment(comment));
+                        continue;
+                    }
+
+                    if let Some(element_like) = self.parse_element_like(false) {
+                        nodes.push(FragmentNodeKind::ElementLike(element_like));
+                        continue;
+                    }
+
+                    if let Some(block) = self.parse_block() {
+                        nodes.push(FragmentNodeKind::Block(block));
+                        continue;
+                    }
+
+                    if let Some(tag) = self.parse_tag() {
+                        nodes.push(FragmentNodeKind::Tag(tag));
+                        continue;
+                    }
+
+                    if let Some(text) = self.parse_text() {
+                        nodes.push(FragmentNodeKind::Text(text));
+                    }
                 }
 
-                self.allow_whitespace();
-
-                if let Some(comment) = self.parse_comment() {
-                    nodes.push(FragmentNodeKind::Comment(comment));
-                    continue;
-                }
-
-                if let Some(element_like) = self.parse_element_like(false) {
-                    nodes.push(FragmentNodeKind::ElementLike(element_like));
-                    continue;
-                }
-
-                if let Some(block) = self.parse_block() {
-                    nodes.push(FragmentNodeKind::Block(block));
-                    continue;
-                }
-
-                if let Some(tag) = self.parse_tag() {
-                    nodes.push(FragmentNodeKind::Tag(tag));
-                    continue;
-                }
-
-                if let Some(text) = self.parse_text() {
-                    nodes.push(FragmentNodeKind::Text(text));
-                }
+                if self.index >= self.source_text.len() {
+                    self.error(UnexpectedEof(Span::new(
+                        self.index as u32,
+                        self.index as u32,
+                    )));
+                    return None;
+                };
             }
-
-            if self.index >= self.source_text.len() {
-                self.error(UnexpectedEof(Span::new(
-                    self.index as u32,
-                    self.index as u32,
-                )));
-                return None;
-            };
             if name == "svelte:head" {
                 self.state.inside_head = false;
             }
@@ -412,7 +414,7 @@ impl<'a> Parser<'a> {
                 fragment,
             })
         } else if REGEX_CAPITAL_LETTER
-            .is_match(&char::from(name.as_bytes()[self.index]).to_string())
+            .is_match(&char::from(name.as_bytes()[0]).to_string())
         {
             ElementLike::Component(Component {
                 span,
@@ -449,13 +451,63 @@ impl<'a> Parser<'a> {
         })
     }
 
+    pub(crate) fn parse_fragment(&mut self, transparent: bool) -> Fragment<'a> {
+        let mut nodes = OxcVec::new_in(self.allocator);
+        let mut empty_round = false;
+
+        while self.index < self.source_text.len() {
+            self.allow_whitespace();
+
+            if let Some(comment) = self.parse_comment() {
+                nodes.push(FragmentNodeKind::Comment(comment));
+                empty_round = false;
+                continue;
+            }
+
+            if let Some(element_like) = self.parse_element_like(false) {
+                nodes.push(FragmentNodeKind::ElementLike(element_like));
+                empty_round = false;
+                continue;
+            }
+
+            if let Some(block) = self.parse_block() {
+                nodes.push(FragmentNodeKind::Block(block));
+                empty_round = false;
+                continue;
+            }
+
+            if let Some(tag) = self.parse_tag() {
+                nodes.push(FragmentNodeKind::Tag(tag));
+                empty_round = false;
+                continue;
+            }
+
+            if let Some(text) = self.parse_text() {
+                nodes.push(FragmentNodeKind::Text(text));
+                empty_round = false;
+                continue;
+            }
+
+            if empty_round {
+                break;
+            } else {
+                empty_round = true;
+            }
+        }
+
+        Fragment { nodes, transparent }
+    }
+
     pub fn parse_tag_name(&mut self) -> &str {
         let start = self.index;
 
         if self.match_regex(&REGEX_SELF).is_some() {
             self.index += 11;
             // TODO: report error if the placement of this tag isn't right
-            if !self.state.is_valid_for_self {
+            if !self.state.is_inside_if_block
+                && !self.state.is_inside_each_block
+                && !self.state.is_inside_snippet_block
+            {
                 self.error(InvalidSelfPlacement(Span::new(
                     start as u32,
                     self.index as u32,
@@ -877,7 +929,9 @@ impl<'a> Parser<'a> {
                     ),
                 ) as &str);
 
-                chunks.push(AttributeSequenceValue::Text(current_chunk));
+                if !current_chunk.raw.as_str().is_empty() || chunks.is_empty() {
+                    chunks.push(AttributeSequenceValue::Text(current_chunk));
+                }
 
                 return Some(chunks);
             } else if self.eat("{", false) {
@@ -909,7 +963,9 @@ impl<'a> Parser<'a> {
                     ),
                 ) as &str);
 
-                chunks.push(AttributeSequenceValue::Text(current_chunk));
+                if !current_chunk.raw.as_str().is_empty() {
+                    chunks.push(AttributeSequenceValue::Text(current_chunk));
+                }
 
                 self.allow_whitespace();
                 let expression = self.parse_expression();
