@@ -11,40 +11,40 @@ This projects aims to make `Svelte` usable without `Node.js` and make the compil
 A lot of features still need to be implemented before `svelte-oxide` is ready for production use.
 
 Feature roadmap:
+
 - [ ] Parser
   - [x] Comment
-	- [x] Script
-	- [x] StyleSheet
-	- [x] Element
-	  - [x] Component
-		- [x] Title
-		- [x] Slot
-		- [x] Regular
-		- [x] SvelteBody
-		- [x] SvelteComponent
-		- [x] SvelteDocument
-		- [x] SvelteElement
-		- [x] SvelteFragment
-		- [x] SvelteHead
-		- [x] SvelteOptionsRaw
-		- [x] SvelteSelf
-		- [x] SvelteWindow
-	- [ ] Block
-		- [ ] Each
-		- [ ] If
-		- [ ] Await
-		- [ ] Key
-		- [ ] Snippet
-	- [ ] Tag
-		- [ ] Expression
-		- [ ] Html
-		- [ ] Const
-		- [ ] Debug
-		- [ ] Render
-	- [ ] Text
+  - [x] Script
+  - [x] StyleSheet
+  - [x] Element
+    - [x] Component
+    - [x] Title
+    - [x] Slot
+    - [x] Regular
+    - [x] SvelteBody
+    - [x] SvelteComponent
+    - [x] SvelteDocument
+    - [x] SvelteElement
+    - [x] SvelteFragment
+    - [x] SvelteHead
+    - [x] SvelteOptionsRaw
+    - [x] SvelteSelf
+    - [x] SvelteWindow
+  - [ ] Block
+    - [ ] Each
+    - [x] If
+    - [ ] Await
+    - [ ] Key
+    - [ ] Snippet
+  - [x] Tag
+    - [x] Expression
+    - [x] Html
+    - [x] Const
+    - [x] Debug
+    - [x] Render
+  - [x] Text
 - [ ] Analyzer
 - [ ] Transformer
-
 
 ## License
 
