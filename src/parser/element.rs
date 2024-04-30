@@ -284,11 +284,7 @@ impl<'a> Parser<'a> {
                 if let ElementAttribute::Attribute(Attribute { name, .. }) =
                     attribute
                 {
-                    if name.as_str() == "this" {
-                        true
-                    } else {
-                        false
-                    }
+                    name.as_str() == "this"
                 } else {
                     false
                 }
@@ -348,11 +344,7 @@ impl<'a> Parser<'a> {
                 if let ElementAttribute::Attribute(Attribute { name, .. }) =
                     attribute
                 {
-                    if name.as_str() == "this" {
-                        true
-                    } else {
-                        false
-                    }
+                    name.as_str() == "this"
                 } else {
                     false
                 }
@@ -569,9 +561,7 @@ impl<'a> Parser<'a> {
                 self.allow_whitespace();
                 self.eat("}", true);
 
-                let Some(expression) = expression else {
-                    return None;
-                };
+                let expression = expression?;
 
                 return Some(ElementAttribute::SpreadAttribute(
                     SpreadAttribute {
@@ -619,7 +609,7 @@ impl<'a> Parser<'a> {
 
                 return Some(ElementAttribute::Attribute(Attribute {
                     span: Span::new(start as u32, self.index as u32),
-                    name: Atom::from(name.name),
+                    name: name.name,
                     value: AttributeValue::Sequence(value),
                 }));
             }
@@ -826,7 +816,7 @@ impl<'a> Parser<'a> {
                         modifiers,
                     })
                 } else if ["transition", "in", "out"]
-                    .contains(&&directive_name.as_str())
+                    .contains(&directive_name.as_str())
                 {
                     let mut modifiers = OxcVec::new_in(self.allocator);
                     for modifier in raw_modifiers {

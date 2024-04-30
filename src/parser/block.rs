@@ -1,9 +1,10 @@
+use oxc_allocator::Vec as OxcVec;
+use oxc_span::Span;
+
 use super::{errors::parse::InvalidElseif, Parser};
 use crate::ast::template::{
     Block, EachBlock, Fragment, FragmentNodeKind, IfBlock,
 };
-use oxc_allocator::Vec as OxcVec;
-use oxc_span::Span;
 
 impl<'a> Parser<'a> {
     pub fn parse_block(&mut self) -> Option<Block<'a>> {

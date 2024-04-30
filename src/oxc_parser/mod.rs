@@ -185,7 +185,6 @@ mod parser_parse {
     use oxc_ast::ast::{Expression, Modifiers, VariableDeclaration};
 
     use self::js::declaration::VariableDeclarationContext;
-
     use super::*;
 
     /// `UniquePromise` is a way to use the type system to enforce the invariant

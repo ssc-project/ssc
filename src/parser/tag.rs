@@ -1,20 +1,23 @@
-use super::{
-    errors::parse::{InvalidDebug, InvalidRenderExpression, UnexpectedToken},
-    patterns::REGEX_WHITESPACE,
-    Parser,
-};
-use crate::ast::template::{
-    ConstTag, DebugTag, ExpressionTag, ExpressionTagMetadata, HtmlTag,
-    RenderTag, RenderTagExpression, Tag,
-};
-use crate::oxc_parser::js::declaration::{
-    VariableDeclarationContext, VariableDeclarationParent,
-};
 use lazy_static::lazy_static;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::ast::{ChainElement, Expression, IdentifierName};
 use oxc_span::{GetSpan, SourceType, Span};
 use regex::Regex;
+
+use super::{
+    errors::parse::{InvalidDebug, InvalidRenderExpression, UnexpectedToken},
+    patterns::REGEX_WHITESPACE,
+    Parser,
+};
+use crate::{
+    ast::template::{
+        ConstTag, DebugTag, ExpressionTag, ExpressionTagMetadata, HtmlTag,
+        RenderTag, RenderTagExpression, Tag,
+    },
+    oxc_parser::js::declaration::{
+        VariableDeclarationContext, VariableDeclarationParent,
+    },
+};
 
 lazy_static! {
     static ref REGEX_WHITESPACE_WITH_CLOSING_CURLY_BRACE: Regex =
