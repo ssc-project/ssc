@@ -1,0 +1,33 @@
+[package]
+name = "svelte-compiler"
+version = "0.1.0"
+authors = ["Dilshad <a-rustacean@outlook.com>"]
+license = "MIT"
+description = "The Svelte compiler, rewritten in Rust."
+readme = "README.md"
+homepage = "https://github.com/a-rustacean/svelte-compiler#readme"
+repository = "https://github.com/a-rustacean/svelte-compiler"
+keywords = ["svelte", "compiler"]
+edition = "2021"
+
+[dependencies]
+assert-unchecked = "0.1.2"
+bitflags = "2.5.0"
+lazy_static = "1.4.0"
+memchr = "2.7.2"
+num-bigint = "0.4.4"
+oxc_allocator = "0.12.5"
+oxc_ast = "0.12.5"
+oxc_diagnostics = "0.12.5"
+oxc_span = "0.12.5"
+oxc_syntax = "0.12.5"
+oxc_index = "0.12.5"
+phf = { version = "0.11.2", features = ["macros"] }
+regex = "1.10.4"
+rustc-hash = "1.1.0"
+seq-macro = "0.3.5"
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+default = ["serialize"]
+serialize = ["dep:serde", "oxc_span/serialize", "oxc_ast/serialize"]
