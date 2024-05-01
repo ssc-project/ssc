@@ -31,10 +31,10 @@ Feature roadmap:
     - [x] SvelteSelf
     - [x] SvelteWindow
   - [ ] Block
-    - [ ] Each
+    - [x] Each
     - [x] If
-    - [ ] Await
-    - [ ] Key
+    - [x] Await
+    - [x] Key
     - [ ] Snippet
   - [x] Tag
     - [x] Expression

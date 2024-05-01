@@ -171,6 +171,7 @@ impl<'a> Parser<'a> {
             }
             'content: {
                 while self.index < self.source_text.len() {
+                    self.allow_whitespace();
                     let end_tag_start = self.index;
                     if self.eat("</", false) {
                         let end_tag_name = self.parse_tag_name();
@@ -182,8 +183,6 @@ impl<'a> Parser<'a> {
                         }
                         break 'content;
                     }
-
-                    self.allow_whitespace();
 
                     if let Some(comment) = self.parse_comment() {
                         nodes.push(FragmentNodeKind::Comment(comment));
@@ -574,7 +573,7 @@ impl<'a> Parser<'a> {
                 ));
             } else {
                 let value_start = self.index;
-                let Some(name) = self.parse_identifier(false) else {
+                let Ok(name) = self.parse_identifier() else {
                     self.error(EmptyAttributeShorthand(Span::new(
                         self.index as u32,
                         self.index as u32,

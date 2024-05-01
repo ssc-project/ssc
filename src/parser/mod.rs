@@ -9,30 +9,23 @@ mod style;
 mod tag;
 mod text;
 mod utils;
-
-use std::collections::HashSet;
-
-use lazy_static::lazy_static;
-use oxc_allocator::{Allocator, Vec as OxcVec};
-use oxc_ast::ast::IdentifierName;
-use oxc_diagnostics::Error;
-use oxc_span::{Atom, GetSpan, Span, SPAN};
-use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
-use regex::Regex;
-
 use self::{
     errors::parse::{
         DuplicateScriptElement, DuplicateStyleElement, MissingWhitespace,
-        UnexpectedEof, UnexpectedEofWithExpected, UnexpectedReservedWord,
-        UnexpectedToken,
+        UnexpectedEof, UnexpectedEofWithExpected, UnexpectedToken,
     },
-    names::RESERVED,
     patterns::REGEX_WHITESPACE,
-    utils::full_char_code_at,
 };
 use crate::ast::template::{
     Fragment, FragmentNodeKind, Root, RootMetadata, ScriptContext,
 };
+use lazy_static::lazy_static;
+use oxc_allocator::{Allocator, Vec as OxcVec};
+use oxc_ast::ast::IdentifierName;
+use oxc_diagnostics::{Error, Report};
+use oxc_span::{GetSpan, SourceType, Span, SPAN};
+use regex::Regex;
+use std::collections::HashSet;
 
 lazy_static! {
     static ref REGEX_LANG_ATTRIBUTE: Regex = Regex::new(r#"(?m)<!--[^>]*?-->|<script\s+(?:[^>]*\s+)?lang=(?:"([^"]*)"|'([^']*)')\s*(?:[^>]*)>"#).unwrap();
@@ -140,7 +133,7 @@ impl<'a> Parser<'a> {
                 continue;
             }
 
-            if let Some(element_like) = self.parse_element_like(false) {
+            if let Some(element_like) = self.parse_element_like(true) {
                 nodes.push(FragmentNodeKind::ElementLike(element_like));
                 continue;
             }
@@ -259,39 +252,19 @@ impl<'a> Parser<'a> {
         None
     }
 
-    fn parse_identifier(
-        &mut self,
-        allow_reserved: bool,
-    ) -> Option<IdentifierName<'a>> {
-        let start = self.index;
-        let mut i = self.index;
-        let code = full_char_code_at(self.source_text, self.index);
-        if !is_identifier_start(char::from_u32(code).unwrap()) {
-            return None;
+    fn parse_identifier(&mut self) -> Result<IdentifierName<'a>, Report> {
+        let parser = crate::oxc_parser::Parser::new(
+            self.allocator,
+            self.source_text,
+            SourceType::default(),
+        );
+        let identifier = parser.parse_identifier_name_at(self.index);
+
+        if let Ok(identifier) = &identifier {
+            self.index = identifier.span.end as usize;
         }
 
-        i += if code <= 0xffff { 1 } else { 2 };
-
-        while i < self.source_text.len() {
-            let code = full_char_code_at(self.source_text, i);
-
-            if !is_identifier_part(char::from_u32(code).unwrap()) {
-                break;
-            }
-
-            i += if code <= 0xffff { 1 } else { 2 };
-        }
-
-        self.index = i;
-
-        let ident_name = &self.source_text[start..i];
-        let span = Span::new(start as u32, i as u32);
-
-        if !allow_reserved && RESERVED.contains(ident_name) {
-            self.error(UnexpectedReservedWord(span, ident_name.to_string()));
-            return None;
-        }
-        Some(IdentifierName { span, name: Atom::from(ident_name) })
+        identifier
     }
 
     fn read_until(&mut self, reg: &Regex) -> &str {

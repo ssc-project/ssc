@@ -182,7 +182,10 @@ impl<'a> Parser<'a> {
 
 mod parser_parse {
     use oxc_allocator::Box;
-    use oxc_ast::ast::{Expression, Modifiers, VariableDeclaration};
+    use oxc_ast::ast::{
+        BindingPattern, Expression, IdentifierName, Modifiers,
+        VariableDeclaration,
+    };
 
     use self::js::declaration::VariableDeclarationContext;
     use super::*;
@@ -292,6 +295,40 @@ mod parser_parse {
                 decl_ctx,
                 Modifiers::empty(),
             )
+        }
+
+        pub fn parse_binding_pattern_at(
+            self,
+            position: usize,
+        ) -> Result<BindingPattern<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_at_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                position,
+                unique,
+            );
+            parser.bump_any();
+            parser.parse_binding_pattern(false)
+        }
+
+        pub fn parse_identifier_name_at(
+            self,
+            position: usize,
+        ) -> Result<IdentifierName<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_at_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                position,
+                unique,
+            );
+            parser.bump_any();
+            parser.parse_identifier_name()
         }
     }
 }

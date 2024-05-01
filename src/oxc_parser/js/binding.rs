@@ -21,7 +21,7 @@ impl<'a> ParserImpl<'a> {
         self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
     }
 
-    pub(super) fn parse_binding_pattern(
+    pub(crate) fn parse_binding_pattern(
         &mut self,
         allow_question: bool,
     ) -> Result<BindingPattern<'a>> {
