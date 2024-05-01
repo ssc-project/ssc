@@ -286,6 +286,7 @@ mod parser_parse {
                 position,
                 unique,
             );
+            parser.bump_any();
             parser.parse_variable_declaration(
                 Span::new(position as u32, 0),
                 decl_ctx,
