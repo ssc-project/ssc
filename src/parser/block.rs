@@ -23,7 +23,8 @@ impl<'a> Parser<'a> {
             } else {
                 todo!()
             }
-        } else if (!self.state.is_inside_if_block)
+        } else if (!self.state.is_inside_if_block
+            && !self.state.is_inside_each_block)
             && (self.eat("/", false) || self.eat(":", false))
         {
             // TODO: report error
