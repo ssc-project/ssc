@@ -341,9 +341,7 @@ impl<'a> Parser<'a> {
 
     fn parse_await_block(&mut self, start: usize) -> Option<AwaitBlock<'a>> {
         self.require_whitespace();
-        let Some(expression) = self.parse_expression() else {
-            return None;
-        };
+        let expression = self.parse_expression()?;
         self.allow_whitespace();
         let (value, error, pending, then, catch) = if self.eat("then", false) {
             self.require_whitespace();
@@ -709,9 +707,7 @@ impl<'a> Parser<'a> {
 
     fn parse_key_block(&mut self, start: usize) -> Option<KeyBlock<'a>> {
         self.require_whitespace();
-        let Some(expression) = self.parse_expression() else {
-            return None;
-        };
+        let expression = self.parse_expression()?;
         let mut nodes = OxcVec::new_in(self.allocator);
 
         'body: {
