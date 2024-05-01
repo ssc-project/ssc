@@ -133,7 +133,7 @@ impl<'a> Parser<'a> {
             );
 
             let declaration = parser.parse_variable_declaration_at(
-                start - 2,
+                start + 2,
                 VariableDeclarationContext::new(
                     VariableDeclarationParent::Clause,
                 ),
