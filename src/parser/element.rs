@@ -495,7 +495,6 @@ impl<'a> Parser<'a> {
 
         if self.match_regex(&REGEX_SELF).is_some() {
             self.index += 11;
-            // TODO: report error if the placement of this tag isn't right
             if !self.state.is_inside_if_block
                 && !self.state.is_inside_each_block
                 && !self.state.is_inside_snippet_block
