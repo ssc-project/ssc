@@ -9,6 +9,15 @@ mod style;
 mod tag;
 mod text;
 mod utils;
+use std::collections::HashSet;
+
+use lazy_static::lazy_static;
+use oxc_allocator::{Allocator, Vec as OxcVec};
+use oxc_ast::ast::IdentifierName;
+use oxc_diagnostics::{Error, Report};
+use oxc_span::{GetSpan, SourceType, Span, SPAN};
+use regex::Regex;
+
 use self::{
     errors::parse::{
         DuplicateScriptElement, DuplicateStyleElement, MissingWhitespace,
@@ -19,13 +28,6 @@ use self::{
 use crate::ast::template::{
     Fragment, FragmentNodeKind, Root, RootMetadata, ScriptContext,
 };
-use lazy_static::lazy_static;
-use oxc_allocator::{Allocator, Vec as OxcVec};
-use oxc_ast::ast::IdentifierName;
-use oxc_diagnostics::{Error, Report};
-use oxc_span::{GetSpan, SourceType, Span, SPAN};
-use regex::Regex;
-use std::collections::HashSet;
 
 lazy_static! {
     static ref REGEX_LANG_ATTRIBUTE: Regex = Regex::new(r#"(?m)<!--[^>]*?-->|<script\s+(?:[^>]*\s+)?lang=(?:"([^"]*)"|'([^']*)')\s*(?:[^>]*)>"#).unwrap();

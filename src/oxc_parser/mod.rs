@@ -1,3 +1,6 @@
+#![allow(clippy::all)]
+#![allow(dead_code)]
+
 //! Oxc Parser for JavaScript and TypeScript
 //!
 //! # Performance

@@ -30,12 +30,12 @@ Feature roadmap:
     - [x] SvelteOptionsRaw
     - [x] SvelteSelf
     - [x] SvelteWindow
-  - [ ] Block
+  - [x] Block
     - [x] Each
     - [x] If
     - [x] Await
     - [x] Key
-    - [ ] Snippet
+    - [x] Snippet
   - [x] Tag
     - [x] Expression
     - [x] Html

@@ -441,8 +441,8 @@ pub struct EachBlock<'a> {
     pub context: BindingPattern<'a>,
     pub body: Fragment<'a>,
     pub fallback: Option<Fragment<'a>>,
-    // Difference from the original svelte compiler, the original svelte compiler
-    // uses `String` instead of `IdentifierName`
+    // Difference from the original svelte compiler, the original svelte
+    // compiler uses `String` instead of `IdentifierName`
     pub index: Option<IdentifierName<'a>>,
     pub key: Option<Expression<'a>>,
     pub metadata: EachBlockMetadata<'a>,

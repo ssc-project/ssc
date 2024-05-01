@@ -1,17 +1,18 @@
-use super::{
-    errors::parse::{InvalidElseif, UnexpectedEof},
-    Parser,
-};
-use crate::ast::template::{
-    AwaitBlock, Block, EachBlock, EachBlockMetadata, Fragment,
-    FragmentNodeKind, IfBlock, KeyBlock,
-};
 use lazy_static::lazy_static;
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::ast::IdentifierName;
 use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use regex::Regex;
 use rustc_hash::FxHashMap;
+
+use super::{
+    errors::parse::{InvalidElseif, UnexpectedEof},
+    Parser,
+};
+use crate::ast::template::{
+    AwaitBlock, Block, EachBlock, EachBlockMetadata, Fragment,
+    FragmentNodeKind, IfBlock, KeyBlock, SnippetBlock,
+};
 
 lazy_static! {
     static ref REGEX_AS_OR_CLOSE_CURLY_BRACE: Regex =
@@ -36,8 +37,11 @@ impl<'a> Parser<'a> {
                 self.parse_await_block(start).map(Block::Await)
             } else if self.eat("key", false) {
                 self.parse_key_block(start).map(Block::Key)
+            } else if self.eat("snippet", false) {
+                self.parse_snippet_block(start).map(Block::Snippet)
             } else {
-                todo!()
+                // TODO: report error
+                None
             }
         } else if (!self.state.is_inside_if_block
             && !self.state.is_inside_each_block)
@@ -362,8 +366,8 @@ impl<'a> Parser<'a> {
             'then: {
                 while self.index < self.source_text.len() {
                     self.allow_whitespace();
-                    if self.eat("{", false) {
-                        self.eat("/await", true);
+                    if self.eat("{/", false) {
+                        self.eat("await", true);
                         self.allow_whitespace();
                         self.eat("}", true);
                         break 'then;
@@ -760,6 +764,110 @@ impl<'a> Parser<'a> {
             span: Span::new(start as u32, self.index as u32),
             expression,
             fragment,
+        })
+    }
+
+    fn parse_snippet_block(
+        &mut self,
+        start: usize,
+    ) -> Option<SnippetBlock<'a>> {
+        self.require_whitespace();
+        let expression = match self.parse_identifier() {
+            Ok(expression) => expression,
+            Err(error) => {
+                self.error(error);
+                return None;
+            }
+        };
+
+        self.index = expression.span.end as usize;
+
+        let mut parameters = OxcVec::new_in(self.allocator);
+
+        self.allow_whitespace();
+        self.eat("(", true);
+
+        while !self.match_str(")") {
+            let parser = crate::oxc_parser::Parser::new(
+                self.allocator,
+                self.source_text,
+                SourceType::default(),
+            );
+            let pattern = match parser.parse_binding_pattern_at(self.index) {
+                Ok(pattern) => pattern,
+                Err(error) => {
+                    self.error(error);
+                    return None;
+                }
+            };
+
+            self.index = pattern.span().end as usize;
+
+            parameters.push(pattern);
+            self.allow_whitespace();
+            if !self.eat(",", false) {
+                break;
+            }
+            self.allow_whitespace();
+        }
+
+        self.eat(")", true);
+        self.allow_whitespace();
+        self.eat("}", true);
+
+        let mut nodes = OxcVec::new_in(self.allocator);
+
+        'body: {
+            while self.index < self.source_text.len() {
+                self.allow_whitespace();
+                if self.eat("{/", false) {
+                    self.eat("snippet", true);
+                    self.allow_whitespace();
+                    self.eat("}", true);
+                    break 'body;
+                }
+
+                if let Some(comment) = self.parse_comment() {
+                    nodes.push(FragmentNodeKind::Comment(comment));
+                    continue;
+                }
+
+                if let Some(element_like) = self.parse_element_like(false) {
+                    nodes.push(FragmentNodeKind::ElementLike(element_like));
+                    continue;
+                }
+
+                if let Some(block) = self.parse_block() {
+                    nodes.push(FragmentNodeKind::Block(block));
+                    continue;
+                }
+
+                if let Some(tag) = self.parse_tag() {
+                    nodes.push(FragmentNodeKind::Tag(tag));
+                    continue;
+                }
+
+                if let Some(text) = self.parse_text() {
+                    nodes.push(FragmentNodeKind::Text(text));
+                }
+            }
+
+            if self.index >= self.source_text.len() {
+                self.error(UnexpectedEof(Span::new(
+                    self.index as u32,
+                    self.index as u32,
+                )));
+                return None;
+            };
+        }
+
+        let body = Fragment { nodes, transparent: false };
+
+        Some(SnippetBlock {
+            span: Span::new(start as u32, self.index as u32),
+            expression,
+            parameters,
+            body,
         })
     }
 }
