@@ -13,6 +13,7 @@ use oxc_ast::ast::{
     VariableDeclarator,
 };
 use oxc_span::{Atom, GetSpan, Span};
+use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
@@ -452,8 +453,7 @@ pub struct EachBlockMetadata<'a> {
     pub array_name: Option<IdentifierName<'a>>,
     pub index: IdentifierName<'a>,
     pub item: IdentifierName<'a>,
-    // TODO: use fx map
-    pub declarations: HashMap<String, Binding<'a>>,
+    pub declarations: FxHashMap<String, Binding<'a>>,
     pub references: Vec<'a, Binding<'a>>,
     pub is_controlled: bool,
 }
