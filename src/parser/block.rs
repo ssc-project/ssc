@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
 
         if self.eat("#", false) {
             if self.eat("if", false) {
-                self.parse_if_block(false).map(Block::If)
+                self.parse_if_block(start, false).map(Block::If)
             } else if self.eat("each", false) {
                 self.parse_each_block().map(Block::Each)
             } else {
@@ -34,8 +34,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_if_block(&mut self, elseif: bool) -> Option<IfBlock<'a>> {
-        let start = self.index - 4;
+    fn parse_if_block(
+        &mut self,
+        start: usize,
+        elseif: bool,
+    ) -> Option<IfBlock<'a>> {
         let state_changed = if self.state.is_inside_if_block {
             false
         } else {
@@ -56,6 +59,7 @@ impl<'a> Parser<'a> {
         let consequent = self.parse_fragment(false);
 
         self.allow_whitespace();
+        let block_start = self.index;
         self.eat("{", true);
 
         let alternate = if self.eat("/", false) {
@@ -78,7 +82,7 @@ impl<'a> Parser<'a> {
 
             if elseif {
                 let mut nodes = OxcVec::new_in(self.allocator);
-                if let Some(block) = self.parse_if_block(true) {
+                if let Some(block) = self.parse_if_block(block_start, true) {
                     nodes.push(FragmentNodeKind::Block(Block::If(block)));
                 }
                 Some(Fragment { transparent: false, nodes })
