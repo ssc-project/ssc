@@ -447,8 +447,6 @@ impl<'a> Parser<'a> {
         let mut empty_round = false;
 
         while self.index < self.source_text.len() {
-            self.allow_whitespace();
-
             if let Some(comment) = self.parse_comment() {
                 nodes.push(FragmentNodeKind::Comment(comment));
                 empty_round = false;

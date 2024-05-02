@@ -211,9 +211,15 @@ impl<'a> Parser<'a> {
 
         let mut nodes = OxcVec::new_in(self.allocator);
 
+        let state_changed = if self.state.is_inside_each_block {
+            false
+        } else {
+            self.state.is_inside_each_block = true;
+            true
+        };
+
         let has_fallback = 'body: {
             while self.index < self.source_text.len() {
-                self.allow_whitespace();
                 if self.eat("{", false) {
                     if self.eat(":", false) {
                         self.eat("else", true);
@@ -273,7 +279,6 @@ impl<'a> Parser<'a> {
 
             'fallback: {
                 while self.index < self.source_text.len() {
-                    self.allow_whitespace();
                     if self.eat("{", false) {
                         self.eat("/each", true);
                         self.allow_whitespace();
@@ -317,6 +322,10 @@ impl<'a> Parser<'a> {
 
             Some(Fragment { nodes, transparent: false })
         };
+
+        if state_changed {
+            self.state.is_inside_each_block = false;
+        }
 
         Some(EachBlock {
             span: Span::new(start as u32, self.index as u32),
@@ -363,7 +372,6 @@ impl<'a> Parser<'a> {
 
             'then: {
                 while self.index < self.source_text.len() {
-                    self.allow_whitespace();
                     if self.eat("{/", false) {
                         self.eat("await", true);
                         self.allow_whitespace();
@@ -428,7 +436,6 @@ impl<'a> Parser<'a> {
 
             'catch: {
                 while self.index < self.source_text.len() {
-                    self.allow_whitespace();
                     if self.eat("{", false) {
                         self.eat("/await", true);
                         self.allow_whitespace();
@@ -482,7 +489,6 @@ impl<'a> Parser<'a> {
 
             'pending: {
                 while self.index < self.source_text.len() {
-                    self.allow_whitespace();
                     if self.eat("{", false) {
                         if self.eat(":", false) {
                             if self.eat("then", false) {
@@ -567,7 +573,6 @@ impl<'a> Parser<'a> {
 
                 'then: {
                     while self.index < self.source_text.len() {
-                        self.allow_whitespace();
                         if self.eat("{", false) {
                             if self.eat(":", false) {
                                 self.eat("catch", true);
@@ -641,7 +646,6 @@ impl<'a> Parser<'a> {
 
                 'catch: {
                     while self.index < self.source_text.len() {
-                        self.allow_whitespace();
                         if self.eat("{", false) {
                             self.eat("/await", true);
                             self.allow_whitespace();
@@ -712,7 +716,6 @@ impl<'a> Parser<'a> {
 
         'body: {
             while self.index < self.source_text.len() {
-                self.allow_whitespace();
                 if self.eat("{", false) {
                     self.eat("/key", true);
                     self.allow_whitespace();
@@ -813,9 +816,15 @@ impl<'a> Parser<'a> {
 
         let mut nodes = OxcVec::new_in(self.allocator);
 
+        let state_changed = if self.state.is_inside_snippet_block {
+            false
+        } else {
+            self.state.is_inside_snippet_block = true;
+            true
+        };
+
         'body: {
             while self.index < self.source_text.len() {
-                self.allow_whitespace();
                 if self.eat("{/", false) {
                     self.eat("snippet", true);
                     self.allow_whitespace();
@@ -855,6 +864,10 @@ impl<'a> Parser<'a> {
                 )));
                 return None;
             };
+        }
+
+        if state_changed {
+            self.state.is_inside_snippet_block = false;
         }
 
         let body = Fragment { nodes, transparent: false };

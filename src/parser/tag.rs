@@ -67,7 +67,6 @@ impl<'a> Parser<'a> {
         }
 
         if self.eat("html", false) {
-            // {@html expression}
             self.require_whitespace();
 
             let expression = self.parse_expression();

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{
     ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern,
@@ -208,18 +206,6 @@ pub enum ElementAttribute<'a> {
     Attribute(Attribute<'a>),
     SpreadAttribute(SpreadAttribute<'a>),
     Directive(Directive<'a>),
-}
-
-impl<'a> ElementAttribute<'a> {
-    pub fn name(&self) -> Option<String> {
-        match self {
-            ElementAttribute::Attribute(attribute) => {
-                Some(attribute.name.as_str().to_string())
-            }
-            ElementAttribute::SpreadAttribute(_) => None,
-            ElementAttribute::Directive(directive) => Some(directive.name()),
-        }
-    }
 }
 
 impl<'a> GetSpan for ElementAttribute<'a> {
@@ -455,7 +441,7 @@ pub struct EachBlockMetadata<'a> {
     pub array_name: Option<IdentifierName<'a>>,
     pub index: IdentifierName<'a>,
     pub item: IdentifierName<'a>,
-    pub declarations: FxHashMap<String, Binding<'a>>,
+    pub declarations: FxHashMap<Atom<'a>, Binding<'a>>,
     pub references: Vec<'a, Binding<'a>>,
     pub is_controlled: bool,
 }
@@ -620,10 +606,11 @@ pub struct SvelteOptions<'a> {
     pub attributes: Vec<'a, Attribute<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, Copy)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum Namespace {
+    #[default]
     Html,
     Svg,
     Foreign,
@@ -632,9 +619,9 @@ pub enum Namespace {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct CustomElement<'a> {
-    pub tag: bool, // true
+    pub tag: Atom<'a>, // true
     pub shadow: Option<CustomElementShadow>,
-    pub props: HashMap<String, CustomElementProp<'a>>,
+    pub props: FxHashMap<Atom<'a>, CustomElementProp<'a>>,
     pub extend: Option<CustomElementExtend<'a>>,
 }
 
@@ -651,12 +638,12 @@ pub enum CustomElementShadow {
 pub struct CustomElementProp<'a> {
     pub attribute: Option<Atom<'a>>,
     pub reflect: Option<bool>,
+    #[cfg_attr(feature = "serialize", serde(rename = "type"))]
     pub type_: Option<CustomElementPropType>,
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum CustomElementPropType {
     Array,
     Boolean,
@@ -762,33 +749,6 @@ pub enum Directive<'a> {
     Style(StyleDirective<'a>),
     Transition(TransitionDirective<'a>),
     Use(UseDirective<'a>),
-}
-
-impl<'a> Directive<'a> {
-    pub fn name(&self) -> String {
-        match self {
-            Directive::Animate(animate) => format!("animate:{}", animate.name),
-            Directive::Bind(bind) => format!("bind:{}", bind.name),
-            Directive::Class(class) => format!("class:{}", class.name),
-            Directive::Let(let_directive) => {
-                format!("let:{}", let_directive.name)
-            }
-            Directive::On(on) => format!("on:{}", on.name),
-            Directive::Style(style) => format!("style:{}", style.name),
-            Directive::Transition(transition) => {
-                if transition.intro && !transition.outro {
-                    format!("in:{}", transition.name)
-                } else if transition.outro && !transition.intro {
-                    format!("out:{}", transition.name)
-                } else {
-                    format!("transition:{}", transition.name)
-                }
-            }
-            Directive::Use(use_directive) => {
-                format!("use:{}", use_directive.name)
-            }
-        }
-    }
 }
 
 impl<'a> GetSpan for Directive<'a> {

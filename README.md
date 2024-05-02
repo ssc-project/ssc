@@ -12,7 +12,7 @@ A lot of features still need to be implemented before `svelte-oxide` is ready fo
 
 Feature roadmap:
 
-- [ ] Parser
+- [x] Parser
   - [x] Comment
   - [x] Script
   - [x] StyleSheet

@@ -9,3 +9,7 @@ pub mod html;
 //     let next = str.as_bytes()[pos + 1] as u32;
 //     (code << 10) + next - 0x35fdc00
 // }
+
+pub(crate) fn copy_ast_node<T>(node: &T) -> T {
+    unsafe { std::mem::transmute_copy(node) }
+}
