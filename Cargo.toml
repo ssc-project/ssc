@@ -27,6 +27,7 @@ regex = "1.10.4"
 rustc-hash = "1.1.0"
 seq-macro = "0.3.5"
 serde = { version = "1", features = ["derive"], optional = true }
+oxc_sourcemap = "0.12.5"
 
 [features]
 default = ["serialize"]
