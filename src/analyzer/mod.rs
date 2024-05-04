@@ -1,6 +1,7 @@
-use crate::{ast::template::Root, options::CombinedCompileOptions};
 use oxc_allocator::Allocator;
 use oxc_diagnostics::Error;
+
+use crate::{ast::template::Root, options::CombinedCompileOptions};
 
 pub struct ComponentAnalysis<'a> {
     source_text: &'a str,
