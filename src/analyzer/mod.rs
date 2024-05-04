@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::Error;
 
@@ -12,7 +14,7 @@ pub struct AnalyzerReturn<'a> {
     pub errors: Vec<Error>,
 }
 
-pub struct Analyzer<'a> {
+pub(crate) struct Analyzer<'a> {
     allocator: &'a Allocator,
     root: &'a Root<'a>,
     source_text: &'a str,
@@ -44,7 +46,7 @@ impl<'a> Analyzer<'a> {
     }
 }
 
-pub fn analyze<'a>(
+pub(crate) fn analyze<'a>(
     allocator: &'a Allocator,
     root: &'a Root<'a>,
     source_text: &'a str,

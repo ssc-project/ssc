@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use oxc_sourcemap::SourceMap;
 
 use crate::{
@@ -99,7 +101,7 @@ impl From<CompileOptions> for ValidatedCompileOptions {
                 .unwrap_or_default(),
             runes: compile_options.runes,
             disclose_version: compile_options.disclose_version.unwrap_or(true),
-            legacy: compile_options.legacy.unwrap_or_default().into(),
+            legacy: compile_options.legacy.unwrap_or_default(),
             source_map: compile_options.source_map,
             output_filename: compile_options.output_filename,
             css_output_filename: compile_options.css_output_filename,

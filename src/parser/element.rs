@@ -150,11 +150,11 @@ impl<'a> Parser<'a> {
             };
 
             if let ElementAttribute::Attribute(attribute) = &attribute {
-                if attribute.name.as_str() == "shadowrootmode" {
-                    if !self.state.is_inside_shadowroot_template {
-                        state_changed = true;
-                        self.state.is_inside_shadowroot_template = true;
-                    }
+                if attribute.name.as_str() == "shadowrootmode"
+                    && !self.state.is_inside_shadowroot_template
+                {
+                    state_changed = true;
+                    self.state.is_inside_shadowroot_template = true;
                 }
             }
 

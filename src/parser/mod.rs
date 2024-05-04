@@ -273,6 +273,7 @@ impl<'a> Parser<'a> {
 
                                             let props_expression = properties.iter().find(|(key, _)| key.as_str() == "props").map(|(_, value)| value);
 
+                                            #[allow(clippy::collapsible_match)]
                                             if let Some(expression) = props_expression {
                                                 if let Expression::ObjectExpression(object) = expression {
                                                     for property in &object.properties {

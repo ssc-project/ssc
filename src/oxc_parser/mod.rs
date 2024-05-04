@@ -122,7 +122,7 @@ pub struct ParserReturn<'a> {
 
 /// Parser options
 #[derive(Clone, Copy)]
-struct ParserOptions {
+pub(crate) struct ParserOptions {
     pub allow_return_outside_function: bool,
     /// Emit `ParenthesizedExpression` in AST.
     ///
@@ -340,7 +340,7 @@ use parser_parse::UniquePromise;
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this
 /// type.
-struct ParserImpl<'a> {
+pub(crate) struct ParserImpl<'a> {
     lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?

@@ -27,7 +27,7 @@ pub fn compile<'a, T>(
     let combined_options =
         CombinedCompileOptions::new(validated_options, root.options.as_ref());
 
-    let analysis = analyze(allocator, &root, source_text, &combined_options)?;
+    let _analysis = analyze(allocator, root, source_text, &combined_options)?;
 
     todo!()
 }
