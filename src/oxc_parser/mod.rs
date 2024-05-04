@@ -531,7 +531,7 @@ impl<'a> ParserImpl<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is
-    ///     retrned
+    ///     returned
     fn unexpected(&mut self) -> Error {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.

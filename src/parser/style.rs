@@ -38,7 +38,7 @@ lazy_static! {
     static ref REGEX_ATTRIBUTE_FLAGS: Regex =
         Regex::new(r"^[a-zA-Z]+").unwrap();
     static ref REGEX_NTH_OF: Regex = Regex::new(r#"(?x)^(even|odd|\+?(?:\d+|\d*n(?:\s*[+-]\s*\d+)?)|-\d*n(?:\s*\+\s*\d+))(?:\s*[,)]|\s+of\s+|$)"#).unwrap();
-    static ref REGEX_PERCENTANGE: Regex = Regex::new(r#"^\d+(\.\d+)?%"#).unwrap();
+    static ref REGEX_PERCENTAGE: Regex = Regex::new(r#"^\d+(\.\d+)?%"#).unwrap();
     static ref REGEX_COMBINATOR: Regex = Regex::new(r#"^(\+|~|>||\|\|)"#).unwrap();
     static ref REGEX_CLOSING_BRACKET: Regex = Regex::new(r"[\s\]]").unwrap();
     static ref REGEX_WHITESPACE_OR_COLON: Regex = Regex::new(r"[\s:]").unwrap();
@@ -325,13 +325,13 @@ impl<'a> Parser<'a> {
                             as &str,
                     ),
                 }));
-            } else if self.match_regex(&REGEX_PERCENTANGE).is_some() {
+            } else if self.match_regex(&REGEX_PERCENTAGE).is_some() {
                 relative_selector.selectors.push(SimpleSelector::Percentage(
                     Percentage {
                         span: Span::new(start as u32, self.index as u32),
                         value: Atom::from(
                             self.allocator
-                                .alloc(self.read(&REGEX_PERCENTANGE).unwrap())
+                                .alloc(self.read(&REGEX_PERCENTAGE).unwrap())
                                 as &str,
                         ),
                     },

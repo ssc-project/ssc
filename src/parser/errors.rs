@@ -74,7 +74,7 @@ pub mod parse {
     #[derive(Debug, Error, Diagnostic)]
     #[error(
         "{{:...}} block is invalid at this position (did you forget to close \
-         the preceeding element or block?)"
+         the preceding element or block?)"
     )]
     pub struct InvalidContinuingBlockPlacement(#[label] pub Span);
 
@@ -159,7 +159,8 @@ pub mod parse {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error(
-        "The $ prefix is reserved, and cannot be used for vaiables and imports"
+        "The $ prefix is reserved, and cannot be used for variables and \
+         imports"
     )]
     pub struct InvalidDollarPrefix(#[label] pub Span);
 
@@ -205,7 +206,7 @@ pub mod parse {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("snippets do not support rest parameters; use an array instead")]
-    pub struct InvalidSnippetRestParamenter(#[label] pub Span);
+    pub struct InvalidSnippetRestParameter(#[label] pub Span);
 }
 
 pub mod special_elements {
