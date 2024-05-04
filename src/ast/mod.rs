@@ -29,6 +29,7 @@ pub struct Binding<'a> {
     // TODO: add `expression` and mutation fields
     // pub expression: BindingExpression<'a>,
     // pub mutation: BindingMutation<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: Option<BindingMetadata>,
 }
 

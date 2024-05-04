@@ -98,6 +98,7 @@ pub struct ExpressionTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: ExpressionTagMetadata,
 }
 
@@ -274,6 +275,7 @@ pub struct RegularElement<'a> {
     pub name: Atom<'a>,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RegularElementMetadata,
 }
 
@@ -329,6 +331,7 @@ pub struct SvelteElement<'a> {
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
     pub expression: Expression<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: SvelteElementMetadata,
 }
 
@@ -431,6 +434,7 @@ pub struct EachBlock<'a> {
     // compiler uses `String` instead of `IdentifierName`
     pub index: Option<IdentifierName<'a>>,
     pub key: Option<Expression<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: EachBlockMetadata<'a>,
 }
 
@@ -589,6 +593,7 @@ pub struct Root<'a> {
     pub css: Option<StyleSheet<'a>>,
     pub instance: Option<Script<'a>>,
     pub module: Option<Script<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RootMetadata,
 }
 
@@ -727,6 +732,7 @@ pub struct SpreadAttribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: SpreadAttributeMetadata,
 }
 
@@ -811,6 +817,7 @@ pub struct ClassDirective<'a> {
     pub span: Span,
     pub name: Atom<'a>,
     pub expression: Expression<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: ClassDirectiveMetadata,
 }
 
@@ -860,6 +867,7 @@ pub struct StyleDirective<'a> {
     pub name: Atom<'a>,
     pub value: AttributeValue<'a>,
     pub modifiers: Vec<'a, StyleDirectiveModifier>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: StyleDirectiveMetadata,
 }
 

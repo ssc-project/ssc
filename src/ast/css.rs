@@ -20,6 +20,7 @@ pub struct StyleSheet<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct StyleSheetContent<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub styles: Atom<'a>,
     pub comment: Option<Comment<'a>>,
@@ -52,6 +53,7 @@ pub struct Rule<'a> {
     pub span: Span,
     pub prelude: SelectorList<'a>,
     pub block: Block<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RuleMetadata,
 }
 
@@ -79,6 +81,7 @@ pub struct ComplexSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub children: Vec<'a, RelativeSelector<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: ComplexSelectorMetadata,
 }
 
@@ -97,6 +100,7 @@ pub struct RelativeSelector<'a> {
     pub span: Span,
     pub combinator: Option<Combinator<'a>>,
     pub selectors: Vec<'a, SimpleSelector<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RelativeSelectorMetadata,
 }
 
