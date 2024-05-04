@@ -1,0 +1,25 @@
+name: Lint PR
+
+on:
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "full"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: clippy
+
+      - name: Lint
+        run: cargo +nightly clippy --all -Z unstable-options -- -D warnings
