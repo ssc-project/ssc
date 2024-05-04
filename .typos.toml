@@ -1,0 +1,7 @@
+[files]
+extend-exclude = [
+  "src/oxc_parser/lexer/byte_handlers.rs"
+]
+
+[default.extend-words]
+trivias = "trivias"
