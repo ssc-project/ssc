@@ -53,6 +53,7 @@ struct ParserState {
     pub is_inside_if_block: bool,
     pub is_inside_each_block: bool,
     pub is_inside_snippet_block: bool,
+    pub is_inside_shadowroot_template: bool,
 }
 
 pub struct Parser<'a> {
@@ -170,6 +171,24 @@ impl<'a> Parser<'a> {
             }
             if css.span.end > span.end {
                 span.end = css.span.end;
+            }
+        }
+
+        if let Some(instance) = &instance {
+            if instance.span.start < span.start {
+                span.start = instance.span.start;
+            }
+            if instance.span.end > span.end {
+                span.end = instance.span.end;
+            }
+        }
+
+        if let Some(module) = &module {
+            if module.span.start < span.start {
+                span.start = module.span.start;
+            }
+            if module.span.end > span.end {
+                span.end = module.span.end;
             }
         }
 
@@ -454,24 +473,6 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-
-        if let Some(instance) = &instance {
-            if instance.span.start < span.start {
-                span.start = instance.span.start;
-            }
-            if instance.span.end > span.end {
-                span.end = instance.span.end;
-            }
-        }
-
-        if let Some(module) = &module {
-            if module.span.start < span.start {
-                span.start = module.span.start;
-            }
-            if module.span.end > span.end {
-                span.end = module.span.end;
-            }
-        }
 
         let fragment = Fragment { nodes, transparent: false };
 

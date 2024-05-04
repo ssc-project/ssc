@@ -132,6 +132,8 @@ impl<'a> Parser<'a> {
             return None;
         }
 
+        let mut state_changed = false;
+
         while let Some(attribute) = self.parse_attribute() {
             let attribute_name = match &attribute {
                 ElementAttribute::Attribute(attribute) => {
@@ -146,6 +148,15 @@ impl<'a> Parser<'a> {
                 }
                 _ => None,
             };
+
+            if let ElementAttribute::Attribute(attribute) = &attribute {
+                if attribute.name.as_str() == "shadowrootmode" {
+                    if !self.state.is_inside_shadowroot_template {
+                        state_changed = true;
+                        self.state.is_inside_shadowroot_template = true;
+                    }
+                }
+            }
 
             if let Some(attribute_name) = attribute_name {
                 if unique_names.contains(&attribute_name) {
@@ -171,7 +182,6 @@ impl<'a> Parser<'a> {
             }
             'content: {
                 while self.index < self.source_text.len() {
-                    self.allow_whitespace();
                     let end_tag_start = self.index;
                     if self.eat("</", false) {
                         let end_tag_name = self.parse_tag_name();
@@ -221,6 +231,10 @@ impl<'a> Parser<'a> {
                 self.state.inside_head = false;
             }
         };
+
+        if state_changed {
+            self.state.is_inside_shadowroot_template = false;
+        }
 
         let fragment = Fragment { nodes, transparent: true };
 
@@ -420,7 +434,7 @@ impl<'a> Parser<'a> {
                 attributes,
                 fragment,
             })
-        } else if name == "slot" {
+        } else if name == "slot" && !self.state.is_inside_shadowroot_template {
             ElementLike::Slot(SlotElement {
                 span,
                 name: SlotElementName,
@@ -878,6 +892,9 @@ impl<'a> Parser<'a> {
         if let Some(sequence) =
             self.parse_sequence(quote_mark, "in attribute value")
         {
+            if quote_mark.is_some() {
+                self.index += 1;
+            }
             sequence
         } else {
             // TODO: report error
@@ -910,7 +927,7 @@ impl<'a> Parser<'a> {
                 current_chunk.span.end = self.index as u32;
                 current_chunk.data = Atom::from(self.allocator.alloc(
                     decode_character_references(
-                        current_chunk.data.as_str(),
+                        current_chunk.raw.as_str(),
                         true,
                     ),
                 ) as &str);
@@ -944,7 +961,7 @@ impl<'a> Parser<'a> {
                 current_chunk.span.end = self.index as u32;
                 current_chunk.data = Atom::from(self.allocator.alloc(
                     decode_character_references(
-                        current_chunk.data.as_str(),
+                        current_chunk.raw.as_str(),
                         true,
                     ),
                 ) as &str);
@@ -979,11 +996,11 @@ impl<'a> Parser<'a> {
                     raw: Atom::from(""),
                 };
             } else {
+                self.index += 1;
                 current_chunk.raw = Atom::from(
                     &self.source_text
                         [(current_chunk.span.start as usize)..self.index],
                 );
-                self.index += 1;
             }
         }
 

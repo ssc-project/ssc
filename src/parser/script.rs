@@ -75,9 +75,10 @@ impl<'a> Parser<'a> {
         let program_start = self.index;
         self.read_until(&REGEX_STARTS_CLOSING_SCRIPT_TAG);
         let program_end = self.index;
+        let reached_eof = self.index >= self.source_text.len();
         self.read(&REGEX_STARTS_CLOSING_SCRIPT_TAG);
 
-        let content = if self.index >= self.source_text.len() {
+        let content = if reached_eof {
             self.error(UnclosedElement(
                 Span::new(
                     self.source_text.len() as u32,
@@ -108,7 +109,7 @@ impl<'a> Parser<'a> {
         };
 
         Some(Script {
-            span: Span::new(start as u32, start as u32),
+            span: Span::new(start as u32, self.index as u32),
             context,
             content,
             attributes,
