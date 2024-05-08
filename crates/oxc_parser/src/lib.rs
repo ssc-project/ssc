@@ -73,12 +73,7 @@ mod ts;
 
 mod diagnostics;
 
-// Expose lexer only in benchmarks
-#[cfg(not(feature = "benchmarking"))]
 mod lexer;
-#[cfg(feature = "benchmarking")]
-#[doc(hidden)]
-pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
@@ -210,7 +205,7 @@ mod parser_parse {
     ///
     /// `UniquePromise::new_for_tests` is a backdoor for unit tests and
     /// benchmarks, so they can create a `ParserImpl` or `Lexer`, and
-    /// manipulate it directly, for testing/benchmarking purposes.
+    /// manipulate it directly, for testing purposes.
     pub(crate) struct UniquePromise {
         _dummy: (),
     }
@@ -225,7 +220,7 @@ mod parser_parse {
         /// above). This function must NOT be exposed outside of tests
         /// and benchmarks, as it allows circumventing safety invariants
         /// of the parser.
-        #[cfg(any(test, feature = "benchmarking"))]
+        #[cfg(test)]
         pub fn new_for_tests() -> Self {
             Self { _dummy: () }
         }
