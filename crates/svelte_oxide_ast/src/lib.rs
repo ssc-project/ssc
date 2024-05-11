@@ -1,90 +1,27 @@
-pub mod css;
-mod macros;
-pub mod template;
+//! # Svelte Oxide AST
+//!
+//! ## Cargo Features
+//! * `"serde"` enables support for serde serialization
 
-use oxc_allocator::Vec;
-use oxc_ast::ast::{
-    Class, Expression, Function, IdentifierName, ImportDeclaration,
+pub mod ast;
+mod ast_builder;
+mod ast_kind;
+mod span;
+pub mod visit;
+
+pub use crate::{
+    ast_builder::AstBuilder,
+    ast_kind::{AstKind, AstType},
+    visit::{Visit, VisitMut},
 };
-use oxc_span::Atom;
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-use template::{EachBlock, SvelteNode};
 
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct Binding<'a> {
-    pub node: IdentifierName<'a>,
-    pub kind: BindingKind,
-    pub declaration_kind: DeclarationKind,
-    pub initial: Option<BindingInitial<'a>>,
-    pub is_called: bool,
-    pub references: BindingReferences<'a>,
-    pub mutated: bool,
-    pub reassigned: bool,
-    // TODO: add scope
-    // pub scope: Scope,
-    pub legacy_dependencies: Vec<'a, Binding<'a>>,
-    pub prop_alias: Option<Atom<'a>>,
-    // TODO: add `expression` and mutation fields
-    // pub expression: BindingExpression<'a>,
-    // pub mutation: BindingMutation<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: Option<BindingMetadata>,
-}
+#[test]
+fn lifetime_variance() {
+    use crate::ast;
 
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
-pub enum BindingKind {
-    Normal,
-    Prop,
-    BindableProp,
-    RestProp,
-    State,
-    FrozenState,
-    Derived,
-    Each,
-    Snippet,
-    StoreSub,
-    LegacyReactive,
-    LegacyReactiveImport,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
-pub enum DeclarationKind {
-    Var,
-    Let,
-    Const,
-    Function,
-    Import,
-    Param,
-    RestParam,
-    Synthetic,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum BindingInitial<'a> {
-    Expression(Expression<'a>),
-    FunctionDeclaration(Function<'a>),
-    ClassDeclaration(Class<'a>),
-    ImportDeclaration(ImportDeclaration<'a>),
-    EachBlock(EachBlock<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct BindingReferences<'a> {
-    pub node: IdentifierName<'a>,
-    pub path: Vec<'a, SvelteNode<'a>>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct BindingMetadata {
-    pub inside_rest: bool,
+    fn _assert_program_variant_lifetime<'a: 'b, 'b>(
+        root: ast::Root<'a>,
+    ) -> ast::Root<'b> {
+        root
+    }
 }

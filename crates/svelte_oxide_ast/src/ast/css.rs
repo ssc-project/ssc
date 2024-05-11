@@ -3,10 +3,8 @@ use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{
-    define_constant_string,
-    template::{Attribute, Comment},
-};
+use super::macros::define_constant_string;
+use crate::ast::{Attribute, Comment};
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -44,7 +42,7 @@ pub struct Atrule<'a> {
     pub span: Span,
     pub name: Atom<'a>,
     pub prelude: Atom<'a>,
-    pub block: Option<Block<'a>>,
+    pub block: Option<CssBlock<'a>>,
 }
 
 #[derive(Debug)]
@@ -54,7 +52,7 @@ pub struct Rule<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub prelude: SelectorList<'a>,
-    pub block: Block<'a>,
+    pub block: CssBlock<'a>,
     #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RuleMetadata,
 }
@@ -166,8 +164,8 @@ pub struct PseudoClassSelector<'a> {
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Percentage<'a> {
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Percentage"))]
+pub struct PercentageSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
@@ -186,8 +184,8 @@ pub struct NestingSelector {
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Nth<'a> {
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Nth"))]
+pub struct NthSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
@@ -203,8 +201,8 @@ pub enum SimpleSelector<'a> {
     AttributeSelector(AttributeSelector<'a>),
     PseudoElementSelector(PseudoElementSelector<'a>),
     PseudoClassSelector(PseudoClassSelector<'a>),
-    Percentage(Percentage<'a>),
-    Nth(Nth<'a>),
+    PercentageSelector(PercentageSelector<'a>),
+    NthSelector(NthSelector<'a>),
     NestingSelector(NestingSelector),
 }
 
@@ -229,7 +227,7 @@ pub struct Combinator<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Block<'a> {
+pub struct CssBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub children: Vec<'a, BlockChild<'a>>,
@@ -257,12 +255,12 @@ pub struct Declaration<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Node<'a> {
+pub enum CssNode<'a> {
     StyleSheet(StyleSheet<'a>),
     Rule(Rule<'a>),
     Atrule(Atrule<'a>),
     SelectorList(SelectorList<'a>),
-    Block(Block<'a>),
+    Block(CssBlock<'a>),
     ComplexSelector(ComplexSelector<'a>),
     RelativeSelector(RelativeSelector<'a>),
     Combinator(Combinator<'a>),

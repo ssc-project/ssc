@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! define_constant_string {
     ($struct_name:ident => $value:literal) => {
         #[derive(Debug)]
@@ -15,3 +14,5 @@ macro_rules! define_constant_string {
         }
     };
 }
+
+pub(crate) use define_constant_string;

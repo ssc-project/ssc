@@ -10,15 +10,13 @@ use oxc_ast::ast::{
     StringLiteral, Super, SwitchCase, TemplateElement, VariableDeclaration,
     VariableDeclarator,
 };
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{
-    css::{Node as CssNode, StyleSheet},
-    define_constant_string, Binding,
-};
+use super::macros::define_constant_string;
+use crate::ast::{Binding, CssNode, StyleSheet};
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -40,21 +38,9 @@ impl<'a> Fragment<'a> {
 pub enum FragmentNodeKind<'a> {
     Text(Text<'a>),
     Tag(Tag<'a>),
-    ElementLike(ElementLike<'a>),
+    Element(Element<'a>),
     Block(Block<'a>),
     Comment(Comment<'a>),
-}
-
-impl<'a> GetSpan for FragmentNodeKind<'a> {
-    fn span(&self) -> Span {
-        match self {
-            FragmentNodeKind::Text(text) => text.span,
-            FragmentNodeKind::Tag(tag) => tag.span(),
-            FragmentNodeKind::ElementLike(element_like) => element_like.span(),
-            FragmentNodeKind::Block(block) => block.span(),
-            FragmentNodeKind::Comment(comment) => comment.span,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -71,23 +57,11 @@ pub struct Text<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Tag<'a> {
-    Expression(ExpressionTag<'a>),
-    Html(HtmlTag<'a>),
-    Const(ConstTag<'a>),
-    Debug(DebugTag<'a>),
-    Render(RenderTag<'a>),
-}
-
-impl<'a> GetSpan for Tag<'a> {
-    fn span(&self) -> Span {
-        match self {
-            Tag::Expression(expression) => expression.span,
-            Tag::Html(html) => html.span,
-            Tag::Const(const_tag) => const_tag.span,
-            Tag::Debug(debug) => debug.span,
-            Tag::Render(render) => render.span,
-        }
-    }
+    ExpressionTag(ExpressionTag<'a>),
+    HtmlTag(HtmlTag<'a>),
+    ConstTag(ConstTag<'a>),
+    DebugTag(DebugTag<'a>),
+    RenderTag(RenderTag<'a>),
 }
 
 #[derive(Debug)]
@@ -155,11 +129,11 @@ pub enum RenderTagExpression<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum ElementLike<'a> {
+pub enum Element<'a> {
     Component(Component<'a>),
-    Title(TitleElement<'a>),
-    Slot(SlotElement<'a>),
-    Regular(RegularElement<'a>),
+    TitleElement(TitleElement<'a>),
+    SlotElement(SlotElement<'a>),
+    RegularElement(RegularElement<'a>),
     SvelteBody(SvelteBody<'a>),
     SvelteComponent(SvelteComponent<'a>),
     SvelteDocument(SvelteDocument<'a>),
@@ -171,34 +145,6 @@ pub enum ElementLike<'a> {
     SvelteWindow(SvelteWindow<'a>),
 }
 
-impl<'a> GetSpan for ElementLike<'a> {
-    fn span(&self) -> Span {
-        match self {
-            ElementLike::Component(component) => component.span,
-            ElementLike::Title(title) => title.span,
-            ElementLike::Slot(slot) => slot.span,
-            ElementLike::Regular(regular) => regular.span,
-            ElementLike::SvelteBody(svelte_body) => svelte_body.span,
-            ElementLike::SvelteComponent(svelte_component) => {
-                svelte_component.span
-            }
-            ElementLike::SvelteDocument(svelte_document) => {
-                svelte_document.span
-            }
-            ElementLike::SvelteElement(svelte_element) => svelte_element.span,
-            ElementLike::SvelteFragment(svelte_fragment) => {
-                svelte_fragment.span
-            }
-            ElementLike::SvelteHead(svelte_head) => svelte_head.span,
-            ElementLike::SvelteOptionsRaw(svelte_options_raw) => {
-                svelte_options_raw.span
-            }
-            ElementLike::SvelteSelf(svelte_self) => svelte_self.span,
-            ElementLike::SvelteWindow(svelte_window) => svelte_window.span,
-        }
-    }
-}
-
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -206,18 +152,6 @@ pub enum ElementAttribute<'a> {
     Attribute(Attribute<'a>),
     SpreadAttribute(SpreadAttribute<'a>),
     Directive(Directive<'a>),
-}
-
-impl<'a> GetSpan for ElementAttribute<'a> {
-    fn span(&self) -> Span {
-        match self {
-            ElementAttribute::Attribute(attribute) => attribute.span,
-            ElementAttribute::Directive(directive) => directive.span(),
-            ElementAttribute::SpreadAttribute(spread_attribute) => {
-                spread_attribute.span
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -400,23 +334,11 @@ pub struct SvelteWindow<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Block<'a> {
-    Each(EachBlock<'a>),
-    If(IfBlock<'a>),
-    Await(AwaitBlock<'a>),
-    Key(KeyBlock<'a>),
-    Snippet(SnippetBlock<'a>),
-}
-
-impl<'a> GetSpan for Block<'a> {
-    fn span(&self) -> Span {
-        match self {
-            Block::Each(each) => each.span,
-            Block::If(if_block) => if_block.span,
-            Block::Await(await_block) => await_block.span,
-            Block::Key(key) => key.span,
-            Block::Snippet(snippet) => snippet.span,
-        }
-    }
+    EachBlock(EachBlock<'a>),
+    IfBlock(IfBlock<'a>),
+    AwaitBlock(AwaitBlock<'a>),
+    KeyBlock(KeyBlock<'a>),
+    SnippetBlock(SnippetBlock<'a>),
 }
 
 #[derive(Debug)]
@@ -573,7 +495,7 @@ pub enum TemplateNode<'a> {
     Root(Root<'a>),
     Text(Text<'a>),
     Tag(Tag<'a>),
-    ElementLike(ElementLike<'a>),
+    ElementLike(Element<'a>),
     Attribute(Attribute<'a>),
     SpreadAttribute(SpreadAttribute<'a>),
     Directive(Directive<'a>),
@@ -715,15 +637,6 @@ pub enum AttributeSequenceValue<'a> {
     ExpressionTag(ExpressionTag<'a>),
 }
 
-impl<'a> GetSpan for AttributeSequenceValue<'a> {
-    fn span(&self) -> Span {
-        match self {
-            AttributeSequenceValue::Text(text) => text.span,
-            AttributeSequenceValue::ExpressionTag(tag) => tag.span,
-        }
-    }
-}
-
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -746,29 +659,14 @@ pub struct SpreadAttributeMetadata {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Directive<'a> {
-    Animate(AnimateDirective<'a>),
-    Bind(BindDirective<'a>),
-    Class(ClassDirective<'a>),
-    Let(LetDirective<'a>),
-    On(OnDirective<'a>),
-    Style(StyleDirective<'a>),
-    Transition(TransitionDirective<'a>),
-    Use(UseDirective<'a>),
-}
-
-impl<'a> GetSpan for Directive<'a> {
-    fn span(&self) -> Span {
-        match self {
-            Directive::Animate(animate) => animate.span,
-            Directive::Bind(bind) => bind.span,
-            Directive::Class(class) => class.span,
-            Directive::Let(let_directive) => let_directive.span,
-            Directive::On(on) => on.span,
-            Directive::Style(style) => style.span,
-            Directive::Transition(transition) => transition.span,
-            Directive::Use(use_directive) => use_directive.span,
-        }
-    }
+    AnimateDirective(AnimateDirective<'a>),
+    BindDirective(BindDirective<'a>),
+    ClassDirective(ClassDirective<'a>),
+    LetDirective(LetDirective<'a>),
+    OnDirective(OnDirective<'a>),
+    StyleDirective(StyleDirective<'a>),
+    TransitionDirective(TransitionDirective<'a>),
+    UseDirective(UseDirective<'a>),
 }
 
 #[derive(Debug)]
