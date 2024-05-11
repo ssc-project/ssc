@@ -27,10 +27,6 @@ pub trait VisitMut<'a>: Sized {
         walk_text_mut(self, text);
     }
 
-    fn visit_comment(&mut self, comment: &mut Comment<'a>) {
-        walk_comment_mut(self, comment);
-    }
-
     /* ----------  Tag ---------- */
 
     fn visit_tag(&mut self, tag: &mut Tag<'a>) {
@@ -193,9 +189,6 @@ pub mod walk_mut {
                 visitor.visit_element(element)
             }
             FragmentNodeKind::Block(block) => visitor.visit_block(block),
-            FragmentNodeKind::Comment(comment) => {
-                visitor.visit_comment(comment)
-            }
         }
     }
 
@@ -204,15 +197,6 @@ pub mod walk_mut {
         _text: &mut Text<'a>,
     ) {
         let kind = AstType::Text;
-        visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_comment_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _comment: &mut Comment<'a>,
-    ) {
-        let kind = AstType::Comment;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

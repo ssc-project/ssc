@@ -9,7 +9,6 @@ impl<'a> GetSpan for FragmentNodeKind<'a> {
             FragmentNodeKind::Tag(tag) => tag.span(),
             FragmentNodeKind::Element(element) => element.span(),
             FragmentNodeKind::Block(block) => block.span(),
-            FragmentNodeKind::Comment(comment) => comment.span,
         }
     }
 }

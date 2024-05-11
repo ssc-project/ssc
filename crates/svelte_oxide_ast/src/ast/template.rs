@@ -15,7 +15,6 @@ use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use super::macros::define_constant_string;
 use crate::ast::{Binding, CssNode, StyleSheet};
 
 #[derive(Debug)]
@@ -40,7 +39,6 @@ pub enum FragmentNodeKind<'a> {
     Tag(Tag<'a>),
     Element(Element<'a>),
     Block(Block<'a>),
-    Comment(Comment<'a>),
 }
 
 #[derive(Debug)]
@@ -165,25 +163,12 @@ pub struct Component<'a> {
     pub fragment: Fragment<'a>,
 }
 
-define_constant_string!(TitleElementName => "title");
-define_constant_string!(SlotElementName => "slot");
-define_constant_string!(SvelteBodyName => "svelte:body");
-define_constant_string!(SvelteComponentName => "svelte:component");
-define_constant_string!(SvelteDocumentName => "svelte:document");
-define_constant_string!(SvelteElementName => "svelte:element");
-define_constant_string!(SvelteFragmentName => "svelte:fragment");
-define_constant_string!(SvelteHeadName => "svelte:head");
-define_constant_string!(SvelteOptionsRawName => "svelte:options");
-define_constant_string!(SvelteSelfName => "svelte:self");
-define_constant_string!(SvelteWindowName => "svelte:window");
-
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TitleElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: TitleElementName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -194,7 +179,6 @@ pub struct TitleElement<'a> {
 pub struct SlotElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SlotElementName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -226,7 +210,6 @@ pub struct RegularElementMetadata {
 pub struct SvelteBody<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteBodyName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -237,7 +220,6 @@ pub struct SvelteBody<'a> {
 pub struct SvelteComponent<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteComponentName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
     pub expression: Expression<'a>,
@@ -249,7 +231,6 @@ pub struct SvelteComponent<'a> {
 pub struct SvelteDocument<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteDocumentName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -260,7 +241,6 @@ pub struct SvelteDocument<'a> {
 pub struct SvelteElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteElementName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
     pub expression: Expression<'a>,
@@ -281,7 +261,6 @@ pub struct SvelteElementMetadata {
 pub struct SvelteFragment<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteFragmentName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -292,7 +271,6 @@ pub struct SvelteFragment<'a> {
 pub struct SvelteHead<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteHeadName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -303,7 +281,6 @@ pub struct SvelteHead<'a> {
 pub struct SvelteOptionsRaw<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteOptionsRawName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -314,7 +291,6 @@ pub struct SvelteOptionsRaw<'a> {
 pub struct SvelteSelf<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteSelfName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -325,7 +301,6 @@ pub struct SvelteSelf<'a> {
 pub struct SvelteWindow<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: SvelteWindowName,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
 }
@@ -420,16 +395,6 @@ pub struct SnippetBlock<'a> {
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Comment<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub data: Atom<'a>,
-    pub ignores: Vec<'a, Atom<'a>>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum SvelteNode<'a> {
     Node(Node<'a>),
@@ -499,7 +464,6 @@ pub enum TemplateNode<'a> {
     Attribute(Attribute<'a>),
     SpreadAttribute(SpreadAttribute<'a>),
     Directive(Directive<'a>),
-    Comment(Comment<'a>),
     Block(Block<'a>),
 }
 

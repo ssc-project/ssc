@@ -4,7 +4,7 @@ use oxc_span::{Atom, Span};
 use serde::Serialize;
 
 use super::macros::define_constant_string;
-use crate::ast::{Attribute, Comment};
+use crate::ast::Attribute;
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -23,7 +23,6 @@ pub struct StyleSheetContent<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub styles: Atom<'a>,
-    pub comment: Option<Comment<'a>>,
 }
 
 #[derive(Debug)]

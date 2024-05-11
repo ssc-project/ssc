@@ -375,6 +375,7 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "seq-macro",
+ "static_assertions",
 ]
 
 [[package]]

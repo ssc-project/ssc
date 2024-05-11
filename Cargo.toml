@@ -16,17 +16,18 @@ resolver = "2"
   rust-version = "1.74"
 
   [workspace.dependencies]
-  assert-unchecked = "0.1.2"
-  bitflags         = "2.5.0"
-  lazy_static      = "1.4.0"
-  memchr           = "2.7.2"
-  num-bigint       = "0.4.5"
-  oxc_span         = "0.12.5"
-  oxc_syntax       = "0.12.5"
-  phf              = { version = "0.11.2", features = ["macros"] }
-  regex            = "1.10.4"
-  rustc-hash       = "1.1.0"
-  seq-macro        = "0.3.5"
+  assert-unchecked  = "0.1.2"
+  bitflags          = "2.5.0"
+  lazy_static       = "1.4.0"
+  memchr            = "2.7.2"
+  num-bigint        = "0.4.5"
+  oxc_span          = "0.12.5"
+  oxc_syntax        = "0.12.5"
+  phf               = { version = "0.11.2", features = ["macros"] }
+  regex             = "1.10.4"
+  rustc-hash        = "1.1.0"
+  seq-macro         = "0.3.5"
+  static_assertions = "1.1.0"
 
   # Oxc
   oxc_allocator   = "0.12.5"

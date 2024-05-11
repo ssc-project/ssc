@@ -21,7 +21,6 @@ macro_rules! ast_kinds {
 ast_kinds! {
     Root(&'a Root<'a>),
     Text(&'a Text<'a>),
-    Comment(&'a Comment<'a>),
     ExpressionTag(&'a ExpressionTag<'a>),
     HtmlTag(&'a HtmlTag<'a>),
     ConstTag(&'a ConstTag<'a>),
@@ -64,7 +63,6 @@ impl<'a> GetSpan for AstKind<'a> {
         match self {
             Self::Root(x) => x.span,
             Self::Text(x) => x.span,
-            Self::Comment(x) => x.span,
             Self::ExpressionTag(x) => x.span,
             Self::HtmlTag(x) => x.span,
             Self::ConstTag(x) => x.span,
@@ -103,7 +101,6 @@ impl<'a> AstKind<'a> {
         match self {
             Self::Root(_) => "Root".into(),
             Self::Text(_) => "Text".into(),
-            Self::Comment(_) => "Comment".into(),
             Self::ExpressionTag(_) => "ExpressionTag".into(),
             Self::HtmlTag(_) => "HtmlTag".into(),
             Self::ConstTag(_) => "ConstTag".into(),
