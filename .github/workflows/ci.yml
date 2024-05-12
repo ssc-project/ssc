@@ -1,4 +1,4 @@
-name: Lint and Check Formatting
+name: CI
 
 on:
   push:
@@ -9,7 +9,7 @@ env:
   RUST_BACKTRACE: "full"
 
 jobs:
-  lint:
+  check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
