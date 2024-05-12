@@ -13,16 +13,3 @@ rust-version.workspace = true
 version                = "0.1.0"
 
 [dependencies]
-oxc_allocator   = { workspace = true }
-oxc_ast         = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_span        = { workspace = true }
-
-svelte_oxide_ast = { workspace = true }
-
-rustc-hash = { workspace = true }
-
-lazy_static = { workspace = true }
-phf         = { workspace = true }
-regex       = { workspace = true }
