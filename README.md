@@ -20,6 +20,24 @@ is ready for production use.
 Here's a feature roadmap:
 
 - [x] AST
+- [x] CSS AST
+- [ ] CSS Parser
+  - [ ] Rule
+    - [ ] AtRule
+    - [ ] StyleRule
+  - [ ] Selector
+    - [ ] TypeSelector
+    - [ ] IdSelector
+    - [ ] ClassSelector
+    - [ ] AttributeSelector
+    - [ ] PseudoElementSelector
+    - [ ] PseudoClassSelector
+    - [ ] PercentageSelector
+    - [ ] NthSelector
+    - [ ] NestingSelector
+    - [ ] Combinator
+  - [ ] Block
+  - [ ] Declaration
 - [ ] Parser
   - [ ] Script
   - [ ] StyleSheet
@@ -52,7 +70,6 @@ Here's a feature roadmap:
   - [ ] Text
 - [ ] Analyzer
 - [ ] Transformer
-
 
 ## License
 
