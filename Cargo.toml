@@ -18,29 +18,26 @@ resolver = "2"
   [workspace.dependencies]
   assert-unchecked  = "0.1.2"
   bitflags          = "2.5.0"
-  lazy_static       = "1.4.0"
   memchr            = "2.7.2"
-  num-bigint        = "0.4.5"
-  phf               = { version = "0.11.2", features = ["macros"] }
-  regex             = "1.10.4"
+  num-bigint        = "0.4.4"
+  num-traits        = "0.2.18"
   rustc-hash        = "1.1.0"
   seq-macro         = "0.3.5"
   static_assertions = "1.1.0"
 
   # Oxc
-  oxc_allocator   = "0.12.5"
-  oxc_ast         = "0.12.5"
-  oxc_diagnostics = "0.12.5"
-  oxc_index       = "0.12.5"
-  oxc_parser      = { path = "crates/oxc_parser" }
-  oxc_semantic    = "0.12.5"
-  oxc_sourcemap   = "0.12.5"
-  oxc_span        = "0.12.5"
-  oxc_syntax      = "0.12.5"
+  oxc_allocator   = "0.13.1"
+  oxc_ast         = "0.13.1"
+  oxc_diagnostics = "0.13.1"
+  oxc_parser      = { version = "0.13.1", path = "crates/oxc_parser" }
+  oxc_semantic    = "0.13.1"
+  oxc_sourcemap   = "0.13.1"
+  oxc_span        = "0.13.1"
+  oxc_syntax      = "0.13.1"
 
   # Svelte Oxide
-  svelte_oxide          = { path = "crates/svelte_oxide" }
-  svelte_oxide_analyzer = { path = "crates/svelte_oxide_analyzer" }
-  svelte_oxide_ast      = { path = "crates/svelte_oxide_ast" }
-  svelte_oxide_css_ast  = { path = "crates/svelte_oxide_css_ast" }
-  svelte_oxide_parser   = { path = "crates/svelte_oxide_parser" }
+  svelte_oxide          = { version = "0.1.0", path = "crates/svelte_oxide" }
+  svelte_oxide_analyzer = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
+  svelte_oxide_ast      = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
+  svelte_oxide_css_ast  = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
+  svelte_oxide_parser   = { version = "0.1.0", path = "crates/svelte_oxide_parser" }

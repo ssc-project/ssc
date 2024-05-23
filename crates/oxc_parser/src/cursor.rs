@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::ast::RegExpFlags;
+use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -110,7 +110,7 @@ impl<'a> ParserImpl<'a> {
     fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped() && kind.is_all_keyword() {
             let span = self.cur_token().span();
-            self.error(diagnostics::EscapedKeyword(span));
+            self.error(diagnostics::escaped_keyword(span));
         }
     }
 
@@ -161,7 +161,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
             let span = Span::new(self.prev_token_end, self.cur_token().start);
-            return Err(diagnostics::AutoSemicolonInsertion(span).into());
+            return Err(diagnostics::auto_semicolon_insertion(span));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -181,12 +181,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(diagnostics::ExpectToken(
+            return Err(diagnostics::expect_token(
                 kind.to_str(),
                 self.cur_kind().to_str(),
                 range,
-            )
-            .into());
+            ));
         }
         Ok(())
     }
@@ -259,6 +258,13 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    pub(crate) fn re_lex_ts_r_angle(&mut self) {
+        let kind = self.cur_kind();
+        if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
+            self.token = self.lexer.re_lex_as_typescript_r_angle(kind);
+        }
+    }
+
     pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
@@ -307,31 +313,28 @@ impl<'a> ParserImpl<'a> {
         answer
     }
 
-    pub(crate) fn without_context<F, T>(&mut self, flags: Context, cb: F) -> T
+    #[allow(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context<F, T>(
+        &mut self,
+        add_flags: Context,
+        remove_flags: Context,
+        cb: F,
+    ) -> T
     where
         F: FnOnce(&mut Self) -> T,
     {
-        let context_flags_to_clear = flags & self.ctx;
-        if !context_flags_to_clear.is_empty() {
-            self.ctx &= !context_flags_to_clear;
-            let result = cb(self);
-            self.ctx |= context_flags_to_clear;
-            return result;
-        }
-        cb(self)
+        let ctx = self.ctx;
+        self.ctx = ctx.difference(remove_flags).union(add_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
     }
 
-    pub(crate) fn with_context<F, T>(&mut self, flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let context_flags_to_set = flags & !self.ctx;
-        if !context_flags_to_set.is_empty() {
-            self.ctx |= context_flags_to_set;
-            let result = cb(self);
-            self.ctx &= !context_flags_to_set;
-            return result;
-        }
-        cb(self)
+    pub(crate) fn consume_decorators(
+        &mut self,
+    ) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+        let decorators = std::mem::take(&mut self.state.decorators);
+        self.ast.new_vec_from_iter(decorators)
     }
 }

@@ -31,7 +31,7 @@ use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 use rustc_hash::FxHashMap;
 
@@ -80,7 +80,7 @@ pub struct Lexer<'a> {
 
     token: Token,
 
-    pub(crate) errors: Vec<Error>,
+    pub(crate) errors: Vec<OxcDiagnostic>,
 
     lookahead: VecDeque<Lookahead<'a>>,
 
@@ -135,34 +135,17 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(super) fn new_at_position(
+    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for
+    /// benchmarks. This function must NOT be exposed in public API as it
+    /// breaks safety invariants.
+    #[cfg(feature = "benchmarking")]
+    pub fn new_for_benchmarks(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
-        position: usize,
-        unique: UniquePromise,
     ) -> Self {
-        let mut source = Source::new(source_text, unique);
-
-        source.set_position(unsafe { source.position().add(position) });
-
-        // The first token is at the start of file, so is allows on a new line
-        let token = Token::new_on_new_line();
-        Self {
-            allocator,
-            source,
-            source_type,
-            token,
-            errors: vec![],
-            lookahead: VecDeque::with_capacity(4), /* 4 is the maximum
-                                                    * lookahead for
-                                                    * TypeScript */
-            context: LexerContext::Regular,
-            trivia_builder: TriviaBuilder::default(),
-            escaped_strings: FxHashMap::default(),
-            escaped_templates: FxHashMap::default(),
-            multi_line_comment_end_finder: None,
-        }
+        let unique = UniquePromise::new_for_tests();
+        Self::new(allocator, source_text, source_type, unique)
     }
 
     /// Remaining string from `Source`
@@ -252,8 +235,8 @@ impl<'a> Lexer<'a> {
     }
 
     // ---------- Private Methods ---------- //
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
     }
 
     /// Get the length offset from the source, in UTF-8 bytes
@@ -311,8 +294,8 @@ impl<'a> Lexer<'a> {
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
         match self.peek() {
-            Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
-            None => self.error(diagnostics::UnexpectedEnd(offset)),
+            Some(c) => self.error(diagnostics::invalid_character(c, offset)),
+            None => self.error(diagnostics::unexpected_end(offset)),
         }
     }
 

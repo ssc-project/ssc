@@ -16,17 +16,15 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTarget<'a> {
             Expression::ArrayExpression(array_expr) => {
                 ArrayAssignmentTarget::cover(array_expr.unbox(), p)
                     .map(|pat| p.ast.alloc(pat))
-                    .map(AssignmentTargetPattern::ArrayAssignmentTarget)
-                    .map(AssignmentTarget::AssignmentTargetPattern)
+                    .map(AssignmentTarget::ArrayAssignmentTarget)
             }
             Expression::ObjectExpression(object_expr) => {
                 ObjectAssignmentTarget::cover(object_expr.unbox(), p)
                     .map(|pat| p.ast.alloc(pat))
-                    .map(AssignmentTargetPattern::ObjectAssignmentTarget)
-                    .map(AssignmentTarget::AssignmentTargetPattern)
+                    .map(AssignmentTarget::ObjectAssignmentTarget)
             }
             _ => SimpleAssignmentTarget::cover(expr, p)
-                .map(AssignmentTarget::SimpleAssignmentTarget),
+                .map(AssignmentTarget::from),
         }
     }
 }
@@ -38,15 +36,16 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
             Expression::Identifier(ident) => {
                 Ok(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident))
             }
-            Expression::MemberExpression(expr) => {
-                Ok(SimpleAssignmentTarget::MemberAssignmentTarget(expr))
+            match_member_expression!(Expression) => {
+                let member_expr = MemberExpression::try_from(expr).unwrap();
+                Ok(SimpleAssignmentTarget::from(member_expr))
             }
             Expression::ParenthesizedExpression(expr) => {
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_)
                     | Expression::ArrayExpression(_) => {
-                        Err(diagnostics::InvalidAssignment(span).into())
+                        Err(diagnostics::invalid_assignment(span))
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
@@ -63,7 +62,10 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
             Expression::TSTypeAssertion(expr) => {
                 Ok(SimpleAssignmentTarget::TSTypeAssertion(expr))
             }
-            expr => Err(diagnostics::InvalidAssignment(expr.span()).into()),
+            Expression::TSInstantiationExpression(expr) => {
+                Ok(SimpleAssignmentTarget::TSInstantiationExpression(expr))
+            }
+            expr => Err(diagnostics::invalid_assignment(expr.span())),
         }
     }
 }
@@ -79,7 +81,8 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
         let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
-                ArrayExpressionElement::Expression(expr) => {
+                match_expression!(ArrayExpressionElement) => {
+                    let expr = Expression::try_from(elem).unwrap();
                     let target = AssignmentTargetMaybeDefault::cover(expr, p)?;
                     elements.push(Some(target));
                 }
@@ -93,16 +96,12 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             )?,
                         });
                         if let Some(span) = expr.trailing_comma {
-                            p.error(
-                                diagnostics::BindingRestElementTrailingComma(
-                                    span,
-                                ),
-                            );
+                            p.error(diagnostics::binding_rest_element_trailing_comma(span));
                         }
                     } else {
-                        return Err(
-                            diagnostics::SpreadLastElement(elem.span).into()
-                        );
+                        return Err(diagnostics::spread_last_element(
+                            elem.span,
+                        ));
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
@@ -132,7 +131,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
             }
             expr => {
                 let target = AssignmentTarget::cover(expr, p)?;
-                Ok(AssignmentTargetMaybeDefault::AssignmentTarget(target))
+                Ok(AssignmentTargetMaybeDefault::from(target))
             }
         }
     }
@@ -175,10 +174,9 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                             )?,
                         });
                     } else {
-                        return Err(diagnostics::SpreadLastElement(
+                        return Err(diagnostics::spread_last_element(
                             spread.span,
-                        )
-                        .into());
+                        ));
                     }
                 }
             }
@@ -195,7 +193,7 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
     ) -> Result<Self> {
         if property.shorthand {
             let binding = match property.key {
-                PropertyKey::Identifier(ident) => {
+                PropertyKey::StaticIdentifier(ident) => {
                     let ident = ident.unbox();
                     IdentifierReference::new(ident.span, ident.name)
                 }

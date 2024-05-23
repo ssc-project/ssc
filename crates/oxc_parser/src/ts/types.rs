@@ -223,21 +223,24 @@ impl<'a> ParserImpl<'a> {
             && !self.cur_token().is_on_new_line
             && self.eat(Kind::Extends)
         {
-            let extends_type = self.with_context(
+            let extends_type = self.context(
                 Context::DisallowConditionalTypes,
+                Context::empty(),
                 Self::parse_ts_type,
             )?;
 
             self.expect(Kind::Question)?;
 
-            let true_type = self.without_context(
+            let true_type = self.context(
+                Context::empty(),
                 Context::DisallowConditionalTypes,
                 Self::parse_ts_type,
             )?;
 
             self.expect(Kind::Colon)?;
 
-            let false_type = self.without_context(
+            let false_type = self.context(
+                Context::empty(),
                 Context::DisallowConditionalTypes,
                 Self::parse_ts_type,
             )?;
@@ -339,7 +342,8 @@ impl<'a> ParserImpl<'a> {
             ));
         }
 
-        let mut left = self.without_context(
+        let mut left = self.context(
+            Context::empty(),
             Context::DisallowConditionalTypes,
             ParserImpl::parse_ts_basic_type,
         )?;
@@ -550,33 +554,37 @@ impl<'a> ParserImpl<'a> {
             return Ok(None);
         }
         let span = self.start_span();
-        let params = TSTypeArgumentList::parse(self)?.params;
+        let params = TSTypeArgumentList::parse(self, false)?.params;
         Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)))
     }
 
     pub(crate) fn parse_ts_type_arguments_in_expression(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-            return None;
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
+        if !self.ts_enabled() {
+            return Ok(None);
         }
+
         let span = self.start_span();
+        self.re_lex_ts_l_angle();
+        if !self.at(Kind::LAngle) {
+            return Ok(None);
+        }
 
-        self.try_parse(|p| {
-            p.re_lex_ts_l_angle();
+        let params =
+            TSTypeArgumentList::parse(self, /* in_expression */ true)?.params;
 
-            let params = TSTypeArgumentList::parse(p)?.params;
-            let token = p.cur_token();
-            if token.is_on_new_line
-                || token.kind.can_follow_type_arguments_in_expr()
-            {
-                Ok(params)
-            } else {
-                Err(p.unexpected())
-            }
-        })
-        .ok()
-        .map(|types| self.ast.ts_type_arguments(self.end_span(span), types))
+        let token = self.cur_token();
+
+        if token.is_on_new_line
+            || token.kind.can_follow_type_arguments_in_expr()
+        {
+            return Ok(Some(
+                self.ast.ts_type_arguments(self.end_span(span), params),
+            ));
+        }
+
+        Err(self.unexpected())
     }
 
     fn parse_ts_tuple_type(&mut self) -> Result<TSType<'a>> {
@@ -895,7 +903,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(this_param) = this_param {
             // type Foo = new (this: number) => any;
-            self.error(diagnostics::TSConstructorThisParameter(
+            self.error(diagnostics::ts_constructor_this_parameter(
                 this_param.span,
             ));
         }
@@ -962,8 +970,9 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {
         if self.eat(Kind::Extends) {
-            let constraint = self.with_context(
+            let constraint = self.context(
                 Context::DisallowConditionalTypes,
+                Context::empty(),
                 Self::parse_ts_type,
             )?;
             if self.ctx.has_disallow_conditional_types()
@@ -1040,7 +1049,8 @@ impl<'a> ParserImpl<'a> {
         if !self.peek_token().is_on_new_line && (asserts || is_predicate) {
             self.parse_ts_type_predicate()
         } else {
-            self.without_context(
+            self.context(
+                Context::empty(),
                 Context::DisallowConditionalTypes,
                 Self::parse_ts_type,
             )
@@ -1107,11 +1117,9 @@ impl<'a> ParserImpl<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if let Some(return_type) = return_type.as_ref() {
-            self.error(
-                diagnostics::ASetAccessorCannotHaveAReturnTypeAnnotation(
-                    return_type.span,
-                ),
-            );
+            self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                return_type.span,
+            ));
         }
         Ok(self.ast.ts_method_signature(
             self.end_span(span),
@@ -1187,7 +1195,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(this_param) = this_param {
             // interface Foo { new(this: number): Foo }
-            self.error(diagnostics::TSConstructorThisParameter(
+            self.error(diagnostics::ts_constructor_this_parameter(
                 this_param.span,
             ));
         }

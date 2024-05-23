@@ -4,9 +4,8 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
 use super::{
-    declaration::{VariableDeclarationContext, VariableDeclarationParent},
-    grammar::CoverGrammar,
-    list::SwitchCases,
+    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext,
+    VariableDeclarationParent,
 };
 use crate::{
     diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl,
@@ -234,12 +233,12 @@ impl<'a> ParserImpl<'a> {
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(diagnostics::LexicalDeclarationSingleStatement(
+            self.error(diagnostics::lexical_declaration_single_statement(
                 decl.span,
             ));
         }
 
-        Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
+        Ok(Statement::VariableDeclaration(decl))
     }
 
     /// Section 14.4 Empty Statement
@@ -340,23 +339,26 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let init_expression =
-            self.without_context(Context::In, ParserImpl::parse_expression)?;
+        let init_expression = self.context(
+            Context::empty(),
+            Context::In,
+            ParserImpl::parse_expression,
+        )?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
                 .map_err(|_| {
-                    diagnostics::UnexpectedToken(self.end_span(expr_span))
+                    diagnostics::unexpected_token(self.end_span(expr_span))
                 })?;
-            let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
+            let for_stmt_left = ForStatementLeft::from(target);
             if !r#await && is_async_of {
-                self.error(diagnostics::ForLoopAsyncOf(
+                self.error(diagnostics::for_loop_async_of(
                     self.end_span(expr_span),
                 ));
             }
             if is_let_of {
-                self.error(diagnostics::UnexpectedToken(
+                self.error(diagnostics::unexpected_token(
                     self.end_span(expr_span),
                 ));
             }
@@ -365,7 +367,7 @@ impl<'a> ParserImpl<'a> {
 
         self.parse_for_loop(
             span,
-            Some(ForStatementInit::Expression(init_expression)),
+            Some(ForStatementInit::from(init_expression)),
             r#await,
         )
     }
@@ -376,15 +378,17 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
-        let init_declaration = self.without_context(Context::In, |p| {
-            let decl_ctx =
-                VariableDeclarationContext::new(VariableDeclarationParent::For);
-            p.parse_variable_declaration(
-                start_span,
-                decl_ctx,
-                Modifiers::empty(),
-            )
-        })?;
+        let init_declaration =
+            self.context(Context::empty(), Context::In, |p| {
+                let decl_ctx = VariableDeclarationContext::new(
+                    VariableDeclarationParent::For,
+                );
+                p.parse_variable_declaration(
+                    start_span,
+                    decl_ctx,
+                    Modifiers::empty(),
+                )
+            })?;
 
         // for (.. a in) for (.. a of)
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
@@ -406,15 +410,13 @@ impl<'a> ParserImpl<'a> {
 
         if matches!(self.cur_kind(), Kind::In) {
             if using_decl.is_await {
-                self.error(diagnostics::AwaitUsingDeclarationNotAllowedInForInStatement(
+                self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
             } else {
-                self.error(
-                    diagnostics::UsingDeclarationNotAllowedInForInStatement(
-                        using_decl.span,
-                    ),
-                );
+                self.error(diagnostics::using_declaration_not_allowed_in_for_in_statement(
+                    using_decl.span,
+                ));
             }
         }
 
@@ -438,7 +440,11 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
+            Some(self.context(
+                Context::In,
+                Context::empty(),
+                ParserImpl::parse_expression,
+            )?)
         } else {
             None
         };
@@ -446,11 +452,15 @@ impl<'a> ParserImpl<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
+            Some(self.context(
+                Context::In,
+                Context::empty(),
+                ParserImpl::parse_expression,
+            )?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
-            self.error(diagnostics::ForAwait(self.end_span(span)));
+            self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For)?;
         Ok(self.ast.for_statement(
@@ -473,12 +483,12 @@ impl<'a> ParserImpl<'a> {
         let right = if is_for_in {
             self.parse_expression()
         } else {
-            self.parse_assignment_expression_base()
+            self.parse_assignment_expression_or_higher()
         }?;
         self.expect(Kind::RParen)?;
 
         if r#await && is_for_in {
-            self.error(diagnostics::ForAwait(self.end_span(span)));
+            self.error(diagnostics::for_await(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -522,13 +532,16 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
                 None
             } else {
-                let expr = self
-                    .with_context(Context::In, ParserImpl::parse_expression)?;
+                let expr = self.context(
+                    Context::In,
+                    Context::empty(),
+                    ParserImpl::parse_expression,
+                )?;
                 self.asi()?;
                 Some(expr)
             };
         if !self.ctx.has_return() {
-            self.error(diagnostics::ReturnStatementOnlyInFunctionBody(
+            self.error(diagnostics::return_statement_only_in_function_body(
                 Span::new(span.start, span.start + 6),
             ));
         }
@@ -590,7 +603,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `throw`
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::IllegalNewline(
+            self.error(diagnostics::illegal_newline(
                 "throw",
                 self.end_span(span),
                 self.cur_token().span(),
@@ -618,7 +631,7 @@ impl<'a> ParserImpl<'a> {
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::new(block.span.end, block.span.end);
-            self.error(diagnostics::ExpectCatchFinally(range));
+            self.error(diagnostics::expect_catch_finally(range));
         }
 
         Ok(self.ast.try_statement(

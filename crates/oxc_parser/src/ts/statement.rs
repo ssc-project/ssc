@@ -8,10 +8,7 @@ use super::{
     types::ModifierFlags,
 };
 use crate::{
-    js::{
-        declaration::{VariableDeclarationContext, VariableDeclarationParent},
-        function::FunctionKind,
-    },
+    js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
     ParserImpl, StatementContext,
@@ -44,7 +41,7 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_ts_enum_member_name()?;
 
         let initializer = if self.eat(Kind::Eq) {
-            Some(self.parse_assignment_expression_base()?)
+            Some(self.parse_assignment_expression_or_higher()?)
         } else {
             None
         };
@@ -316,7 +313,7 @@ impl<'a> ParserImpl<'a> {
             .and_await(flags.r#async());
         let result = self.parse_declaration(start_span, modifiers);
         self.ctx = reserved_ctx;
-        result.map(Statement::Declaration)
+        result.map(Statement::from)
     }
 
     pub(crate) fn parse_declaration(
@@ -416,7 +413,7 @@ impl<'a> ParserImpl<'a> {
         let type_annotation = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;
         let lhs_span = self.start_span();
-        let expression = self.parse_unary_expression_base(lhs_span)?;
+        let expression = self.parse_simple_unary_expression(lhs_span)?;
         Ok(self.ast.ts_type_assertion(
             self.end_span(span),
             type_annotation,
@@ -487,7 +484,7 @@ impl<'a> ParserImpl<'a> {
             return Ok(());
         }
 
-        let mut decorators = self.ast.new_vec();
+        let mut decorators = vec![];
         while self.at(Kind::At) {
             let decorator = self.parse_decorator()?;
             decorators.push(decorator);

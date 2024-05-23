@@ -1,6 +1,3 @@
-#![allow(clippy::all)]
-#![allow(dead_code)]
-
 //! Oxc Parser for JavaScript and TypeScript
 //!
 //! # Performance
@@ -48,16 +45,14 @@
 //!
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing
 //! tree with untyped nodes, the nodes can be iterated through a sequential
-//! loop.
-//!
-//! ```rust
+//! loop. ```rust
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node
 //!     }
 //! }
 //! ```
-//!
+//! 
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
@@ -67,18 +62,23 @@ mod cursor;
 mod list;
 mod state;
 
-pub mod js;
+mod js;
 mod jsx;
 mod ts;
 
 mod diagnostics;
 
+// Expose lexer only in benchmarks
+#[cfg(not(feature = "benchmarking"))]
 mod lexer;
+#[cfg(feature = "benchmarking")]
+#[doc(hidden)]
+pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstBuilder, Trivias};
-use oxc_diagnostics::{Error, Result};
+use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
 pub use crate::lexer::Kind; // re-export for codegen
@@ -110,14 +110,14 @@ pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// recovery.
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcDiagnostic>,
     pub trivias: Trivias,
     pub panicked: bool,
 }
 
 /// Parser options
 #[derive(Clone, Copy)]
-pub(crate) struct ParserOptions {
+struct ParserOptions {
     pub allow_return_outside_function: bool,
     /// Emit `ParenthesizedExpression` in AST.
     ///
@@ -179,13 +179,6 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
-    use oxc_allocator::Box;
-    use oxc_ast::ast::{
-        BindingPattern, Expression, IdentifierName, Modifiers,
-        VariableDeclaration,
-    };
-
-    use self::js::declaration::VariableDeclarationContext;
     use super::*;
 
     /// `UniquePromise` is a way to use the type system to enforce the invariant
@@ -205,7 +198,7 @@ mod parser_parse {
     ///
     /// `UniquePromise::new_for_tests` is a backdoor for unit tests and
     /// benchmarks, so they can create a `ParserImpl` or `Lexer`, and
-    /// manipulate it directly, for testing purposes.
+    /// manipulate it directly, for testing/benchmarking purposes.
     pub(crate) struct UniquePromise {
         _dummy: (),
     }
@@ -220,7 +213,7 @@ mod parser_parse {
         /// above). This function must NOT be exposed outside of tests
         /// and benchmarks, as it allows circumventing safety invariants
         /// of the parser.
-        #[cfg(test)]
+        #[cfg(any(test, feature = "benchmarking"))]
         pub fn new_for_tests() -> Self {
             Self { _dummy: () }
         }
@@ -242,92 +235,6 @@ mod parser_parse {
             );
             parser.parse()
         }
-
-        pub fn parse_at_position(self, position: usize) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new_at_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                position,
-                unique,
-            );
-            parser.parse()
-        }
-
-        pub fn parse_expression_at(
-            self,
-            position: usize,
-        ) -> Result<Expression<'a>> {
-            let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_at_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                position,
-                unique,
-            );
-            parser.bump_any();
-            parser.parse_expression()
-        }
-
-        pub fn parse_variable_declaration_at(
-            self,
-            position: usize,
-            decl_ctx: VariableDeclarationContext,
-        ) -> Result<Box<'a, VariableDeclaration<'a>>> {
-            let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_at_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                position,
-                unique,
-            );
-            parser.bump_any();
-            parser.parse_variable_declaration(
-                Span::new(position as u32, 0),
-                decl_ctx,
-                Modifiers::empty(),
-            )
-        }
-
-        pub fn parse_binding_pattern_at(
-            self,
-            position: usize,
-        ) -> Result<BindingPattern<'a>> {
-            let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_at_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                position,
-                unique,
-            );
-            parser.bump_any();
-            parser.parse_binding_pattern(false)
-        }
-
-        pub fn parse_identifier_name_at(
-            self,
-            position: usize,
-        ) -> Result<IdentifierName<'a>> {
-            let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_at_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                position,
-                unique,
-            );
-            parser.bump_any();
-            parser.parse_identifier_name()
-        }
     }
 }
 use parser_parse::UniquePromise;
@@ -335,7 +242,7 @@ use parser_parse::UniquePromise;
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this
 /// type.
-pub(crate) struct ParserImpl<'a> {
+struct ParserImpl<'a> {
     lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
@@ -346,7 +253,7 @@ pub(crate) struct ParserImpl<'a> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<Error>,
+    errors: Vec<OxcDiagnostic>,
 
     /// The current parsing token
     token: Token,
@@ -388,36 +295,7 @@ impl<'a> ParserImpl<'a> {
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::new(allocator),
-            ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
-            preserve_parens: options.preserve_parens,
-        }
-    }
-
-    #[inline]
-    pub fn new_at_position(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-        position: usize,
-        unique: UniquePromise,
-    ) -> Self {
-        Self {
-            lexer: Lexer::new_at_position(
-                allocator,
-                source_text,
-                source_type,
-                position,
-                unique,
-            ),
-            source_type,
-            source_text,
-            errors: vec![],
-            token: Token::default(),
-            prev_token_end: 0,
-            state: ParserState::new(allocator),
+            state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             preserve_parens: options.preserve_parens,
@@ -503,12 +381,12 @@ impl<'a> ParserImpl<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<Error> {
+    fn flow_error(&self) -> Option<OxcDiagnostic> {
         if self.source_type.is_javascript()
             && (self.source_text.starts_with("// @flow")
                 || self.source_text.starts_with("/* @flow */"))
         {
-            return Some(diagnostics::Flow(Span::new(0, 8)).into());
+            return Some(diagnostics::flow(Span::new(0, 8)));
         }
         None
     }
@@ -516,9 +394,9 @@ impl<'a> ParserImpl<'a> {
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as
     /// the source text.
-    fn overlong_error(&self) -> Option<Error> {
+    fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::OverlongSource.into());
+            return Some(diagnostics::overlong_source());
         }
         None
     }
@@ -527,7 +405,7 @@ impl<'a> ParserImpl<'a> {
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is
     ///     returned
-    fn unexpected(&mut self) -> Error {
+    fn unexpected(&mut self) -> OxcDiagnostic {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
@@ -535,12 +413,12 @@ impl<'a> ParserImpl<'a> {
                 return error;
             }
         }
-        diagnostics::UnexpectedToken(self.cur_token().span()).into()
+        diagnostics::unexpected_token(self.cur_token().span())
     }
 
     /// Push a Syntax Error
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
     }
 
     fn ts_enabled(&self) -> bool {

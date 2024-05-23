@@ -95,7 +95,7 @@ impl<'a> Source<'a> {
     ) -> Self {
         // If source text exceeds size limit, substitute a short source text
         // which will fail to parse. `Parser::parse` will convert error
-        // to `diagnostics::OverlongSource`.
+        // to `diagnostics::overlong_source()`.
         if source_text.len() > MAX_LEN {
             source_text = "\0";
         }

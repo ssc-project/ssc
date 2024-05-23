@@ -43,7 +43,7 @@ macro_rules! handle_string_literal {
             table: $table,
             start: after_opening_quote,
             handle_eof: {
-                $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                 return Kind::Undetermined;
             },
         };
@@ -65,7 +65,7 @@ macro_rules! handle_string_literal {
                 cold_branch(|| {
                     debug_assert!(matches!(next_byte, b'\r' | b'\n'));
                     $lexer.consume_char();
-                    $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                     Kind::Undetermined
                 })
             }
@@ -101,7 +101,7 @@ macro_rules! handle_string_literal_escape {
             );
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
-                $lexer.error(diagnostics::InvalidEscapeSequence(range));
+                $lexer.error(diagnostics::invalid_escape_sequence(range));
             }
 
             // Consume bytes until reach end of string, line break, or another
@@ -149,7 +149,7 @@ macro_rules! handle_string_literal_escape {
                         return cold_branch(|| {
                             debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
-                            $lexer.error(diagnostics::UnterminatedString(
+                            $lexer.error(diagnostics::unterminated_string(
                                 $lexer.unterminated_range(),
                             ));
                             Kind::Undetermined
@@ -159,7 +159,7 @@ macro_rules! handle_string_literal_escape {
             }
 
             // EOF
-            $lexer.error(diagnostics::UnterminatedString(
+            $lexer.error(diagnostics::unterminated_string(
                 $lexer.unterminated_range(),
             ));
             return Kind::Undetermined;

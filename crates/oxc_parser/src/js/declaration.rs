@@ -3,25 +3,8 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
+use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
-
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
-pub enum VariableDeclarationParent {
-    For,
-    Statement,
-    Clause,
-}
-
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
-pub struct VariableDeclarationContext {
-    pub parent: VariableDeclarationParent,
-}
-
-impl VariableDeclarationContext {
-    pub fn new(parent: VariableDeclarationParent) -> Self {
-        Self { parent }
-    }
-}
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(
@@ -32,7 +15,7 @@ impl<'a> ParserImpl<'a> {
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
-            let expr = self.parse_assignment_expression_base()?;
+            let expr = self.parse_assignment_expression_or_higher()?;
             self.parse_expression_statement(span, expr)
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
@@ -55,9 +38,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
 
-        Ok(Statement::Declaration(Declaration::UsingDeclaration(
-            self.ast.alloc(using_decl),
-        )))
+        Ok(Statement::UsingDeclaration(self.ast.alloc(using_decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
@@ -141,7 +122,7 @@ impl<'a> ParserImpl<'a> {
 
         let init = self
             .eat(Kind::Eq)
-            .then(|| self.parse_assignment_expression_base())
+            .then(|| self.parse_assignment_expression_or_higher())
             .transpose()?;
 
         if init.is_none()
@@ -153,7 +134,7 @@ impl<'a> ParserImpl<'a> {
             // Initializer[?In, ?Yield, ?Await] the grammar forbids
             // `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::InvalidDestrucuringDeclaration(
+                self.error(diagnostics::invalid_destrucuring_declaration(
                     id.span(),
                 ));
             } else if kind == VariableDeclarationKind::Const
@@ -162,7 +143,7 @@ impl<'a> ParserImpl<'a> {
                 // It is a Syntax Error if Initializer is not present and
                 // IsConstantDeclaration of the LexicalDeclaration containing
                 // this LexicalBinding is true.
-                self.error(diagnostics::MissinginitializerInConst(id.span()));
+                self.error(diagnostics::missinginitializer_in_const(id.span()));
             }
         }
 
@@ -191,14 +172,14 @@ impl<'a> ParserImpl<'a> {
 
         // `[no LineTerminator here]`
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::LineTerminatorBeforeUsingDeclaration(
+            self.error(diagnostics::line_terminator_before_using_declaration(
                 self.cur_token().span(),
             ));
         }
 
         // [lookahead ≠ await]
         if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::AwaitInUsingDeclaration(
+            self.error(diagnostics::await_in_using_declaration(
                 self.cur_token().span(),
             ));
             self.eat(Kind::Await);
@@ -219,7 +200,7 @@ impl<'a> ParserImpl<'a> {
                 BindingPatternKind::BindingIdentifier(_) => {}
                 _ => {
                     self.error(
-                        diagnostics::InvalidIdentifierInUsingDeclaration(
+                        diagnostics::invalid_identifier_in_using_declaration(
                             declaration.id.span(),
                         ),
                     );
@@ -231,9 +212,11 @@ impl<'a> ParserImpl<'a> {
             if declaration.init.is_none()
                 && !matches!(statement_ctx, StatementContext::For)
             {
-                self.error(diagnostics::UsingDeclarationsMustBeInitialized(
-                    declaration.id.span(),
-                ));
+                self.error(
+                    diagnostics::using_declarations_must_be_initialized(
+                        declaration.id.span(),
+                    ),
+                );
             }
 
             declarations.push(declaration);

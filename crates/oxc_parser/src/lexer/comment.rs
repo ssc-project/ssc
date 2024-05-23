@@ -148,7 +148,7 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
+                self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
                 return Kind::Eof;
             },
         };
@@ -185,7 +185,7 @@ impl<'a> Lexer<'a> {
             Kind::Skip
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::UnterminatedMultiLineComment(
+            self.error(diagnostics::unterminated_multi_line_comment(
                 self.unterminated_range(),
             ));
             Kind::Eof

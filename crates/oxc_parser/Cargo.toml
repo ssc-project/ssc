@@ -9,19 +9,22 @@ license.workspace      = true
 name                   = "oxc_parser"
 repository.workspace   = true
 rust-version.workspace = true
-version                = "0.12.5"
+version                = "0.13.1"
+
+[lib]
+doctest = false
 
 [dependencies]
 oxc_allocator   = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_index       = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_syntax      = { workspace = true }
 
 assert-unchecked  = { workspace = true }
 bitflags          = { workspace = true }
 num-bigint        = { workspace = true }
+num-traits        = { workspace = true }
 rustc-hash        = { workspace = true }
 seq-macro         = { workspace = true }
 static_assertions = { workspace = true }
