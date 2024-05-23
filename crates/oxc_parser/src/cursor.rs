@@ -49,8 +49,7 @@ impl<'a> ParserImpl<'a> {
         // criteria of `get_unchecked`.
         #[allow(unsafe_code)]
         unsafe {
-            self.source_text
-                .get_unchecked(range.start as usize..range.end as usize)
+            self.source_text.get_unchecked(range.start as usize..range.end as usize)
         }
     }
 
@@ -181,11 +180,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(diagnostics::expect_token(
-                kind.to_str(),
-                self.cur_kind().to_str(),
-                range,
-            ));
+            return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
         }
         Ok(())
     }
@@ -208,10 +203,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Expect the next next token to be a `JsxString` or any other token
     /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(
-        &mut self,
-        kind: Kind,
-    ) -> Result<()> {
+    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) -> Result<()> {
         self.lexer.set_context(LexerContext::JsxAttributeValue);
         self.expect(kind)?;
         self.lexer.set_context(LexerContext::Regular);
@@ -220,8 +212,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Tell lexer to read a regex
     pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        let (token, pattern_end, flags) =
-            self.lexer.next_regex(self.cur_kind());
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
         (pattern_end, flags)
     }
@@ -275,12 +266,8 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint {
-            lexer,
-            cur_token,
-            prev_span_end,
-            errors_pos: errors_lens,
-        } = checkpoint;
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
+            checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
@@ -303,10 +290,7 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn lookahead<U>(
-        &mut self,
-        predicate: impl Fn(&mut ParserImpl<'a>) -> U,
-    ) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);
@@ -315,12 +299,7 @@ impl<'a> ParserImpl<'a> {
 
     #[allow(clippy::inline_always)]
     #[inline(always)] // inline because this is always on a hot path
-    pub(crate) fn context<F, T>(
-        &mut self,
-        add_flags: Context,
-        remove_flags: Context,
-        cb: F,
-    ) -> T
+    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
     {
@@ -331,9 +310,7 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn consume_decorators(
-        &mut self,
-    ) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+    pub(crate) fn consume_decorators(&mut self) -> oxc_allocator::Vec<'a, Decorator<'a>> {
         let decorators = std::mem::take(&mut self.state.decorators);
         self.ast.new_vec_from_iter(decorators)
     }

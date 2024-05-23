@@ -79,8 +79,7 @@ macro_rules! handle_string_literal_escape {
         // We don't know how long string will end up being. Take a guess that
         // total length will be double what we've seen so far, or
         // `MIN_ESCAPED_STR_LEN` minimum.
-        let so_far =
-            $lexer.source.str_from_pos_to_current($after_opening_quote);
+        let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
         let mut str = String::with_capacity_in(capacity, $lexer.allocator);
 
@@ -94,11 +93,7 @@ macro_rules! handle_string_literal_escape {
 
             // Consume escape sequence and add char to `str`
             let mut is_valid_escape_sequence = true;
-            $lexer.read_string_escape_sequence(
-                &mut str,
-                false,
-                &mut is_valid_escape_sequence,
-            );
+            $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
                 $lexer.error(diagnostics::invalid_escape_sequence(range));
@@ -124,8 +119,7 @@ macro_rules! handle_string_literal_escape {
                     }
                     b if b == $delimiter => {
                         // End of string found. Push last chunk to `str`.
-                        let chunk =
-                            $lexer.source.str_from_pos_to_current(chunk_start);
+                        let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
                         str.push_str(chunk);
 
                         // Consume closing quote.
@@ -138,8 +132,7 @@ macro_rules! handle_string_literal_escape {
                     b'\\' => {
                         // Another escape found. Push last chunk to `str`, and
                         // loop back to handle escape.
-                        let chunk =
-                            $lexer.source.str_from_pos_to_current(chunk_start);
+                        let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
                         str.push_str(chunk);
                         continue 'outer;
                     }
@@ -159,9 +152,7 @@ macro_rules! handle_string_literal_escape {
             }
 
             // EOF
-            $lexer.error(diagnostics::unterminated_string(
-                $lexer.unterminated_range(),
-            ));
+            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
             return Kind::Undetermined;
         }
 
@@ -182,9 +173,7 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees next char is `"`, which is ASCII.
         // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a
         // `SafeByteMatchTable`.
-        unsafe {
-            handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE)
-        }
+        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Read string literal delimited with `'`.
@@ -194,9 +183,7 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees next char is `'`, which is ASCII.
         // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a
         // `SafeByteMatchTable`.
-        unsafe {
-            handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE)
-        }
+        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Save the string if it is escaped
@@ -216,8 +203,7 @@ impl<'a> Lexer<'a> {
             return self.escaped_strings[&token.start];
         }
 
-        let raw =
-            &self.source.whole()[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[token.start as usize..token.end as usize];
         match token.kind {
             Kind::Str => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes

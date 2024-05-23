@@ -77,31 +77,19 @@ pub trait VisitMut<'a>: Sized {
         walk_class_selector_mut(self, selector);
     }
 
-    fn visit_attribute_selector(
-        &mut self,
-        selector: &mut AttributeSelector<'a>,
-    ) {
+    fn visit_attribute_selector(&mut self, selector: &mut AttributeSelector<'a>) {
         walk_attribute_selector_mut(self, selector);
     }
 
-    fn visit_pseudo_element_selector(
-        &mut self,
-        selector: &mut PseudoElementSelector<'a>,
-    ) {
+    fn visit_pseudo_element_selector(&mut self, selector: &mut PseudoElementSelector<'a>) {
         walk_pseudo_element_selector_mut(self, selector);
     }
 
-    fn visit_pseudo_class_selector(
-        &mut self,
-        selector: &mut PseudoClassSelector<'a>,
-    ) {
+    fn visit_pseudo_class_selector(&mut self, selector: &mut PseudoClassSelector<'a>) {
         walk_pseudo_class_selector_mut(self, selector);
     }
 
-    fn visit_percentage_selector(
-        &mut self,
-        selector: &mut PercentageSelector<'a>,
-    ) {
+    fn visit_percentage_selector(&mut self, selector: &mut PercentageSelector<'a>) {
         walk_percentage_selector_mut(self, selector);
     }
 
@@ -133,29 +121,20 @@ pub mod walk_mut {
 
     /* ----------  Rule ---------- */
 
-    pub fn walk_rules_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        rules: &mut Vec<'a, Rule<'a>>,
-    ) {
+    pub fn walk_rules_mut<'a, V: VisitMut<'a>>(visitor: &mut V, rules: &mut Vec<'a, Rule<'a>>) {
         for rule in rules.iter_mut() {
             visitor.visit_rule(rule);
         }
     }
 
-    pub fn walk_rule_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        rule: &mut Rule<'a>,
-    ) {
+    pub fn walk_rule_mut<'a, V: VisitMut<'a>>(visitor: &mut V, rule: &mut Rule<'a>) {
         match rule {
             Rule::AtRule(rule) => visitor.visit_at_rule(rule),
             Rule::StyleRule(rule) => visitor.visit_style_rule(rule),
         }
     }
 
-    pub fn walk_at_rule_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        rule: &mut AtRule<'a>,
-    ) {
+    pub fn walk_at_rule_mut<'a, V: VisitMut<'a>>(visitor: &mut V, rule: &mut AtRule<'a>) {
         let kind = AstType::AtRule;
         visitor.enter_node(kind);
         if let Some(block) = rule.block.as_mut() {
@@ -164,10 +143,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_style_rule_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        rule: &mut StyleRule<'a>,
-    ) {
+    pub fn walk_style_rule_mut<'a, V: VisitMut<'a>>(visitor: &mut V, rule: &mut StyleRule<'a>) {
         let kind = AstType::StyleRule;
         visitor.enter_node(kind);
         visitor.visit_selector_list(&mut rule.prelude);
@@ -177,19 +153,13 @@ pub mod walk_mut {
 
     /* ----------  Block ---------- */
 
-    pub fn walk_block_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        block: &mut Block<'a>,
-    ) {
+    pub fn walk_block_mut<'a, V: VisitMut<'a>>(visitor: &mut V, block: &mut Block<'a>) {
         for child in block.children.iter_mut() {
             visitor.visit_block_child(child);
         }
     }
 
-    pub fn walk_block_child_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        child: &mut BlockChild<'a>,
-    ) {
+    pub fn walk_block_child_mut<'a, V: VisitMut<'a>>(visitor: &mut V, child: &mut BlockChild<'a>) {
         match child {
             BlockChild::Declaration(decl) => visitor.visit_declaration(decl),
             BlockChild::StyleRule(rule) => visitor.visit_style_rule(rule),
@@ -197,10 +167,7 @@ pub mod walk_mut {
         }
     }
 
-    pub fn walk_declaration_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _decl: &mut Declaration<'a>,
-    ) {
+    pub fn walk_declaration_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _decl: &mut Declaration<'a>) {
         let kind = AstType::Declaration;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
@@ -249,15 +216,9 @@ pub mod walk_mut {
         selector: &mut SimpleSelector<'a>,
     ) {
         match selector {
-            SimpleSelector::TypeSelector(selector) => {
-                visitor.visit_type_selector(selector)
-            }
-            SimpleSelector::IdSelector(selector) => {
-                visitor.visit_id_selector(selector)
-            }
-            SimpleSelector::ClassSelector(selector) => {
-                visitor.visit_class_selector(selector)
-            }
+            SimpleSelector::TypeSelector(selector) => visitor.visit_type_selector(selector),
+            SimpleSelector::IdSelector(selector) => visitor.visit_id_selector(selector),
+            SimpleSelector::ClassSelector(selector) => visitor.visit_class_selector(selector),
             SimpleSelector::AttributeSelector(selector) => {
                 visitor.visit_attribute_selector(selector)
             }
@@ -270,12 +231,8 @@ pub mod walk_mut {
             SimpleSelector::PercentageSelector(selector) => {
                 visitor.visit_percentage_selector(selector)
             }
-            SimpleSelector::NthSelector(selector) => {
-                visitor.visit_nth_selector(selector)
-            }
-            SimpleSelector::NestingSelector(selector) => {
-                visitor.visit_nesting_selector(selector)
-            }
+            SimpleSelector::NthSelector(selector) => visitor.visit_nth_selector(selector),
+            SimpleSelector::NestingSelector(selector) => visitor.visit_nesting_selector(selector),
         }
     }
 

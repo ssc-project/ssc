@@ -94,17 +94,11 @@ pub trait Visit<'a>: Sized {
         walk_attribute_selector(self, selector);
     }
 
-    fn visit_pseudo_element_selector(
-        &mut self,
-        selector: &PseudoElementSelector<'a>,
-    ) {
+    fn visit_pseudo_element_selector(&mut self, selector: &PseudoElementSelector<'a>) {
         walk_pseudo_element_selector(self, selector);
     }
 
-    fn visit_pseudo_class_selector(
-        &mut self,
-        selector: &PseudoClassSelector<'a>,
-    ) {
+    fn visit_pseudo_class_selector(&mut self, selector: &PseudoClassSelector<'a>) {
         walk_pseudo_class_selector(self, selector);
     }
 
@@ -128,10 +122,7 @@ pub trait Visit<'a>: Sized {
 pub mod walk {
     use super::*;
 
-    pub fn walk_stylesheet<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        stylesheet: &StyleSheet<'a>,
-    ) {
+    pub fn walk_stylesheet<'a, V: Visit<'a>>(visitor: &mut V, stylesheet: &StyleSheet<'a>) {
         let kind = AstKind::StyleSheet(visitor.alloc(stylesheet));
         visitor.enter_node(kind);
         visitor.visit_rules(&stylesheet.children);
@@ -140,10 +131,7 @@ pub mod walk {
 
     /* ----------  Rule ---------- */
 
-    pub fn walk_rules<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        rules: &Vec<'a, Rule<'a>>,
-    ) {
+    pub fn walk_rules<'a, V: Visit<'a>>(visitor: &mut V, rules: &Vec<'a, Rule<'a>>) {
         for rule in rules {
             visitor.visit_rule(rule);
         }
@@ -165,10 +153,7 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_style_rule<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        rule: &StyleRule<'a>,
-    ) {
+    pub fn walk_style_rule<'a, V: Visit<'a>>(visitor: &mut V, rule: &StyleRule<'a>) {
         let kind = AstKind::StyleRule(visitor.alloc(rule));
         visitor.enter_node(kind);
         visitor.visit_selector_list(&rule.prelude);
@@ -184,10 +169,7 @@ pub mod walk {
         }
     }
 
-    pub fn walk_block_child<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        child: &BlockChild<'a>,
-    ) {
+    pub fn walk_block_child<'a, V: Visit<'a>>(visitor: &mut V, child: &BlockChild<'a>) {
         match child {
             BlockChild::Declaration(decl) => visitor.visit_declaration(decl),
             BlockChild::StyleRule(rule) => visitor.visit_style_rule(rule),
@@ -195,10 +177,7 @@ pub mod walk {
         }
     }
 
-    pub fn walk_declaration<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        decl: &Declaration<'a>,
-    ) {
+    pub fn walk_declaration<'a, V: Visit<'a>>(visitor: &mut V, decl: &Declaration<'a>) {
         let kind = AstKind::Declaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
@@ -206,10 +185,7 @@ pub mod walk {
 
     /* ----------  Selector ---------- */
 
-    pub fn walk_selector_list<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector_list: &SelectorList<'a>,
-    ) {
+    pub fn walk_selector_list<'a, V: Visit<'a>>(visitor: &mut V, selector_list: &SelectorList<'a>) {
         for selector in &selector_list.children {
             visitor.visit_complex_selector(selector);
         }
@@ -242,20 +218,11 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_simple_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &SimpleSelector<'a>,
-    ) {
+    pub fn walk_simple_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &SimpleSelector<'a>) {
         match selector {
-            SimpleSelector::TypeSelector(selector) => {
-                visitor.visit_type_selector(selector)
-            }
-            SimpleSelector::IdSelector(selector) => {
-                visitor.visit_id_selector(selector)
-            }
-            SimpleSelector::ClassSelector(selector) => {
-                visitor.visit_class_selector(selector)
-            }
+            SimpleSelector::TypeSelector(selector) => visitor.visit_type_selector(selector),
+            SimpleSelector::IdSelector(selector) => visitor.visit_id_selector(selector),
+            SimpleSelector::ClassSelector(selector) => visitor.visit_class_selector(selector),
             SimpleSelector::AttributeSelector(selector) => {
                 visitor.visit_attribute_selector(selector)
             }
@@ -268,37 +235,24 @@ pub mod walk {
             SimpleSelector::PercentageSelector(selector) => {
                 visitor.visit_percentage_selector(selector)
             }
-            SimpleSelector::NthSelector(selector) => {
-                visitor.visit_nth_selector(selector)
-            }
-            SimpleSelector::NestingSelector(selector) => {
-                visitor.visit_nesting_selector(selector)
-            }
+            SimpleSelector::NthSelector(selector) => visitor.visit_nth_selector(selector),
+            SimpleSelector::NestingSelector(selector) => visitor.visit_nesting_selector(selector),
         }
     }
 
-    pub fn walk_type_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &TypeSelector<'a>,
-    ) {
+    pub fn walk_type_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &TypeSelector<'a>) {
         let kind = AstKind::TypeSelector(visitor.alloc(selector));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_id_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &IdSelector<'a>,
-    ) {
+    pub fn walk_id_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &IdSelector<'a>) {
         let kind = AstKind::IdSelector(visitor.alloc(selector));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_class_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &ClassSelector<'a>,
-    ) {
+    pub fn walk_class_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &ClassSelector<'a>) {
         let kind = AstKind::ClassSelector(visitor.alloc(selector));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
@@ -343,28 +297,19 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_nth_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &NthSelector<'a>,
-    ) {
+    pub fn walk_nth_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &NthSelector<'a>) {
         let kind = AstKind::NthSelector(visitor.alloc(selector));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_nesting_selector<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        selector: &NestingSelector,
-    ) {
+    pub fn walk_nesting_selector<'a, V: Visit<'a>>(visitor: &mut V, selector: &NestingSelector) {
         let kind = AstKind::NestingSelector(visitor.alloc(selector));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_combinator<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        combinator: &Combinator<'a>,
-    ) {
+    pub fn walk_combinator<'a, V: Visit<'a>>(visitor: &mut V, combinator: &Combinator<'a>) {
         let kind = AstKind::Combinator(visitor.alloc(combinator));
         visitor.enter_node(kind);
         visitor.leave_node(kind);

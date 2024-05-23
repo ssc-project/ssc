@@ -89,10 +89,7 @@ impl<'a> Source<'a> {
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Source`
     /// can exist on a single thread at one time.
     #[allow(clippy::needless_pass_by_value)]
-    pub(super) fn new(
-        mut source_text: &'a str,
-        _unique: UniquePromise,
-    ) -> Self {
+    pub(super) fn new(mut source_text: &'a str, _unique: UniquePromise) -> Self {
         // If source text exceeds size limit, substitute a short source text
         // which will fail to parse. `Parser::parse` will convert error
         // to `diagnostics::overlong_source()`.
@@ -112,16 +109,9 @@ impl<'a> Source<'a> {
         // (e.g. 16). If that's the case, `end_for_batch_search_addr`
         // will be 0, so a test whether any non-null pointer is past end
         // will always test positive, and disable batch search.
-        let end_for_batch_search_addr =
-            (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
+        let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
 
-        Self {
-            start,
-            end,
-            ptr: start,
-            end_for_batch_search_addr,
-            _marker: PhantomData,
-        }
+        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
     }
 
     /// Get entire source text as `&str`.
@@ -232,10 +222,7 @@ impl<'a> Source<'a> {
 
     /// Get string slice from a `SourcePosition` up to the current position of
     /// `Source`.
-    pub(super) fn str_from_pos_to_current(
-        &self,
-        pos: SourcePosition,
-    ) -> &'a str {
+    pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
         assert!(pos.ptr <= self.ptr);
         // SAFETY: The above assertion satisfies
         // `str_from_pos_to_current_unchecked`'s requirements
@@ -251,10 +238,7 @@ impl<'a> Source<'a> {
     /// 1. `Source::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been advanced with `SourcePosition::add`.
     #[inline]
-    pub(super) unsafe fn str_from_pos_to_current_unchecked(
-        &self,
-        pos: SourcePosition,
-    ) -> &'a str {
+    pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not after current position of
         // `Source`. `self.ptr` is always a valid `SourcePosition` due
         // to invariants of `Source`.
@@ -270,10 +254,7 @@ impl<'a> Source<'a> {
     /// 1. `Source::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
     #[inline]
-    pub(super) unsafe fn str_from_current_to_pos_unchecked(
-        &self,
-        pos: SourcePosition,
-    ) -> &'a str {
+    pub(super) unsafe fn str_from_current_to_pos_unchecked(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not before current position of
         // `Source`. `self.ptr` is always a valid `SourcePosition` due
         // to invariants of `Source`.
@@ -287,12 +268,7 @@ impl<'a> Source<'a> {
         // of `Source`, and always on a UTF-8 character boundary.
         // `self.end` is always a valid `SourcePosition` due to invariants of
         // `Source`.
-        unsafe {
-            self.str_between_positions_unchecked(
-                pos,
-                SourcePosition::new(self.end),
-            )
-        }
+        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.end)) }
     }
 
     /// Get string slice of source between 2 `SourcePosition`s, without checks.
@@ -313,9 +289,7 @@ impl<'a> Source<'a> {
         // Check `start` and `end` are on UTF-8 character boundaries.
         // SAFETY: Above assertions ensure `start` and `end` are valid to read
         // from if not at EOF.
-        debug_assert!(
-            start.ptr == self.end || !is_utf8_cont_byte(start.read())
-        );
+        debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
         debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
 
         // SAFETY: Caller guarantees `start` is not after `end`.
@@ -371,10 +345,7 @@ impl<'a> Source<'a> {
 
         // Ensure not attempting to go back to before start of source
         let offset = self.ptr as usize - self.start as usize;
-        assert!(
-            n <= offset,
-            "Cannot go back {n} bytes - only {offset} bytes consumed"
-        );
+        assert!(n <= offset, "Cannot go back {n} bytes - only {offset} bytes consumed");
 
         // SAFETY: We have checked that `n` is less than distance between
         // `start` and `ptr`, so `new_ptr` cannot be outside of
@@ -390,10 +361,7 @@ impl<'a> Source<'a> {
         // memory `new_ptr` addresses cannot be aliased by a `&mut` ref
         // as long as `Source` exists.
         let byte = unsafe { new_pos.read() };
-        assert!(
-            !is_utf8_cont_byte(byte),
-            "Offset is not on a UTF-8 character boundary"
-        );
+        assert!(!is_utf8_cont_byte(byte), "Offset is not on a UTF-8 character boundary");
 
         // Move current position. The checks above satisfy `Source`'s
         // invariants.

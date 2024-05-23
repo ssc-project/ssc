@@ -11,10 +11,7 @@ impl<'a> Lexer<'a> {
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of
     /// `PrimaryExpression`
-    pub(crate) fn next_regex(
-        &mut self,
-        kind: Kind,
-    ) -> (Token, u32, RegExpFlags) {
+    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags) {
         self.token.start = self.offset()
             - match kind {
                 Kind::Slash => 1,
@@ -34,15 +31,11 @@ impl<'a> Lexer<'a> {
         loop {
             match self.next_char() {
                 None => {
-                    self.error(diagnostics::unterminated_reg_exp(
-                        self.unterminated_range(),
-                    ));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     return (self.offset(), RegExpFlags::empty());
                 }
                 Some(c) if is_line_terminator(c) => {
-                    self.error(diagnostics::unterminated_reg_exp(
-                        self.unterminated_range(),
-                    ));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     #[allow(clippy::cast_possible_truncation)]
                     let pattern_end = self.offset() - c.len_utf8() as u32;
                     return (pattern_end, RegExpFlags::empty());
@@ -66,22 +59,14 @@ impl<'a> Lexer<'a> {
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
 
-        while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) =
-            self.peek()
-        {
+        while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.consume_char();
             let Ok(flag) = RegExpFlags::try_from(ch) else {
-                self.error(diagnostics::reg_exp_flag(
-                    ch,
-                    self.current_offset(),
-                ));
+                self.error(diagnostics::reg_exp_flag(ch, self.current_offset()));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::reg_exp_flag_twice(
-                    ch,
-                    self.current_offset(),
-                ));
+                self.error(diagnostics::reg_exp_flag_twice(ch, self.current_offset()));
                 continue;
             }
             flags |= flag;

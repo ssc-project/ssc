@@ -8,9 +8,8 @@ use super::{
 };
 use crate::diagnostics;
 
-static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable = safe_byte_match_table!(
-    |b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-'))
-);
+static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
 
 impl<'a> Lexer<'a> {
     /// `JSXDoubleStringCharacters` ::
@@ -28,10 +27,7 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
     /// * Next char in `lexer.source` must be ASCII.
-    pub(super) unsafe fn read_jsx_string_literal(
-        &mut self,
-        delimiter: u8,
-    ) -> Kind {
+    pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
         // Skip opening quote
         debug_assert!(delimiter.is_ascii());
         // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8
@@ -49,9 +45,7 @@ impl<'a> Lexer<'a> {
             Kind::Str
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::unterminated_string(
-                self.unterminated_range(),
-            ));
+            self.error(diagnostics::unterminated_string(self.unterminated_range()));
             Kind::Undetermined
         }
     }

@@ -22,9 +22,7 @@ impl<'a> ParserImpl<'a> {
         match self.is_parenthesized_arrow_function_expression() {
             Tristate::False => Ok(None),
             Tristate::True => self.parse_parenthesized_arrow_function(),
-            Tristate::Maybe => {
-                self.parse_possible_parenthesized_arrow_function_expression()
-            }
+            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(),
         }
     }
 
@@ -32,17 +30,13 @@ impl<'a> ParserImpl<'a> {
         &mut self,
     ) -> Result<Option<Expression<'a>>> {
         if self.at(Kind::Async)
-            && self.is_un_parenthesized_async_arrow_function_worker()
-                == Tristate::True
+            && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
         {
             let span = self.start_span();
             self.bump_any(); // bump `async`
-            let expr =
-                self.parse_binary_expression_or_higher(Precedence::lowest())?;
+            let expr = self.parse_binary_expression_or_higher(Precedence::lowest())?;
             return self
-                .parse_simple_arrow_function_expression(
-                    span, expr, /* async */ true,
-                )
+                .parse_simple_arrow_function_expression(span, expr, /* async */ true)
                 .map(Some);
         }
         Ok(None)
@@ -57,9 +51,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_parenthesized_arrow_function_expression_worker(
-        &mut self,
-    ) -> Tristate {
+    fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
         let mut offset = 0;
 
         if self.at(Kind::Async) {
@@ -146,10 +138,7 @@ impl<'a> ParserImpl<'a> {
                     // is definitely a lambda.
                     Kind::Question => {
                         let fourth = self.nth_kind(offset + 3);
-                        if matches!(
-                            fourth,
-                            Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen
-                        ) {
+                        if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
                             return Tristate::True;
                         }
                         Tristate::False
@@ -234,8 +223,7 @@ impl<'a> ParserImpl<'a> {
             let params_span = self.end_span(ident.span);
             let ident = self.ast.binding_pattern_identifier(ident);
             let pattern = self.ast.binding_pattern(ident, None, false);
-            let formal_parameter =
-                self.ast.plain_formal_parameter(params_span, pattern);
+            let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.formal_parameters(
                 params_span,
                 FormalParameterKind::ArrowFormalParameters,
@@ -247,22 +235,17 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::lineterminator_before_arrow(
-                self.cur_token().span(),
-            ));
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
         self.expect(Kind::Arrow)?;
 
         self.parse_arrow_function_body(
-            span, /* type_parameters */ None, params,
-            /* return_type */ None, r#async,
+            span, /* type_parameters */ None, params, /* return_type */ None, r#async,
         )
     }
 
-    fn parse_parenthesized_arrow_function_head(
-        &mut self,
-    ) -> Result<ArrowFunctionHead<'a>> {
+    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
@@ -271,15 +254,12 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
-        let (this_param, params) = self.parse_formal_parameters(
-            FormalParameterKind::ArrowFormalParameters,
-        )?;
+        let (this_param, params) =
+            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters)?;
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};
-            self.error(diagnostics::ts_arrow_function_this_parameter(
-                this_param.span,
-            ));
+            self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
         let return_type = self.parse_ts_return_type_annotation()?;
@@ -287,9 +267,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::lineterminator_before_arrow(
-                self.cur_token().span(),
-            ));
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
         self.expect(Kind::Arrow)?;
@@ -319,11 +297,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_assignment_expression_or_higher()?;
             let span = expr.span();
             let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(
-                span,
-                self.ast.new_vec(),
-                self.ast.new_vec_single(expr_stmt),
-            )
+            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
         } else {
             self.parse_function_body()?
         };
@@ -345,19 +319,11 @@ impl<'a> ParserImpl<'a> {
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] =>
     /// `ConciseBody`[?In]
-    fn parse_parenthesized_arrow_function(
-        &mut self,
-    ) -> Result<Option<Expression<'a>>> {
+    fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a>>> {
         let (type_parameters, params, return_type, r#async, span) =
             self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(
-            span,
-            type_parameters,
-            params,
-            return_type,
-            r#async,
-        )
-        .map(Some)
+        self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
+            .map(Some)
     }
 
     fn parse_possible_parenthesized_arrow_function_expression(
@@ -371,13 +337,7 @@ impl<'a> ParserImpl<'a> {
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self
-                .parse_arrow_function_body(
-                    span,
-                    type_parameters,
-                    params,
-                    return_type,
-                    r#async,
-                )
+                .parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
                 .map(Some);
         }
         self.state.not_parenthesized_arrow.insert(pos);

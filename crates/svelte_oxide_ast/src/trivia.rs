@@ -35,9 +35,7 @@ impl Trivias {
     }
 
     pub fn comments(&self) -> impl Iterator<Item = Span> + '_ {
-        self.comments
-            .iter()
-            .map(|(start, comment)| Span::new(*start, comment.end))
+        self.comments.iter().map(|(start, comment)| Span::new(*start, comment.end))
     }
 
     pub fn comments_range<R>(&self, range: R) -> Range<'_, u32, Comment>

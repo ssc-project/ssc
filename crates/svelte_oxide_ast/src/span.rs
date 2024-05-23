@@ -38,9 +38,7 @@ impl<'a> GetSpan for Element<'a> {
             Element::SvelteElement(svelte_element) => svelte_element.span,
             Element::SvelteFragment(svelte_fragment) => svelte_fragment.span,
             Element::SvelteHead(svelte_head) => svelte_head.span,
-            Element::SvelteOptionsRaw(svelte_options_raw) => {
-                svelte_options_raw.span
-            }
+            Element::SvelteOptionsRaw(svelte_options_raw) => svelte_options_raw.span,
             Element::SvelteSelf(svelte_self) => svelte_self.span,
             Element::SvelteWindow(svelte_window) => svelte_window.span,
         }
@@ -52,9 +50,7 @@ impl<'a> GetSpan for ElementAttribute<'a> {
         match self {
             ElementAttribute::Attribute(attribute) => attribute.span,
             ElementAttribute::Directive(directive) => directive.span(),
-            ElementAttribute::SpreadAttribute(spread_attribute) => {
-                spread_attribute.span
-            }
+            ElementAttribute::SpreadAttribute(spread_attribute) => spread_attribute.span,
         }
     }
 }
@@ -83,17 +79,13 @@ impl<'a> GetSpan for AttributeSequenceValue<'a> {
 impl<'a> GetSpan for Directive<'a> {
     fn span(&self) -> Span {
         match self {
-            Directive::AnimateDirective(animate_directive) => {
-                animate_directive.span
-            }
+            Directive::AnimateDirective(animate_directive) => animate_directive.span,
             Directive::BindDirective(bind_directive) => bind_directive.span,
             Directive::ClassDirective(class_directive) => class_directive.span,
             Directive::LetDirective(let_directive) => let_directive.span,
             Directive::OnDirective(on_directive) => on_directive.span,
             Directive::StyleDirective(style_directive) => style_directive.span,
-            Directive::TransitionDirective(transition_directive) => {
-                transition_directive.span
-            }
+            Directive::TransitionDirective(transition_directive) => transition_directive.span,
             Directive::UseDirective(use_directive) => use_directive.span,
         }
     }

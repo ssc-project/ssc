@@ -202,13 +202,7 @@ impl Kind {
     pub fn is_number(self) -> bool {
         matches!(
             self,
-            Float
-                | Decimal
-                | Binary
-                | Octal
-                | Hex
-                | PositiveExponential
-                | NegativeExponential
+            Float | Decimal | Binary | Octal | Hex | PositiveExponential | NegativeExponential
         )
     }
 
@@ -225,9 +219,7 @@ impl Kind {
     /// [Identifiers](https://tc39.es/ecma262/#sec-identifiers)
     /// `IdentifierReference`
     pub fn is_identifier_reference(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier()
-            || (!r#yield && self == Yield)
-            || (!r#await && self == Await)
+        self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
     }
 
     /// `BindingIdentifier`
@@ -237,9 +229,7 @@ impl Kind {
 
     /// `LabelIdentifier`
     pub fn is_label_identifier(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier()
-            || (!r#yield && self == Yield)
-            || (!r#await && self == Await)
+        self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
     }
 
     /// Identifier
@@ -256,9 +246,7 @@ impl Kind {
     /// Check the succeeding token of a `let` keyword
     // let { a, b } = c, let [a, b] = c, let ident
     pub fn is_after_let(self) -> bool {
-        self != Self::In
-            && (matches!(self, LCurly | LBrack | Ident)
-                || self.is_all_keyword())
+        self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_all_keyword())
     }
 
     /// Section 13.2.4 Literals
@@ -272,8 +260,7 @@ impl Kind {
     }
 
     pub fn is_after_await_or_yield(self) -> bool {
-        !self.is_binary_operator()
-            && (self.is_literal() || self.is_identifier_name())
+        !self.is_binary_operator() && (self.is_literal() || self.is_identifier_name())
     }
 
     /// Section 13.2.6 Object Initializer
@@ -297,8 +284,7 @@ impl Kind {
     ///   `LiteralPropertyName`
     ///   `ComputedPropertyName`[?Yield, ?Await]
     pub fn is_class_element_name_start(self) -> bool {
-        self.is_literal_property_name()
-            || matches!(self, LBrack | PrivateIdentifier)
+        self.is_literal_property_name() || matches!(self, LBrack | PrivateIdentifier)
     }
 
     #[rustfmt::skip]

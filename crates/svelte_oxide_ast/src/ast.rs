@@ -1,14 +1,12 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::{
-    ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern,
-    BooleanLiteral, CallExpression, CatchClause, Class, ClassBody,
-    ExportSpecifier, Expression, Function, IdentifierName, ImportDeclaration,
-    ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier,
-    MemberExpression, MethodDefinition, ModuleDeclaration, NullLiteral,
-    NumericLiteral, ObjectExpression, ObjectProperty, PrivateIdentifier,
-    Program, PropertyDefinition, RegExpLiteral, SpreadElement, Statement,
-    StringLiteral, Super, SwitchCase, TemplateElement, VariableDeclaration,
-    VariableDeclarator,
+    ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern, BooleanLiteral,
+    CallExpression, CatchClause, Class, ClassBody, ExportSpecifier, Expression, Function,
+    IdentifierName, ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier,
+    ImportSpecifier, MemberExpression, MethodDefinition, ModuleDeclaration, NullLiteral,
+    NumericLiteral, ObjectExpression, ObjectProperty, PrivateIdentifier, Program,
+    PropertyDefinition, RegExpLiteral, SpreadElement, Statement, StringLiteral, Super, SwitchCase,
+    TemplateElement, VariableDeclaration, VariableDeclarator,
 };
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;

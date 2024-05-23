@@ -58,8 +58,7 @@ impl<'a> Lexer<'a> {
                     // call here instead of after we ensure the next character
                     // is a number character
                     self.token.set_has_separator();
-                    if self.peek().is_some_and(|c| kind.matches_number_char(c))
-                    {
+                    if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
@@ -194,11 +193,7 @@ impl<'a> Lexer<'a> {
         // The SourceCharacter immediately following a NumericLiteral must not
         // be an IdentifierStart or DecimalDigit.
         let c = self.peek();
-        if c.is_none()
-            || c.is_some_and(|ch| {
-                !ch.is_ascii_digit() && !is_identifier_start(ch)
-            })
-        {
+        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start(ch)) {
             return kind;
         }
         self.consume_char();
@@ -209,10 +204,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        self.error(diagnostics::invalid_number_end(Span::new(
-            offset,
-            self.offset(),
-        )));
+        self.error(diagnostics::invalid_number_end(Span::new(offset, self.offset())));
         Kind::Undetermined
     }
 }

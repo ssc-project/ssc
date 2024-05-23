@@ -4,13 +4,9 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
 use super::{
-    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext,
-    VariableDeclarationParent,
+    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
 };
-use crate::{
-    diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl,
-    StatementContext,
-};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
 impl<'a> ParserImpl<'a> {
     // Section 12
@@ -21,8 +17,7 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             self.bump_any();
             let span = self.end_span(span);
-            let src =
-                &self.source_text[span.start as usize + 2..span.end as usize];
+            let src = &self.source_text[span.start as usize + 2..span.end as usize];
             Some(self.ast.hashbang(span, Atom::from(src)))
         } else {
             None
@@ -45,12 +40,7 @@ impl<'a> ParserImpl<'a> {
         while !self.at(Kind::Eof) {
             match self.cur_kind() {
                 Kind::RCurly if !is_top_level => break,
-                Kind::Import
-                    if !matches!(
-                        self.peek_kind(),
-                        Kind::Dot | Kind::LParen
-                    ) =>
-                {
+                Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
                     let stmt = self.parse_import_declaration()?;
                     statements.push(stmt);
                     expecting_directives = false;
@@ -66,26 +56,19 @@ impl<'a> ParserImpl<'a> {
                     continue;
                 }
                 _ => {
-                    let stmt = self.parse_statement_list_item(
-                        StatementContext::StatementList,
-                    )?;
+                    let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
 
                     // Section 11.2.1 Directive Prologue
                     // The only way to get a correct directive is to parse the
                     // statement first and check if it is a string literal. All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
                     if expecting_directives {
                         if let Statement::ExpressionStatement(expr) = &stmt {
-                            if let Expression::StringLiteral(string) =
-                                &expr.expression
-                            {
+                            if let Expression::StringLiteral(string) = &expr.expression {
                                 // span start will mismatch if they are
                                 // parenthesized when `preserve_parens = false`
                                 if expr.span.start == string.span.start {
-                                    let src =
-                                        &self.source_text[string.span.start
-                                            as usize
-                                            + 1
-                                            ..string.span.end as usize - 1];
+                                    let src = &self.source_text[string.span.start as usize + 1
+                                        ..string.span.end as usize - 1];
                                     let directive = self.ast.directive(
                                         expr.span,
                                         (*string).clone(),
@@ -127,44 +110,31 @@ impl<'a> ParserImpl<'a> {
             Kind::Do => self.parse_do_while_statement(),
             Kind::While => self.parse_while_statement(),
             Kind::For => self.parse_for_statement(),
-            Kind::Break | Kind::Continue => {
-                self.parse_break_or_continue_statement()
-            }
+            Kind::Break | Kind::Continue => self.parse_break_or_continue_statement(),
             Kind::With => self.parse_with_statement(),
             Kind::Switch => self.parse_switch_statement(),
             Kind::Throw => self.parse_throw_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::Debugger => self.parse_debugger_statement(),
             Kind::Class => self.parse_class_statement(stmt_ctx, start_span),
-            Kind::Import
-                if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) =>
-            {
+            Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
                 self.parse_import_declaration()
             }
             Kind::Export => self.parse_export_declaration(),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => self.parse_variable_statement(stmt_ctx),
-            Kind::Const
-                if !(self.ts_enabled() && self.is_at_enum_declaration()) =>
-            {
+            Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
                 self.parse_variable_statement(stmt_ctx)
             }
-            Kind::Let if !self.cur_token().escaped() => {
-                self.parse_let(stmt_ctx)
-            }
+            Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Await
-                if self.peek_kind() == Kind::Using
-                    && self.nth_kind(2).is_binding_identifier() =>
+                if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
             {
                 self.parse_using()
             }
-            Kind::Using if self.peek_kind().is_binding_identifier() => {
-                self.parse_using()
-            }
-            _ if self.at_function_with_async() => {
-                self.parse_function_declaration(stmt_ctx)
-            }
+            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
+            _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
@@ -172,41 +142,28 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_expression_or_labeled_statement(
-        &mut self,
-    ) -> Result<Statement<'a>> {
+    fn parse_expression_or_labeled_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
         let expr = self.parse_expression()?;
         if let Expression::Identifier(ident) = &expr {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier {
-                    span: ident.span,
-                    name: ident.name.clone(),
-                };
-                let body =
-                    self.parse_statement_list_item(StatementContext::Label)?;
-                return Ok(self.ast.labeled_statement(
-                    self.end_span(span),
-                    label,
-                    body,
-                ));
+                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
+                let body = self.parse_statement_list_item(StatementContext::Label)?;
+                return Ok(self.ast.labeled_statement(self.end_span(span), label, body));
             }
         }
         self.parse_expression_statement(span, expr)
     }
 
     /// Section 14.2 Block Statement
-    pub(crate) fn parse_block(
-        &mut self,
-    ) -> Result<Box<'a, BlockStatement<'a>>> {
+    pub(crate) fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let mut body = self.ast.new_vec();
         while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
-            let stmt = self
-                .parse_statement_list_item(StatementContext::StatementList)?;
+            let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             body.push(stmt);
         }
         self.expect(Kind::RCurly)?;
@@ -226,16 +183,12 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let decl = self.parse_variable_declaration(
             start_span,
-            VariableDeclarationContext::new(
-                VariableDeclarationParent::Statement,
-            ),
+            VariableDeclarationContext::new(VariableDeclarationParent::Statement),
             Modifiers::empty(),
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(diagnostics::lexical_declaration_single_statement(
-                decl.span,
-            ));
+            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
 
         Ok(Statement::VariableDeclaration(decl))
@@ -263,18 +216,12 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression()?;
-        let consequent =
-            self.parse_statement_list_item(StatementContext::If)?;
+        let consequent = self.parse_statement_list_item(StatementContext::If)?;
         let alternate = self
             .eat(Kind::Else)
             .then(|| self.parse_statement_list_item(StatementContext::If))
             .transpose()?;
-        Ok(self.ast.if_statement(
-            self.end_span(span),
-            test,
-            consequent,
-            alternate,
-        ))
+        Ok(self.ast.if_statement(self.end_span(span), test, consequent, alternate))
     }
 
     /// Section 14.7.2 Do-While Statement
@@ -318,58 +265,42 @@ impl<'a> ParserImpl<'a> {
             || self.at(Kind::Var)
             || (self.at(Kind::Let) && self.peek_kind().is_after_let())
         {
-            return self
-                .parse_variable_declaration_for_statement(span, r#await);
+            return self.parse_variable_declaration_for_statement(span, r#await);
         }
 
         if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
-            || (self.cur_kind() == Kind::Using
-                && self.peek_kind() == Kind::Ident)
+            || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
         {
             return self.parse_using_declaration_for_statement(span, r#await);
         }
 
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
-        let is_async_of = self.at(Kind::Async)
-            && !self.cur_token().escaped()
-            && self.peek_at(Kind::Of);
+        let is_async_of =
+            self.at(Kind::Async) && !self.cur_token().escaped() && self.peek_at(Kind::Of);
         let expr_span = self.start_span();
 
         if self.at(Kind::RParen) {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let init_expression = self.context(
-            Context::empty(),
-            Context::In,
-            ParserImpl::parse_expression,
-        )?;
+        let init_expression =
+            self.context(Context::empty(), Context::In, ParserImpl::parse_expression)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| {
-                    diagnostics::unexpected_token(self.end_span(expr_span))
-                })?;
+                .map_err(|_| diagnostics::unexpected_token(self.end_span(expr_span)))?;
             let for_stmt_left = ForStatementLeft::from(target);
             if !r#await && is_async_of {
-                self.error(diagnostics::for_loop_async_of(
-                    self.end_span(expr_span),
-                ));
+                self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
             }
             if is_let_of {
-                self.error(diagnostics::unexpected_token(
-                    self.end_span(expr_span),
-                ));
+                self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
             }
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(
-            span,
-            Some(ForStatementInit::from(init_expression)),
-            r#await,
-        )
+        self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await)
     }
 
     fn parse_variable_declaration_for_statement(
@@ -378,17 +309,10 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
-        let init_declaration =
-            self.context(Context::empty(), Context::In, |p| {
-                let decl_ctx = VariableDeclarationContext::new(
-                    VariableDeclarationParent::For,
-                );
-                p.parse_variable_declaration(
-                    start_span,
-                    decl_ctx,
-                    Modifiers::empty(),
-                )
-            })?;
+        let init_declaration = self.context(Context::empty(), Context::In, |p| {
+            let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
+            p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
+        })?;
 
         // for (.. a in) for (.. a of)
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
@@ -396,8 +320,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init =
-            Some(ForStatementInit::VariableDeclaration(init_declaration));
+        let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
         self.parse_for_loop(span, init, r#await)
     }
 
@@ -421,14 +344,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init =
-                ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
+            let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::UsingDeclaration(
-            self.ast.alloc(using_decl),
-        ));
+        let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 
@@ -440,11 +360,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.context(
-                Context::In,
-                Context::empty(),
-                ParserImpl::parse_expression,
-            )?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
         } else {
             None
         };
@@ -452,24 +368,14 @@ impl<'a> ParserImpl<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.context(
-                Context::In,
-                Context::empty(),
-                ParserImpl::parse_expression,
-            )?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For)?;
-        Ok(self.ast.for_statement(
-            self.end_span(span),
-            init,
-            test,
-            update,
-            body,
-        ))
+        Ok(self.ast.for_statement(self.end_span(span), init, test, update, body))
     }
 
     fn parse_for_in_or_of_loop(
@@ -507,11 +413,8 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let kind = self.cur_kind();
         self.bump_any(); // bump `break` or `continue`
-        let label = if self.can_insert_semicolon() {
-            None
-        } else {
-            Some(self.parse_label_identifier()?)
-        };
+        let label =
+            if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()?) };
         self.asi()?;
         let end_span = self.end_span(span);
         match kind {
@@ -528,22 +431,18 @@ impl<'a> ParserImpl<'a> {
     fn parse_return_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `return`
-        let argument =
-            if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
-                None
-            } else {
-                let expr = self.context(
-                    Context::In,
-                    Context::empty(),
-                    ParserImpl::parse_expression,
-                )?;
-                self.asi()?;
-                Some(expr)
-            };
+        let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
+            None
+        } else {
+            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?;
+            self.asi()?;
+            Some(expr)
+        };
         if !self.ctx.has_return() {
-            self.error(diagnostics::return_statement_only_in_function_body(
-                Span::new(span.start, span.start + 6),
-            ));
+            self.error(diagnostics::return_statement_only_in_function_body(Span::new(
+                span.start,
+                span.start + 6,
+            )));
         }
         Ok(self.ast.return_statement(self.end_span(span), argument))
     }
@@ -587,12 +486,8 @@ impl<'a> ParserImpl<'a> {
         };
         self.expect(Kind::Colon)?;
         let mut consequent = self.ast.new_vec();
-        while !matches!(
-            self.cur_kind(),
-            Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof
-        ) {
-            let stmt = self
-                .parse_statement_list_item(StatementContext::StatementList)?;
+        while !matches!(self.cur_kind(), Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof) {
+            let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             consequent.push(stmt);
         }
         Ok(self.ast.switch_case(self.end_span(span), test, consequent))
@@ -621,25 +516,16 @@ impl<'a> ParserImpl<'a> {
 
         let block = self.parse_block()?;
 
-        let handler = self
-            .at(Kind::Catch)
-            .then(|| self.parse_catch_clause())
-            .transpose()?;
+        let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause()).transpose()?;
 
-        let finalizer =
-            self.eat(Kind::Finally).then(|| self.parse_block()).transpose()?;
+        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block()).transpose()?;
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::new(block.span.end, block.span.end);
             self.error(diagnostics::expect_catch_finally(range));
         }
 
-        Ok(self.ast.try_statement(
-            self.end_span(span),
-            block,
-            handler,
-            finalizer,
-        ))
+        Ok(self.ast.try_statement(self.end_span(span), block, handler, finalizer))
     }
 
     fn parse_catch_clause(&mut self) -> Result<Box<'a, CatchClause<'a>>> {
@@ -653,9 +539,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
         let body = self.parse_block()?;
-        let param = pattern.map(|pattern| {
-            self.ast.catch_parameter(pattern.kind.span(), pattern)
-        });
+        let param = pattern.map(|pattern| self.ast.catch_parameter(pattern.kind.span(), pattern));
         Ok(self.ast.catch_clause(self.end_span(span), param, body))
     }
 

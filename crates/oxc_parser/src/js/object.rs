@@ -15,11 +15,8 @@ impl<'a> ParserImpl<'a> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let object_expression_properties = self.context(
-            Context::In,
-            Context::empty(),
-            ObjectExpressionProperties::parse,
-        )?;
+        let object_expression_properties =
+            self.context(Context::In, Context::empty(), ObjectExpressionProperties::parse)?;
         Ok(self.ast.object_expression(
             self.end_span(span),
             object_expression_properties.elements,
@@ -28,9 +25,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    pub(crate) fn parse_property_definition(
-        &mut self,
-    ) -> Result<Box<'a, ObjectProperty<'a>>> {
+    pub(crate) fn parse_property_definition(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
         let peek_kind = self.peek_kind();
         let class_element_name = peek_kind.is_class_element_name_start();
         match self.cur_kind() {
@@ -47,9 +42,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_property_definition_method()
             }
             // GeneratorMethod
-            Kind::Star if class_element_name => {
-                self.parse_property_definition_method()
-            }
+            Kind::Star if class_element_name => self.parse_property_definition_method(),
             // IdentifierReference
             kind if kind.is_identifier_reference(false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })
@@ -66,15 +59,10 @@ impl<'a> ParserImpl<'a> {
                 let (key, computed) = self.parse_property_name()?;
 
                 if self.at(Kind::Colon) {
-                    return self.parse_property_definition_assignment(
-                        span, key, computed,
-                    );
+                    return self.parse_property_definition_assignment(span, key, computed);
                 }
 
-                if matches!(
-                    self.cur_kind(),
-                    Kind::LParen | Kind::LAngle | Kind::ShiftLeft
-                ) {
+                if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::ShiftLeft) {
                     let method = self.parse_method(false, false)?;
                     return Ok(self.ast.object_property(
                         self.end_span(span),
@@ -95,9 +83,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub(crate) fn parse_spread_element(
-        &mut self,
-    ) -> Result<Box<'a, SpreadElement<'a>>> {
+    pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher()?;
@@ -107,23 +93,17 @@ impl<'a> ParserImpl<'a> {
     /// `PropertyDefinition`[Yield, Await] :
     ///   `IdentifierReference`[?Yield, ?Await]
     ///   `CoverInitializedName`[?Yield, ?Await]
-    fn parse_property_definition_shorthand(
-        &mut self,
-    ) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_property_definition_shorthand(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
         let span = self.start_span();
         let identifier = self.parse_identifier_reference()?;
-        let key = self.ast.alloc(IdentifierName {
-            span: identifier.span,
-            name: identifier.name.clone(),
-        });
+        let key =
+            self.ast.alloc(IdentifierName { span: identifier.span, name: identifier.name.clone() });
         // IdentifierReference ({ foo })
         let value = Expression::Identifier(self.ast.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })
         let init = if self.eat(Kind::Eq) {
             let right = self.parse_assignment_expression_or_higher()?;
-            let left = AssignmentTarget::AssignmentTargetIdentifier(
-                self.ast.alloc(identifier),
-            );
+            let left = AssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier));
             Some(self.ast.assignment_expression(
                 self.end_span(span),
                 AssignmentOperator::Assign,
@@ -171,17 +151,11 @@ impl<'a> ParserImpl<'a> {
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
-    pub(crate) fn parse_property_name(
-        &mut self,
-    ) -> Result<(PropertyKey<'a>, bool)> {
+    pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => {
-                self.parse_literal_expression().map(PropertyKey::from)?
-            }
-            kind if kind.is_number() => {
-                self.parse_literal_expression().map(PropertyKey::from)?
-            }
+            Kind::Str => self.parse_literal_expression().map(PropertyKey::from)?,
+            kind if kind.is_number() => self.parse_literal_expression().map(PropertyKey::from)?,
             // { [foo]() {} }
             Kind::LBrack => {
                 computed = true;
@@ -197,9 +171,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `ComputedPropertyName`[Yield, Await] : [ `AssignmentExpression`[+In,
     /// ?Yield, ?Await] ]
-    pub(crate) fn parse_computed_property_name(
-        &mut self,
-    ) -> Result<Expression<'a>> {
+    pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
 
         let expression = self.context(
@@ -214,9 +186,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   `MethodDefinition`[?Yield, ?Await]
-    fn parse_property_definition_method(
-        &mut self,
-    ) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_property_definition_method(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         let generator = self.eat(Kind::Star);

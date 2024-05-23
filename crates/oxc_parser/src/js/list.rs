@@ -32,12 +32,8 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
 
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = match p.cur_kind() {
-            Kind::Dot3 => {
-                p.parse_spread_element().map(ObjectPropertyKind::SpreadProperty)
-            }
-            _ => p
-                .parse_property_definition()
-                .map(ObjectPropertyKind::ObjectProperty),
+            Kind::Dot3 => p.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
+            _ => p.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
         }?;
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
@@ -73,13 +69,8 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         if p.cur_kind() == Kind::Dot3 {
             let rest = p.parse_rest_element()?;
-            if !matches!(
-                &rest.argument.kind,
-                BindingPatternKind::BindingIdentifier(_)
-            ) {
-                p.error(diagnostics::invalid_binding_rest_element(
-                    rest.argument.span(),
-                ));
+            if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
+                p.error(diagnostics::invalid_binding_rest_element(rest.argument.span()));
             }
             if let Some(r) = self.rest.replace(rest) {
                 p.error(diagnostics::binding_rest_element_last(r.span));
@@ -114,12 +105,8 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = match p.cur_kind() {
             Kind::Comma => Ok(p.parse_elision()),
-            Kind::Dot3 => p
-                .parse_spread_element()
-                .map(ArrayExpressionElement::SpreadElement),
-            _ => p
-                .parse_assignment_expression_or_higher()
-                .map(ArrayExpressionElement::from),
+            Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
+            _ => p.parse_assignment_expression_or_higher().map(ArrayExpressionElement::from),
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
@@ -180,10 +167,7 @@ pub struct CallArguments<'a> {
 
 impl<'a> SeparatedList<'a> for CallArguments<'a> {
     fn new(p: &ParserImpl<'a>) -> Self {
-        Self {
-            elements: p.ast.new_vec(),
-            rest_element_with_trilling_comma: None,
-        }
+        Self { elements: p.ast.new_vec(), rest_element_with_trilling_comma: None }
     }
 
     fn open(&self) -> Kind {
@@ -319,18 +303,12 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         let key = match p.cur_kind() {
-            Kind::Str => {
-                ImportAttributeKey::StringLiteral(p.parse_literal_string()?)
-            }
+            Kind::Str => ImportAttributeKey::StringLiteral(p.parse_literal_string()?),
             _ => ImportAttributeKey::Identifier(p.parse_identifier_name()?),
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(diagnostics::redeclaration(
-                key.as_atom().as_str(),
-                *old_span,
-                key.span(),
-            ));
+            p.error(diagnostics::redeclaration(key.as_atom().as_str(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }
@@ -374,19 +352,13 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         if p.ts_enabled() && p.at(Kind::Type) {
             if p.peek_at(Kind::As) {
                 if p.nth_at(2, Kind::As) {
-                    if p.nth_at(3, Kind::Str)
-                        || p.nth_kind(3).is_identifier_name()
-                    {
+                    if p.nth_at(3, Kind::Str) || p.nth_kind(3).is_identifier_name() {
                         export_kind = ImportOrExportKind::Type;
                     }
-                } else if !(p.nth_at(2, Kind::Str)
-                    || p.nth_kind(2).is_identifier_name())
-                {
+                } else if !(p.nth_at(2, Kind::Str) || p.nth_kind(2).is_identifier_name()) {
                     export_kind = ImportOrExportKind::Type;
                 }
-            } else if (matches!(peek_kind, Kind::Str)
-                || peek_kind.is_identifier_name())
-            {
+            } else if (matches!(peek_kind, Kind::Str) || peek_kind.is_identifier_name()) {
                 export_kind = ImportOrExportKind::Type;
             }
         }
@@ -396,17 +368,9 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         }
 
         let local = p.parse_module_export_name()?;
-        let exported = if p.eat(Kind::As) {
-            p.parse_module_export_name()?
-        } else {
-            local.clone()
-        };
-        let element = ExportSpecifier {
-            span: p.end_span(specifier_span),
-            local,
-            exported,
-            export_kind,
-        };
+        let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
+        let element =
+            ExportSpecifier { span: p.end_span(specifier_span), local, exported, export_kind };
         self.elements.push(element);
         Ok(())
     }
@@ -491,8 +455,7 @@ impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {
 
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let import_specifier = p.parse_import_specifier()?;
-        let specifier =
-            ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
+        let specifier = ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
         self.import_specifiers.push(specifier);
         Ok(())
     }

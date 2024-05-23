@@ -4,15 +4,10 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
-use crate::{
-    diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl,
-    StatementContext,
-};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
-type Extends<'a> = Vec<
-    'a,
-    (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span),
->;
+type Extends<'a> =
+    Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
 
@@ -24,8 +19,7 @@ impl<'a> ParserImpl<'a> {
         stmt_ctx: StatementContext,
         start_span: Span,
     ) -> Result<Statement<'a>> {
-        let decl =
-            self.parse_class_declaration(start_span, Modifiers::empty())?;
+        let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
@@ -51,11 +45,8 @@ impl<'a> ParserImpl<'a> {
     ///     class `BindingIdentifier`[?Yield, ?Await]opt `ClassTail`[?Yield,
     /// ?Await]
     pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
-        let class = self.parse_class(
-            self.start_span(),
-            ClassType::ClassExpression,
-            Modifiers::empty(),
-        )?;
+        let class =
+            self.parse_class(self.start_span(), ClassType::ClassExpression, Modifiers::empty())?;
         Ok(self.ast.class_expression(class))
     }
 
@@ -68,22 +59,16 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `class`
 
         let decorators = self.consume_decorators();
-        let start_span =
-            decorators.iter().next().map_or(start_span, |d| d.span);
+        let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
 
-        let id = if self.cur_kind().is_binding_identifier()
-            && !self.at(Kind::Implements)
-        {
+        let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
             Some(self.parse_binding_identifier()?)
         } else {
             None
         };
 
-        let type_parameters = if self.ts_enabled() {
-            self.parse_ts_type_parameters()?
-        } else {
-            None
-        };
+        let type_parameters =
+            if self.ts_enabled() { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -209,9 +194,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             // static ...
-            if self.peek_kind().is_class_element_name_start()
-                || self.peek_at(Kind::Star)
-            {
+            if self.peek_kind().is_class_element_name_start() || self.peek_at(Kind::Star) {
                 self.bump(Kind::Static);
                 r#static = true;
             } else {
@@ -220,13 +203,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         // async ...
-        if key_name.is_none()
-            && self.at(Kind::Async)
-            && !self.peek_at(Kind::Question)
-        {
+        if key_name.is_none() && self.at(Kind::Async) && !self.peek_at(Kind::Question) {
             if !self.peek_token().is_on_new_line
-                && (self.peek_kind().is_class_element_name_start()
-                    || self.peek_at(Kind::Star))
+                && (self.peek_kind().is_class_element_name_start() || self.peek_at(Kind::Star))
             {
                 self.bump(Kind::Async);
                 r#async = true;
@@ -236,9 +215,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         if self.is_at_ts_index_signature_member() {
-            if let TSSignature::TSIndexSignature(sig) =
-                self.parse_ts_index_signature_member()?
-            {
+            if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
                 return Ok(ClassElement::TSIndexSignature(sig));
             }
         }
@@ -250,8 +227,7 @@ impl<'a> ParserImpl<'a> {
 
         if key_name.is_none() && !r#async && !generator {
             // get ... / set ...
-            let peeked_class_element =
-                self.peek_kind().is_class_element_name_start();
+            let peeked_class_element = self.peek_kind().is_class_element_name_start();
             key_name = match self.cur_kind() {
                 Kind::Get if peeked_class_element => {
                     self.bump(Kind::Get);
@@ -270,38 +246,27 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        let (key, computed) = if let Some(result) = key_name {
-            result
-        } else {
-            self.parse_class_element_name()?
-        };
+        let (key, computed) =
+            if let Some(result) = key_name { result } else { self.parse_class_element_name()? };
 
         let optional = self.eat(Kind::Question);
         let definite = self.eat(Kind::Bang);
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(diagnostics::private_name_constructor(
-                    private_ident.span,
-                ));
+                self.error(diagnostics::private_name_constructor(private_ident.span));
             }
         }
 
         if accessor {
             self.parse_ts_type_annotation()?;
 
-            return self.parse_class_accessor_property(
-                span, key, computed, r#static, r#abstract,
-            );
+            return self.parse_class_accessor_property(span, key, computed, r#static, r#abstract);
         }
 
         // LAngle for start of type parameters `foo<T>`
         //                                         ^
-        if self.at(Kind::LParen)
-            || self.at(Kind::LAngle)
-            || r#async
-            || generator
-        {
+        if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             let definition = self.parse_class_method_definition(
                 span,
                 kind,
@@ -320,12 +285,8 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::static_prototype(span));
                 }
                 if !r#static && name == "constructor" {
-                    if kind == MethodDefinitionKind::Get
-                        || kind == MethodDefinitionKind::Set
-                    {
-                        self.error(diagnostics::constructor_getter_setter(
-                            span,
-                        ));
+                    if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
+                        self.error(diagnostics::constructor_getter_setter(span));
                     }
                     if r#async {
                         self.error(diagnostics::constructor_async(span));
@@ -370,12 +331,7 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
-                Ok((
-                    PropertyKey::PrivateIdentifier(
-                        self.ast.alloc(private_ident),
-                    ),
-                    false,
-                ))
+                Ok((PropertyKey::PrivateIdentifier(self.ast.alloc(private_ident)), false))
             }
             _ => self.parse_property_name(),
         }
@@ -412,9 +368,7 @@ impl<'a> ParserImpl<'a> {
         if kind == MethodDefinitionKind::Constructor {
             if let Some(this_param) = &value.this_param {
                 // class Foo { constructor(this: number) {} }
-                self.error(diagnostics::ts_constructor_this_parameter(
-                    this_param.span,
-                ));
+                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
             }
 
             if r#static {
@@ -459,11 +413,8 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
         definite: bool,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation = if self.ts_enabled() {
-            self.parse_ts_type_annotation()?
-        } else {
-            None
-        };
+        let type_annotation =
+            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
         let value = if self.eat(Kind::Eq) {
             // let current_flags = self.scope.current_flags();
             // self.scope.set_current_flags(self.scope.current_flags());
@@ -496,22 +447,14 @@ impl<'a> ParserImpl<'a> {
             definite,
             decorators: self.consume_decorators(),
         };
-        Ok(ClassElement::PropertyDefinition(
-            self.ast.alloc(property_definition),
-        ))
+        Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }
 
     /// `ClassStaticBlockStatementList` :
     ///    `StatementList`[~Yield, +Await, ~Return]
-    fn parse_class_static_block(
-        &mut self,
-        span: Span,
-    ) -> Result<ClassElement<'a>> {
-        let block = self.context(
-            Context::Await,
-            Context::Yield | Context::Return,
-            Self::parse_block,
-        )?;
+    fn parse_class_static_block(&mut self, span: Span) -> Result<ClassElement<'a>> {
+        let block =
+            self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block)?;
         Ok(self.ast.static_block(self.end_span(span), block.unbox().body))
     }
 
@@ -524,10 +467,8 @@ impl<'a> ParserImpl<'a> {
         r#static: bool,
         r#abstract: bool,
     ) -> Result<ClassElement<'a>> {
-        let value = self
-            .eat(Kind::Eq)
-            .then(|| self.parse_assignment_expression_or_higher())
-            .transpose()?;
+        let value =
+            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {
             AccessorPropertyType::TSAbstractAccessorProperty
         } else {

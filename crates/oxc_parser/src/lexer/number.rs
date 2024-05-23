@@ -9,21 +9,15 @@ use static_assertions::const_assert_eq;
 
 use super::kind::Kind;
 
-pub fn parse_int(
-    s: &str,
-    kind: Kind,
-    has_sep: bool,
-) -> Result<f64, &'static str> {
-    let s =
-        if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
 
     parse_int_without_underscores(&s, kind)
 }
 
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s =
-        if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
 
     parse_float_without_underscores(&s)
@@ -31,10 +25,7 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 
 /// This function assumes `s` has had all numeric separators (`_`) removed.
 /// Parsing will fail if this assumption is violated.
-fn parse_int_without_underscores(
-    s: &str,
-    kind: Kind,
-) -> Result<f64, &'static str> {
+fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static str> {
     if kind == Kind::Decimal {
         return parse_float_without_underscores(s);
     }
@@ -127,9 +118,7 @@ fn parse_hex(s: &str) -> f64 {
     // https://godbolt.org/z/5fsdv8rGo
     const fn byte_to_value(c: u8) -> u8 {
         debug_assert!(
-            (c >= b'0' && c <= b'9')
-                || (c >= b'A' && c <= b'F')
-                || (c >= b'a' && c <= b'f')
+            (c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f')
         );
         if c < b'A' {
             c & 15 // 0-9
@@ -154,23 +143,15 @@ fn parse_hex(s: &str) -> f64 {
     result as f64
 }
 
-pub fn parse_big_int(
-    s: &str,
-    kind: Kind,
-    has_sep: bool,
-) -> Result<BigInt, &'static str> {
-    let s =
-        if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
     parse_big_int_without_underscores(&s, kind)
 }
 
 /// This function assumes `s` has had all numeric separators (`_`) removed.
 /// Parsing will fail if this assumption is violated.
-fn parse_big_int_without_underscores(
-    s: &str,
-    kind: Kind,
-) -> Result<BigInt, &'static str> {
+fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'static str> {
     let s = match kind {
         Kind::Decimal => s,
         Kind::Binary | Kind::Octal | Kind::Hex => &s[2..],
@@ -226,10 +207,7 @@ mod test {
     #[test]
     #[allow(clippy::excessive_precision)]
     fn test_int_precision() {
-        assert_eq!(
-            parse_int("9007199254740991", Kind::Decimal, false),
-            Ok(9007199254740991.0)
-        );
+        assert_eq!(parse_int("9007199254740991", Kind::Decimal, false), Ok(9007199254740991.0));
     }
 
     #[test]
@@ -264,8 +242,7 @@ mod test {
             ("0b110001001000100", 0b110001001000100),
             ("0b110001001000100", 0b110001001000100),
         ];
-        let octal =
-            vec![("0o0", 0o0), ("0o1", 0o1), ("0o10", 0o10), ("0o777", 0o777)];
+        let octal = vec![("0o0", 0o0), ("0o1", 0o1), ("0o10", 0o10), ("0o777", 0o777)];
         let hex: Vec<(&str, i64)> = vec![
             ("0x0", 0x0),
             ("0X0", 0x0),

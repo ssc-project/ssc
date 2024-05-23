@@ -22,10 +22,7 @@ impl TriviaBuilder {
 
     pub fn add_multi_line_comment(&mut self, start: u32, end: u32) {
         // skip leading `/*` and trailing `*/`
-        self.add_comment(
-            start + 2,
-            Comment::new(end - 2, CommentKind::MultiLine),
-        );
+        self.add_comment(start + 2, Comment::new(end - 2, CommentKind::MultiLine));
     }
 
     fn add_comment(&mut self, start: u32, comment: Comment) {

@@ -52,7 +52,7 @@
 //!     }
 //! }
 //! ```
-//! 
+//!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
@@ -147,11 +147,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     /// Create a new parser
-    pub fn new(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParserOptions::default();
         Self { allocator, source_text, source_type, options }
     }
@@ -322,23 +318,22 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (program, panicked) =
-            match self.parse_program() {
-                Ok(program) => (program, false),
-                Err(error) => {
-                    self.error(self.flow_error().unwrap_or_else(|| {
-                        self.overlong_error().unwrap_or(error)
-                    }));
-                    let program = self.ast.program(
-                        Span::default(),
-                        self.source_type,
-                        self.ast.new_vec(),
-                        None,
-                        self.ast.new_vec(),
-                    );
-                    (program, true)
-                }
-            };
+        let (program, panicked) = match self.parse_program() {
+            Ok(program) => (program, false),
+            Err(error) => {
+                self.error(
+                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error)),
+                );
+                let program = self.ast.program(
+                    Span::default(),
+                    self.source_type,
+                    self.ast.new_vec(),
+                    None,
+                    self.ast.new_vec(),
+                );
+                (program, true)
+            }
+        };
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
@@ -354,21 +349,11 @@ impl<'a> ParserImpl<'a> {
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(
-            span,
-            self.source_type,
-            directives,
-            hashbang,
-            statements,
-        ))
+        Ok(self.ast.program(span, self.source_type, directives, hashbang, statements))
     }
 
-    fn default_context(
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Context {
-        let mut ctx = Context::default()
-            .and_ambient(source_type.is_typescript_definition());
+    fn default_context(source_type: SourceType, options: ParserOptions) -> Context {
+        let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         if source_type.module_kind() == ModuleKind::Module {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
@@ -451,25 +436,18 @@ mod test {
         let source = "// @flow\nasdf adsf";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
-        assert_eq!(
-            ret.errors.first().unwrap().to_string(),
-            "Flow is not supported"
-        );
+        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
 
         let source = "/* @flow */\n asdf asdf";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
-        assert_eq!(
-            ret.errors.first().unwrap().to_string(),
-            "Flow is not supported"
-        );
+        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
     }
 
     #[test]
     fn ts_module_declaration() {
         let allocator = Allocator::default();
-        let source_type =
-            SourceType::from_path(Path::new("module.ts")).unwrap();
+        let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert_eq!(ret.errors.len(), 0);
@@ -545,15 +523,11 @@ mod test {
         assert_eq!(source.len(), MAX_LEN + 1);
 
         let allocator = Allocator::default();
-        let ret =
-            Parser::new(&allocator, &source, SourceType::default()).parse();
+        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);
-        assert_eq!(
-            ret.errors.first().unwrap().to_string(),
-            "Source length exceeds 4 GiB limit"
-        );
+        assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
     }
 
     // Source with length MAX_LEN parses OK.
@@ -573,8 +547,7 @@ mod test {
         assert_eq!(source.len(), MAX_LEN);
 
         let allocator = Allocator::default();
-        let ret =
-            Parser::new(&allocator, &source, SourceType::default()).parse();
+        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);

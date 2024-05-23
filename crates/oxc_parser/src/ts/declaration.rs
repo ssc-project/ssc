@@ -5,12 +5,7 @@ impl<'a> ParserImpl<'a> {
     fn at_start_of_ts_declaration_worker(&mut self) -> bool {
         loop {
             match self.cur_kind() {
-                Kind::Var
-                | Kind::Let
-                | Kind::Const
-                | Kind::Function
-                | Kind::Class
-                | Kind::Enum => {
+                Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => {
                     return true;
                 }
                 Kind::Interface | Kind::Type => {
@@ -39,17 +34,12 @@ impl<'a> ParserImpl<'a> {
                 }
                 Kind::Global => {
                     self.bump_any();
-                    return matches!(
-                        self.cur_kind(),
-                        Kind::Ident | Kind::LCurly | Kind::Export
-                    );
+                    return matches!(self.cur_kind(), Kind::Ident | Kind::LCurly | Kind::Export);
                 }
                 Kind::Import => {
                     self.bump_any();
-                    return matches!(
-                        self.cur_kind(),
-                        Kind::Str | Kind::Star | Kind::LCurly
-                    ) || self.cur_kind().is_identifier();
+                    return matches!(self.cur_kind(), Kind::Str | Kind::Star | Kind::LCurly)
+                        || self.cur_kind().is_identifier();
                 }
                 Kind::Export => {
                     self.bump_any();
@@ -63,12 +53,7 @@ impl<'a> ParserImpl<'a> {
                     // along with all export [declaration]
                     if matches!(
                         kind,
-                        Kind::Eq
-                            | Kind::Star
-                            | Kind::Default
-                            | Kind::LCurly
-                            | Kind::At
-                            | Kind::As
+                        Kind::Eq | Kind::Star | Kind::Default | Kind::LCurly | Kind::At | Kind::As
                     ) {
                         return true;
                     }
@@ -100,12 +85,8 @@ mod test_is_declaration {
     fn run_check(source: &str, expected: bool) {
         let alloc = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let mut parser = ParserImpl::new_for_tests(
-            &alloc,
-            source,
-            source_type,
-            ParserOptions::default(),
-        );
+        let mut parser =
+            ParserImpl::new_for_tests(&alloc, source, source_type, ParserOptions::default());
         // Get the parser to the first token.
         parser.bump_any();
         assert_eq!(expected, parser.at_start_of_ts_declaration());

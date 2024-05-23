@@ -7,10 +7,7 @@ use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn parse_let(
-        &mut self,
-        stmt_ctx: StatementContext,
-    ) -> Result<Statement<'a>> {
+    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
         let span = self.start_span();
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
@@ -33,8 +30,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
-        let using_decl =
-            self.parse_using_declaration(StatementContext::StatementList)?;
+        let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
 
         self.asi()?;
 
@@ -66,18 +62,12 @@ impl<'a> ParserImpl<'a> {
 
         if matches!(
             decl_ctx.parent,
-            VariableDeclarationParent::Statement
-                | VariableDeclarationParent::Clause
+            VariableDeclarationParent::Statement | VariableDeclarationParent::Clause
         ) {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(
-            self.end_span(start_span),
-            kind,
-            declarations,
-            modifiers,
-        ))
+        Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
     }
 
     fn parse_variable_declarator(
@@ -103,43 +93,25 @@ impl<'a> ParserImpl<'a> {
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(
-                    type_annotation.span,
-                    &mut binding_kind,
-                );
+                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
             }
-            (
-                self.ast.binding_pattern(
-                    binding_kind,
-                    type_annotation,
-                    optional,
-                ),
-                definite,
-            )
+            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
             (self.ast.binding_pattern(binding_kind, None, false), false)
         };
 
-        let init = self
-            .eat(Kind::Eq)
-            .then(|| self.parse_assignment_expression_or_higher())
-            .transpose()?;
+        let init =
+            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
 
-        if init.is_none()
-            && decl_ctx.parent == VariableDeclarationParent::Statement
-        {
+        if init.is_none() && decl_ctx.parent == VariableDeclarationParent::Statement {
             // LexicalBinding[In, Yield, Await] :
             //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield,
             // ?Await] opt   BindingPattern[?Yield, ?Await]
             // Initializer[?In, ?Yield, ?Await] the grammar forbids
             // `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_destrucuring_declaration(
-                    id.span(),
-                ));
-            } else if kind == VariableDeclarationKind::Const
-                && !self.ctx.has_ambient()
-            {
+                self.error(diagnostics::invalid_destrucuring_declaration(id.span()));
+            } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
                 // It is a Syntax Error if Initializer is not present and
                 // IsConstantDeclaration of the LexicalDeclaration containing
                 // this LexicalBinding is true.
@@ -147,13 +119,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.variable_declarator(
-            self.end_span(span),
-            kind,
-            id,
-            init,
-            definite,
-        ))
+        Ok(self.ast.variable_declarator(self.end_span(span), kind, id, init, definite))
     }
 
     /// Section 14.3.1 Let, Const, and Using Declarations
@@ -179,44 +145,33 @@ impl<'a> ParserImpl<'a> {
 
         // [lookahead ≠ await]
         if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::await_in_using_declaration(
-                self.cur_token().span(),
-            ));
+            self.error(diagnostics::await_in_using_declaration(self.cur_token().span()));
             self.eat(Kind::Await);
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> =
-            self.ast.new_vec();
+        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.new_vec();
         loop {
             let declaration = self.parse_variable_declarator(
-                VariableDeclarationContext::new(
-                    VariableDeclarationParent::Statement,
-                ),
+                VariableDeclarationContext::new(VariableDeclarationParent::Statement),
                 VariableDeclarationKind::Var,
             )?;
 
             match declaration.id.kind {
                 BindingPatternKind::BindingIdentifier(_) => {}
                 _ => {
-                    self.error(
-                        diagnostics::invalid_identifier_in_using_declaration(
-                            declaration.id.span(),
-                        ),
-                    );
+                    self.error(diagnostics::invalid_identifier_in_using_declaration(
+                        declaration.id.span(),
+                    ));
                 }
             }
 
             // Excluding `for` loops, an initializer is required in a
             // UsingDeclaration.
-            if declaration.init.is_none()
-                && !matches!(statement_ctx, StatementContext::For)
-            {
-                self.error(
-                    diagnostics::using_declarations_must_be_initialized(
-                        declaration.id.span(),
-                    ),
-                );
+            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
+                self.error(diagnostics::using_declarations_must_be_initialized(
+                    declaration.id.span(),
+                ));
             }
 
             declarations.push(declaration);
@@ -225,10 +180,6 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.using_declaration(
-            self.end_span(span),
-            declarations,
-            is_await,
-        ))
+        Ok(self.ast.using_declaration(self.end_span(span), declarations, is_await))
     }
 }

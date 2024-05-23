@@ -37,10 +37,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(
-        &self,
-        iter: I,
-    ) -> Vec<'a, T> {
+    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
@@ -71,10 +68,6 @@ impl<'a> AstBuilder<'a> {
         children: Vec<'a, Rule<'a>>,
         styles: Atom<'a>,
     ) -> StyleSheet<'a> {
-        StyleSheet {
-            span,
-            children,
-            content: StyleSheetContent { span, styles },
-        }
+        StyleSheet { span, children, content: StyleSheetContent { span, styles } }
     }
 }

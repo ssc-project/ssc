@@ -15,15 +15,11 @@ use crate::diagnostics;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
-static ASCII_ID_START_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| b
-    .is_ascii_alphabetic()
-    || b == b'_'
-    || b == b'$');
+static ASCII_ID_START_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
 
 static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric()
-        || b == b'_'
-        || b == b'$'));
+    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
 #[inline]
 fn is_identifier_start_ascii_byte(byte: u8) -> bool {
@@ -107,10 +103,7 @@ impl<'a> Lexer<'a> {
     /// found. Any number of characters can have already been consumed from
     /// `self.source` prior to it. `self.source` should be positioned at
     /// start of Unicode character.
-    fn identifier_tail_unicode(
-        &mut self,
-        start_pos: SourcePosition,
-    ) -> &'a str {
+    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
         let c = self.peek().unwrap();
         if is_identifier_part_unicode(c) {
             self.consume_char();
@@ -126,10 +119,7 @@ impl<'a> Lexer<'a> {
     /// First char should have been consumed from `self.source` prior to calling
     /// this. `start_pos` should be position of the start of the identifier
     /// (before first char was consumed).
-    pub(super) fn identifier_tail_after_unicode(
-        &mut self,
-        start_pos: SourcePosition,
-    ) -> &'a str {
+    pub(super) fn identifier_tail_after_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
         // Identifier contains a Unicode chars, so probably contains more.
         // So just iterate over chars now, instead of bytes.
         while let Some(c) = self.peek() {
@@ -137,9 +127,7 @@ impl<'a> Lexer<'a> {
                 self.consume_char();
             } else if c == '\\' {
                 // This branch marked cold as escapes are uncommon
-                return cold_branch(|| {
-                    self.identifier_backslash(start_pos, false)
-                });
+                return cold_branch(|| self.identifier_backslash(start_pos, false));
             } else {
                 break;
             }
@@ -164,11 +152,7 @@ impl<'a> Lexer<'a> {
     ///
     /// The `\` must not have be consumed from `lexer.source`.
     /// `start_pos` must be position of start of identifier.
-    fn identifier_backslash(
-        &mut self,
-        start_pos: SourcePosition,
-        is_start: bool,
-    ) -> &'a str {
+    fn identifier_backslash(&mut self, start_pos: SourcePosition, is_start: bool) -> &'a str {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being. Take a guess
         // that total length will be double what we've seen so far, or
@@ -190,11 +174,7 @@ impl<'a> Lexer<'a> {
     /// consumed yet). `str` should contain the identifier up to before the
     /// escape. `is_start` should be `true` if this is first char in the
     /// identifier, `false` otherwise.
-    fn identifier_on_backslash(
-        &mut self,
-        mut str: String<'a>,
-        mut is_start: bool,
-    ) -> &'a str {
+    fn identifier_on_backslash(&mut self, mut str: String<'a>, mut is_start: bool) -> &'a str {
         'outer: loop {
             // Consume `\`
             self.consume_char();
@@ -246,9 +226,7 @@ impl<'a> Lexer<'a> {
         if start_pos.addr() == self.source.end_addr() {
             return cold_branch(|| {
                 let start = self.offset();
-                self.error(diagnostics::unexpected_end(Span::new(
-                    start, start,
-                )));
+                self.error(diagnostics::unexpected_end(Span::new(start, start)));
                 Kind::Undetermined
             });
         }
@@ -326,10 +304,7 @@ impl<'a> Lexer<'a> {
         // No identifier found
         let start = self.offset();
         let c = self.consume_char();
-        self.error(diagnostics::invalid_character(
-            c,
-            Span::new(start, self.offset()),
-        ));
+        self.error(diagnostics::invalid_character(c, Span::new(start, self.offset())));
         Kind::Undetermined
     }
 }

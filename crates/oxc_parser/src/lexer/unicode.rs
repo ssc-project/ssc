@@ -1,8 +1,7 @@
 use oxc_allocator::String;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_start, is_identifier_start_unicode,
-    is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS,
-    TAB, VT,
+    is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
 };
 
 use super::{Kind, Lexer, Span};
@@ -29,23 +28,18 @@ impl<'a> Lexer<'a> {
             }
             c if is_irregular_whitespace(c) => {
                 self.consume_char();
-                self.trivia_builder
-                    .add_irregular_whitespace(self.token.start, self.offset());
+                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
                 Kind::Skip
             }
             c if is_irregular_line_terminator(c) => {
                 self.consume_char();
                 self.token.is_on_new_line = true;
-                self.trivia_builder
-                    .add_irregular_whitespace(self.token.start, self.offset());
+                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
                 Kind::Skip
             }
             _ => {
                 self.consume_char();
-                self.error(diagnostics::invalid_character(
-                    c,
-                    self.unterminated_range(),
-                ));
+                self.error(diagnostics::invalid_character(c, self.unterminated_range()));
                 Kind::Undetermined
             }
         }
@@ -96,17 +90,11 @@ impl<'a> Lexer<'a> {
             }
         };
 
-        let is_valid = if check_identifier_start {
-            is_identifier_start(ch)
-        } else {
-            is_identifier_part(ch)
-        };
+        let is_valid =
+            if check_identifier_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
 
         if !is_valid {
-            self.error(diagnostics::invalid_character(
-                ch,
-                self.current_offset(),
-            ));
+            self.error(diagnostics::invalid_character(ch, self.current_offset()));
             return;
         }
 
@@ -137,8 +125,7 @@ impl<'a> Lexer<'a> {
         // `"\uD83D\uDE00" === 😀` values are interpreted as is if they
         // fall out of range
         match value {
-            SurrogatePair::CodePoint(code_point)
-            | SurrogatePair::Astral(code_point) => {
+            SurrogatePair::CodePoint(code_point) | SurrogatePair::Astral(code_point) => {
                 if let Ok(ch) = char::try_from(code_point) {
                     text.push(ch);
                 } else {
@@ -223,8 +210,7 @@ impl<'a> Lexer<'a> {
         }
 
         // `https://tc39.es/ecma262/#sec-utf16decodesurrogatepair`
-        let astral_code_point =
-            (high - 0xd800) * 0x400 + low - 0xdc00 + 0x10000;
+        let astral_code_point = (high - 0xd800) * 0x400 + low - 0xdc00 + 0x10000;
 
         Some(SurrogatePair::Astral(astral_code_point))
     }
@@ -238,9 +224,7 @@ impl<'a> Lexer<'a> {
     ) {
         match self.next_char() {
             None => {
-                self.error(diagnostics::unterminated_string(
-                    self.unterminated_range(),
-                ));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
             }
             Some(c) => match c {
                 // \ LineTerminatorSequence
@@ -283,15 +267,10 @@ impl<'a> Lexer<'a> {
                 }
                 // UnicodeEscapeSequence
                 'u' => {
-                    self.string_unicode_escape_sequence(
-                        text,
-                        is_valid_escape_sequence,
-                    );
+                    self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
                 }
                 // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => {
-                    text.push('\0')
-                }
+                '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => text.push('\0'),
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
@@ -318,15 +297,11 @@ impl<'a> Lexer<'a> {
                         _ => {}
                     }
 
-                    let value = char::from_u32(
-                        u32::from_str_radix(num.as_str(), 8).unwrap(),
-                    )
-                    .unwrap();
+                    let value =
+                        char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
                     text.push(value);
                 }
-                '0' if in_template
-                    && self.peek().is_some_and(|c| c.is_ascii_digit()) =>
-                {
+                '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
                     self.consume_char();
                     // error raised within the parser by
                     // `diagnostics::template_literal`

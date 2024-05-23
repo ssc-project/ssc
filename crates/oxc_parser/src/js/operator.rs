@@ -1,7 +1,6 @@
 use oxc_syntax::{
     operator::{
-        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator,
-        UpdateOperator,
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     precedence::Precedence,
 };
@@ -16,9 +15,7 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
         Kind::Pipe => Some(Precedence::BitwiseOr),
         Kind::Caret => Some(Precedence::BitwiseXor),
         Kind::Amp => Some(Precedence::BitwiseAnd),
-        Kind::Eq2 | Kind::Eq3 | Kind::Neq | Kind::Neq2 => {
-            Some(Precedence::Equality)
-        }
+        Kind::Eq2 | Kind::Eq3 | Kind::Neq | Kind::Neq2 => Some(Precedence::Equality),
         Kind::LAngle
         | Kind::RAngle
         | Kind::LtEq
@@ -27,9 +24,7 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
         | Kind::In
         | Kind::As
         | Kind::Satisfies => Some(Precedence::Relational),
-        Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => {
-            Some(Precedence::Shift)
-        }
+        Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Precedence::Shift),
         Kind::Plus | Kind::Minus => Some(Precedence::Add),
         Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiply),
         Kind::Star2 => Some(Precedence::Exponential),

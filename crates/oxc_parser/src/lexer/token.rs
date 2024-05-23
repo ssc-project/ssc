@@ -66,11 +66,7 @@ impl Token {
     }
 
     pub(crate) fn set_has_separator(&mut self) {
-        debug_assert!(
-            !self.has_separator
-                || self.kind.is_number()
-                || self.kind == Kind::default()
-        );
+        debug_assert!(!self.has_separator || self.kind.is_number() || self.kind == Kind::default());
         self.has_separator = true;
     }
 }

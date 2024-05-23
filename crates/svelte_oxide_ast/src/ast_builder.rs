@@ -38,10 +38,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(
-        &self,
-        iter: I,
-    ) -> Vec<'a, T> {
+    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
@@ -74,15 +71,7 @@ impl<'a> AstBuilder<'a> {
         module: Option<Script<'a>>,
         ts: bool,
     ) -> Root<'a> {
-        Root {
-            span,
-            options: None,
-            fragment,
-            css,
-            instance,
-            module,
-            metadata: RootMetadata { ts },
-        }
+        Root { span, options: None, fragment, css, instance, module, metadata: RootMetadata { ts } }
     }
 
     pub fn fragment(

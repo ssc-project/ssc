@@ -71,10 +71,7 @@ pub trait VisitMut<'a>: Sized {
         walk_slot_element_mut(self, slot_element);
     }
 
-    fn visit_regular_element(
-        &mut self,
-        regular_element: &mut RegularElement<'a>,
-    ) {
+    fn visit_regular_element(&mut self, regular_element: &mut RegularElement<'a>) {
         walk_regular_element_mut(self, regular_element);
     }
 
@@ -82,17 +79,11 @@ pub trait VisitMut<'a>: Sized {
         walk_svelte_body_mut(self, svelte_body);
     }
 
-    fn visit_svelte_component(
-        &mut self,
-        svelte_component: &mut SvelteComponent<'a>,
-    ) {
+    fn visit_svelte_component(&mut self, svelte_component: &mut SvelteComponent<'a>) {
         walk_svelte_component_mut(self, svelte_component);
     }
 
-    fn visit_svelte_document(
-        &mut self,
-        svelte_document: &mut SvelteDocument<'a>,
-    ) {
+    fn visit_svelte_document(&mut self, svelte_document: &mut SvelteDocument<'a>) {
         walk_svelte_document_mut(self, svelte_document);
     }
 
@@ -100,10 +91,7 @@ pub trait VisitMut<'a>: Sized {
         walk_svelte_element_mut(self, svelte_element);
     }
 
-    fn visit_svelte_fragment(
-        &mut self,
-        svelte_fragment: &mut SvelteFragment<'a>,
-    ) {
+    fn visit_svelte_fragment(&mut self, svelte_fragment: &mut SvelteFragment<'a>) {
         walk_svelte_fragment_mut(self, svelte_fragment);
     }
 
@@ -111,10 +99,7 @@ pub trait VisitMut<'a>: Sized {
         walk_svelte_head_mut(self, svelte_head);
     }
 
-    fn visit_svelte_options_raw(
-        &mut self,
-        svelte_options_raw: &mut SvelteOptionsRaw<'a>,
-    ) {
+    fn visit_svelte_options_raw(&mut self, svelte_options_raw: &mut SvelteOptionsRaw<'a>) {
         walk_svelte_options_raw_mut(self, svelte_options_raw);
     }
 
@@ -156,10 +141,7 @@ pub trait VisitMut<'a>: Sized {
 pub mod walk_mut {
     use super::*;
 
-    pub fn walk_root_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        root: &mut Root<'a>,
-    ) {
+    pub fn walk_root_mut<'a, V: VisitMut<'a>>(visitor: &mut V, root: &mut Root<'a>) {
         let kind = AstType::Root;
         visitor.enter_node(kind);
 
@@ -169,10 +151,7 @@ pub mod walk_mut {
 
     /* ----------  Fragment ---------- */
 
-    pub fn walk_fragment_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        fragment: &mut Fragment<'a>,
-    ) {
+    pub fn walk_fragment_mut<'a, V: VisitMut<'a>>(visitor: &mut V, fragment: &mut Fragment<'a>) {
         for node in fragment.nodes.iter_mut() {
             visitor.visit_fragment_node(node);
         }
@@ -185,17 +164,12 @@ pub mod walk_mut {
         match node {
             FragmentNodeKind::Text(text) => visitor.visit_text(text),
             FragmentNodeKind::Tag(tag) => visitor.visit_tag(tag),
-            FragmentNodeKind::Element(element) => {
-                visitor.visit_element(element)
-            }
+            FragmentNodeKind::Element(element) => visitor.visit_element(element),
             FragmentNodeKind::Block(block) => visitor.visit_block(block),
         }
     }
 
-    pub fn walk_text_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _text: &mut Text<'a>,
-    ) {
+    pub fn walk_text_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _text: &mut Text<'a>) {
         let kind = AstType::Text;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
@@ -203,14 +177,9 @@ pub mod walk_mut {
 
     /* ----------  Tag ---------- */
 
-    pub fn walk_tag_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        tag: &mut Tag<'a>,
-    ) {
+    pub fn walk_tag_mut<'a, V: VisitMut<'a>>(visitor: &mut V, tag: &mut Tag<'a>) {
         match tag {
-            Tag::ExpressionTag(expression_tag) => {
-                visitor.visit_expression_tag(expression_tag)
-            }
+            Tag::ExpressionTag(expression_tag) => visitor.visit_expression_tag(expression_tag),
             Tag::HtmlTag(html_tag) => visitor.visit_html_tag(html_tag),
             Tag::ConstTag(const_tag) => visitor.visit_const_tag(const_tag),
             Tag::DebugTag(debug_tag) => visitor.visit_debug_tag(debug_tag),
@@ -227,28 +196,19 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_html_tag_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _html_tag: &mut HtmlTag<'a>,
-    ) {
+    pub fn walk_html_tag_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _html_tag: &mut HtmlTag<'a>) {
         let kind = AstType::HtmlTag;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_const_tag_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _const_tag: &mut ConstTag<'a>,
-    ) {
+    pub fn walk_const_tag_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _const_tag: &mut ConstTag<'a>) {
         let kind = AstType::ConstTag;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_debug_tag_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _debug_tag: &mut DebugTag<'a>,
-    ) {
+    pub fn walk_debug_tag_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _debug_tag: &mut DebugTag<'a>) {
         let kind = AstType::DebugTag;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
@@ -265,55 +225,35 @@ pub mod walk_mut {
 
     /* ----------  Element ---------- */
 
-    pub fn walk_element_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        element: &mut Element<'a>,
-    ) {
+    pub fn walk_element_mut<'a, V: VisitMut<'a>>(visitor: &mut V, element: &mut Element<'a>) {
         match element {
             Element::Component(component) => visitor.visit_component(component),
-            Element::TitleElement(title_element) => {
-                visitor.visit_title_element(title_element)
-            }
-            Element::SlotElement(slot_element) => {
-                visitor.visit_slot_element(slot_element)
-            }
+            Element::TitleElement(title_element) => visitor.visit_title_element(title_element),
+            Element::SlotElement(slot_element) => visitor.visit_slot_element(slot_element),
             Element::RegularElement(regular_element) => {
                 visitor.visit_regular_element(regular_element)
             }
-            Element::SvelteBody(svelte_body) => {
-                visitor.visit_svelte_body(svelte_body)
-            }
+            Element::SvelteBody(svelte_body) => visitor.visit_svelte_body(svelte_body),
             Element::SvelteComponent(svelte_component) => {
                 visitor.visit_svelte_component(svelte_component)
             }
             Element::SvelteDocument(svelte_document) => {
                 visitor.visit_svelte_document(svelte_document)
             }
-            Element::SvelteElement(svelte_element) => {
-                visitor.visit_svelte_element(svelte_element)
-            }
+            Element::SvelteElement(svelte_element) => visitor.visit_svelte_element(svelte_element),
             Element::SvelteFragment(svelte_fragment) => {
                 visitor.visit_svelte_fragment(svelte_fragment)
             }
-            Element::SvelteHead(svelte_head) => {
-                visitor.visit_svelte_head(svelte_head)
-            }
+            Element::SvelteHead(svelte_head) => visitor.visit_svelte_head(svelte_head),
             Element::SvelteOptionsRaw(svelte_options_raw) => {
                 visitor.visit_svelte_options_raw(svelte_options_raw)
             }
-            Element::SvelteSelf(svelte_self) => {
-                visitor.visit_svelte_self(svelte_self)
-            }
-            Element::SvelteWindow(svelte_window) => {
-                visitor.visit_svelte_window(svelte_window)
-            }
+            Element::SvelteSelf(svelte_self) => visitor.visit_svelte_self(svelte_self),
+            Element::SvelteWindow(svelte_window) => visitor.visit_svelte_window(svelte_window),
         }
     }
 
-    pub fn walk_component_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        component: &mut Component<'a>,
-    ) {
+    pub fn walk_component_mut<'a, V: VisitMut<'a>>(visitor: &mut V, component: &mut Component<'a>) {
         let kind = AstType::Component;
         visitor.enter_node(kind);
         visitor.visit_fragment(&mut component.fragment);
@@ -442,22 +382,13 @@ pub mod walk_mut {
 
     /* ----------  Block ---------- */
 
-    pub fn walk_block_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        block: &mut Block<'a>,
-    ) {
+    pub fn walk_block_mut<'a, V: VisitMut<'a>>(visitor: &mut V, block: &mut Block<'a>) {
         match block {
-            Block::EachBlock(each_block) => {
-                visitor.visit_each_block(each_block)
-            }
+            Block::EachBlock(each_block) => visitor.visit_each_block(each_block),
             Block::IfBlock(if_block) => visitor.visit_if_block(if_block),
-            Block::AwaitBlock(await_block) => {
-                visitor.visit_await_block(await_block)
-            }
+            Block::AwaitBlock(await_block) => visitor.visit_await_block(await_block),
             Block::KeyBlock(key_block) => visitor.visit_key_block(key_block),
-            Block::SnippetBlock(snippet_block) => {
-                visitor.visit_snippet_block(snippet_block)
-            }
+            Block::SnippetBlock(snippet_block) => visitor.visit_snippet_block(snippet_block),
         }
     }
 
@@ -474,10 +405,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_if_block_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        if_block: &mut IfBlock<'a>,
-    ) {
+    pub fn walk_if_block_mut<'a, V: VisitMut<'a>>(visitor: &mut V, if_block: &mut IfBlock<'a>) {
         let kind = AstType::IfBlock;
         visitor.enter_node(kind);
         visitor.visit_fragment(&mut if_block.consequent);
@@ -505,10 +433,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_key_block_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        key_block: &mut KeyBlock<'a>,
-    ) {
+    pub fn walk_key_block_mut<'a, V: VisitMut<'a>>(visitor: &mut V, key_block: &mut KeyBlock<'a>) {
         let kind = AstType::KeyBlock;
         visitor.enter_node(kind);
         visitor.visit_fragment(&mut key_block.fragment);

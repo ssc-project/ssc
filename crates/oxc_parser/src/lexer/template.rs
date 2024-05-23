@@ -25,11 +25,7 @@ impl<'a> Lexer<'a> {
     /// passed to `template_literal_escaped` which builds the unescaped
     /// string. This division keeps the path for common case as fast as
     /// possible.
-    pub(super) fn read_template_literal(
-        &mut self,
-        substitute: Kind,
-        tail: Kind,
-    ) -> Kind {
+    pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
 
         byte_search! {
@@ -113,9 +109,7 @@ impl<'a> Lexer<'a> {
         if pos.addr() == self.source.end_addr() {
             return cold_branch(|| {
                 self.source.advance_to_end();
-                self.error(diagnostics::unterminated_string(
-                    self.unterminated_range(),
-                ));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 Kind::Undetermined
             });
         }
@@ -132,14 +126,7 @@ impl<'a> Lexer<'a> {
             pos = pos.add(1);
         }
 
-        self.template_literal_escaped(
-            str,
-            pos,
-            chunk_start,
-            true,
-            substitute,
-            tail,
-        )
+        self.template_literal_escaped(str, pos, chunk_start, true, substitute, tail)
     }
 
     /// Consume rest of template literal after a `\` escape is found.
@@ -166,11 +153,7 @@ impl<'a> Lexer<'a> {
         self.source.set_position(after_backslash);
 
         let mut is_valid_escape_sequence = true;
-        self.read_string_escape_sequence(
-            &mut str,
-            true,
-            &mut is_valid_escape_sequence,
-        );
+        self.read_string_escape_sequence(&mut str, true, &mut is_valid_escape_sequence);
 
         // Continue search after escape
         let after_escape = self.source.position();
@@ -188,10 +171,7 @@ impl<'a> Lexer<'a> {
     /// Create arena string for modified template literal, containing the
     /// template literal up to `pos`. # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(
-        &self,
-        pos: SourcePosition,
-    ) -> String<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a
         // guess that total length will be double what we've seen so
@@ -329,10 +309,7 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.save_template_string(
-            is_valid_escape_sequence,
-            str.into_bump_str(),
-        );
+        self.save_template_string(is_valid_escape_sequence, str.into_bump_str());
 
         ret
     }
@@ -342,20 +319,14 @@ impl<'a> Lexer<'a> {
     /// `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
         self.token.start = self.offset() - 1;
-        let kind = self
-            .read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
+        let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
         self.finish_next(kind)
     }
 
     /// Save escaped template string
-    fn save_template_string(
-        &mut self,
-        is_valid_escape_sequence: bool,
-        s: &'a str,
-    ) {
-        self.escaped_templates
-            .insert(self.token.start, is_valid_escape_sequence.then_some(s));
+    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
+        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
         self.token.escaped = true;
     }
 
@@ -363,8 +334,7 @@ impl<'a> Lexer<'a> {
         if token.escaped {
             return self.escaped_templates[&token.start];
         }
-        let raw =
-            &self.source.whole()[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[token.start as usize..token.end as usize];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}"

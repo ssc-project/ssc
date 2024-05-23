@@ -190,10 +190,7 @@ impl<'a> Lexer<'a> {
         for _i in self.lookahead.len()..n {
             let kind = self.read_next_token();
             let peeked = self.finish_next(kind);
-            self.lookahead.push_back(Lookahead {
-                position: self.source.position(),
-                token: peeked,
-            });
+            self.lookahead.push_back(Lookahead { position: self.source.position(), token: peeked });
         }
 
         // Call to `finish_next` in loop above leaves `self.token =

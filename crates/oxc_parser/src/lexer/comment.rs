@@ -17,9 +17,8 @@ const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xa9];
 static LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable = safe_byte_match_table!(
-    |b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST)
-);
+static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
 impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
@@ -84,9 +83,7 @@ impl<'a> Lexer<'a> {
         // If `is_on_new_line` is already set, go directly to faster search
         // which only looks for `*/`
         if self.token.is_on_new_line {
-            return self.skip_multi_line_comment_after_line_break(
-                self.source.position(),
-            );
+            return self.skip_multi_line_comment_after_line_break(self.source.position());
         }
 
         byte_search! {
@@ -153,15 +150,11 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.trivia_builder
-            .add_multi_line_comment(self.token.start, self.offset());
+        self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
         Kind::Skip
     }
 
-    fn skip_multi_line_comment_after_line_break(
-        &mut self,
-        pos: SourcePosition,
-    ) -> Kind {
+    fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition) -> Kind {
         // Can use `memchr` here as only searching for 1 pattern.
         // Cache `Finder` instance on `Lexer` as there's a significant cost to
         // creating it. `Finder::new` isn't a const function, so can't
@@ -180,14 +173,11 @@ impl<'a> Lexer<'a> {
             // SAFETY: `pos + index + 2` is end of `*/`, so a valid
             // `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });
-            self.trivia_builder
-                .add_multi_line_comment(self.token.start, self.offset());
+            self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
             Kind::Skip
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::unterminated_multi_line_comment(
-                self.unterminated_range(),
-            ));
+            self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
             Kind::Eof
         }
     }

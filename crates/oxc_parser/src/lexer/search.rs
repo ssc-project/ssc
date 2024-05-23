@@ -450,9 +450,7 @@ macro_rules! byte_search {
         #[allow(unused_unsafe)]
         // Silence warnings if macro called in unsafe code
         'outer: loop {
-            let $byte = if $pos.addr()
-                <= $lexer.source.end_for_batch_search_addr()
-            {
+            let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
                 //
                 // `'inner: loop {}` is not a real loop - it always exits on
@@ -514,11 +512,7 @@ macro_rules! byte_search {
 
                     // Avoid lint errors if `$eof_handler` contains `return`
                     // statement
-                    #[allow(
-                        unused_variables,
-                        unreachable_code,
-                        clippy::diverging_sub_expression
-                    )]
+                    #[allow(unused_variables, unreachable_code, clippy::diverging_sub_expression)]
                     {
                         let eof_ret = $eof_handler;
                         break 'outer eof_ret;
