@@ -45,7 +45,8 @@
 //!
 //! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing
 //! tree with untyped nodes, the nodes can be iterated through a sequential
-//! loop. ```rust
+//! loop.
+//! ```rust
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
 //!         // check node

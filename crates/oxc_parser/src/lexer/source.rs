@@ -623,8 +623,8 @@ impl<'a> SourcePosition<'a> {
     /// # Implementation details
     ///
     /// Using `as_ref()` for reading is copied from `core::slice::iter::next`.
-    /// https://doc.rust-lang.org/src/core/slice/iter.rs.html#132
-    /// https://doc.rust-lang.org/src/core/slice/iter/macros.rs.html#156-168
+    /// <https://doc.rust-lang.org/src/core/slice/iter.rs.html#132>
+    /// <https://doc.rust-lang.org/src/core/slice/iter/macros.rs.html#156-168>
     ///
     /// Using `ptr.as_ref().unwrap_unchecked()` instead of `*ptr` or
     /// `ptr.read()` produces a 7% speed-up on Lexer benchmarks.
