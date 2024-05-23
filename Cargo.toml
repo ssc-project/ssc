@@ -6,7 +6,7 @@ resolver = "2"
   [workspace.package]
   authors      = ["Dilshad <a-rustacean@outlook.com>"]
   categories   = ["development-tools", "web-programming", "compilers"]
-  description  = "The Svelte compiler, rewritten in Rust."
+  description  = "A collection of Svelte tools written in Rust."
   edition      = "2021"
   homepage     = "https://github.com/a-rustacean/svelte-oxide#readme"
   keywords     = ["svelte", "compiler"]
