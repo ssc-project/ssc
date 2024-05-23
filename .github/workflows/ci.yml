@@ -1,39 +1,172 @@
 name: CI
 
 on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
   push:
-    branches: [master]
+    branches:
+      - main
+      - "renovate/**"
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 env:
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: "full"
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
 
 jobs:
-  check:
+  cache: # Warm cache factory for all other CI jobs
+    name: Check and Build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+          - os: macos-14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Cargo check
+        run: cargo ck
+
+      # Only need to build the test to create a warm cache on the main branch
+      - name: Build cache by Cargo Check and Cargo Test
+        if: ${{ github.ref_name == 'main' }}
+        run: cargo test --quiet --no-run
+
+  typos:
+    name: Spell Check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
-      - name: Cache Rust
-        uses: actions/cache@v4
+      - uses: crate-ci/typos@master
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-lint
+          files: .
+
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+
+      - name: Install cargo-deny
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-deny
+
+      - uses: ./.github/actions/rustup
+        if: steps.filter.outputs.src == 'true'
+        with:
+          restore-cache: false
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo deny check
+
+  unused-deps:
+    name: Check Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+              - 'Cargo.lock'
+      - uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
+        if: steps.filter.outputs.src == 'true'
+      - uses: cargo-bins/cargo-binstall@main
+        if: steps.filter.outputs.src == 'true'
+      - run: cargo binstall --no-confirm cargo-shear
+        if: steps.filter.outputs.src == 'true'
+      - run: cargo shear
+        if: steps.filter.outputs.src == 'true'
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+        uses: ./.github/actions/rustup
         with:
-          toolchain: nightly
-          components: rustfmt, clippy
+          fmt: true
+          restore-cache: false
 
-      - name: Lint
-        run: cargo +nightly clippy --all -Z unstable-options -- -D warnings
+      - run: cargo fmt --all -- --check
 
-      - name: Check Formatting
-        run: cargo +nightly fmt --all --check
+  lint:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          clippy: true
+
+      - name: Run Clippy
+        run: cargo lint -- -D warnings
+
+  doc:
+    name: Doc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          docs: true
+
+      - name: Run doc
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+  test:
+    name: Test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+          - os: macos-14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+      - run: cargo test --quiet
