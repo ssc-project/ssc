@@ -1,0 +1,5 @@
+[alias]
+# Do not append `--` or it will break IDEs
+ck      = "check --workspace --all-features --all-targets --locked"
+codecov = "llvm-cov --workspace --ignore-filename-regex tasks"
+lint    = "clippy --workspace --all-targets --all-features"
