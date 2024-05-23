@@ -552,6 +552,16 @@ dependencies = [
  "oxc_span",
  "rustc-hash",
  "serde",
+ "svelte_oxide_css_ast",
+]
+
+[[package]]
+name = "svelte_oxide_css_ast"
+version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_span",
+ "serde",
 ]
 
 [[package]]

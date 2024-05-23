@@ -1,8 +1,8 @@
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::{
     ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern,
     BooleanLiteral, CallExpression, CatchClause, Class, ClassBody,
-    ExportSpecifier, Expression, Function, IdentifierName,
+    ExportSpecifier, Expression, Function, IdentifierName, ImportDeclaration,
     ImportDefaultSpecifier, ImportNamespaceSpecifier, ImportSpecifier,
     MemberExpression, MethodDefinition, ModuleDeclaration, NullLiteral,
     NumericLiteral, ObjectExpression, ObjectProperty, PrivateIdentifier,
@@ -14,8 +14,85 @@ use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
+use svelte_oxide_css_ast::ast::{Node as CssNode, StyleSheet};
 
-use crate::ast::{Binding, CssNode, StyleSheet};
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct Binding<'a> {
+    pub node: IdentifierName<'a>,
+    pub kind: BindingKind,
+    pub declaration_kind: DeclarationKind,
+    pub initial: Option<BindingInitial<'a>>,
+    pub is_called: bool,
+    pub references: BindingReferences<'a>,
+    pub mutated: bool,
+    pub reassigned: bool,
+    // TODO: add scope
+    // pub scope: Scope,
+    pub legacy_dependencies: Vec<'a, Binding<'a>>,
+    pub prop_alias: Option<Atom<'a>>,
+    // TODO: add `expression` and mutation fields
+    // pub expression: BindingExpression<'a>,
+    // pub mutation: BindingMutation<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
+    pub metadata: Option<BindingMetadata>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
+pub enum BindingKind {
+    Normal,
+    Prop,
+    BindableProp,
+    RestProp,
+    State,
+    FrozenState,
+    Derived,
+    Each,
+    Snippet,
+    StoreSub,
+    LegacyReactive,
+    LegacyReactiveImport,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
+pub enum DeclarationKind {
+    Var,
+    Let,
+    Const,
+    Function,
+    Import,
+    Param,
+    RestParam,
+    Synthetic,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(untagged))]
+pub enum BindingInitial<'a> {
+    Expression(Expression<'a>),
+    FunctionDeclaration(Function<'a>),
+    ClassDeclaration(Class<'a>),
+    ImportDeclaration(ImportDeclaration<'a>),
+    EachBlock(EachBlock<'a>),
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct BindingReferences<'a> {
+    pub node: IdentifierName<'a>,
+    pub path: Vec<'a, SvelteNode<'a>>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct BindingMetadata {
+    pub inside_rest: bool,
+}
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -23,12 +100,6 @@ use crate::ast::{Binding, CssNode, StyleSheet};
 pub struct Fragment<'a> {
     pub nodes: Vec<'a, FragmentNodeKind<'a>>,
     pub transparent: bool,
-}
-
-impl<'a> Fragment<'a> {
-    pub fn new(allocator: &'a Allocator, transparent: bool) -> Self {
-        Self { nodes: Vec::new_in(allocator), transparent }
-    }
 }
 
 #[derive(Debug)]
@@ -492,7 +563,7 @@ pub struct SvelteOptions<'a> {
     pub accessors: Option<bool>,
     pub preserve_whitespace: Option<bool>,
     pub namespace: Option<Namespace>,
-    pub custom_element: Option<CustomElement<'a>>,
+    pub custom_element: Option<CustomElementOptions<'a>>,
     pub attributes: Vec<'a, Attribute<'a>>,
 }
 
@@ -503,13 +574,14 @@ pub enum Namespace {
     #[default]
     Html,
     Svg,
+    MathMl,
     Foreign,
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct CustomElement<'a> {
-    pub tag: Atom<'a>, // true
+pub struct CustomElementOptions<'a> {
+    pub tag: Atom<'a>,
     pub shadow: Option<CustomElementShadow>,
     pub props: FxHashMap<Atom<'a>, CustomElementProp<'a>>,
     pub extend: Option<CustomElementExtend<'a>>,

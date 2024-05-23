@@ -42,4 +42,5 @@ resolver = "2"
   svelte_oxide          = { path = "crates/svelte_oxide" }
   svelte_oxide_analyzer = { path = "crates/svelte_oxide_analyzer" }
   svelte_oxide_ast      = { path = "crates/svelte_oxide_ast" }
+  svelte_oxide_css_ast  = { path = "crates/svelte_oxide_css_ast" }
   svelte_oxide_parser   = { path = "crates/svelte_oxide_parser" }

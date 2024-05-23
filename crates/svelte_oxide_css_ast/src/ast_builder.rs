@@ -2,7 +2,6 @@ use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, Span};
-use svelte_oxide_css_ast::ast::StyleSheet;
 
 use crate::ast::*;
 
@@ -65,31 +64,17 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    pub fn root(
+    #[inline]
+    pub fn stylesheet(
         &self,
         span: Span,
-        fragment: Fragment<'a>,
-        css: Option<StyleSheet<'a>>,
-        instance: Option<Script<'a>>,
-        module: Option<Script<'a>>,
-        ts: bool,
-    ) -> Root<'a> {
-        Root {
+        children: Vec<'a, Rule<'a>>,
+        styles: Atom<'a>,
+    ) -> StyleSheet<'a> {
+        StyleSheet {
             span,
-            options: None,
-            fragment,
-            css,
-            instance,
-            module,
-            metadata: RootMetadata { ts },
+            children,
+            content: StyleSheetContent { span, styles },
         }
-    }
-
-    pub fn fragment(
-        &self,
-        nodes: Vec<'a, FragmentNodeKind<'a>>,
-        transparent: bool,
-    ) -> Fragment<'a> {
-        Fragment { nodes, transparent }
     }
 }

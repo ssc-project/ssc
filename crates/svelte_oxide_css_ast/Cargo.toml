@@ -6,7 +6,7 @@ edition.workspace      = true
 homepage.workspace     = true
 keywords.workspace     = true
 license.workspace      = true
-name                   = "svelte_oxide_ast"
+name                   = "svelte_oxide_css_ast"
 readme.workspace       = true
 repository.workspace   = true
 rust-version.workspace = true
@@ -14,14 +14,9 @@ version                = "0.1.0"
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
-
-svelte_oxide_css_ast = { workspace = true }
-
-rustc-hash = { workspace = true }
 
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
-serialize = ["dep:serde", "oxc_span/serialize", "oxc_ast/serialize"]
+serialize = ["dep:serde", "oxc_span/serialize"]

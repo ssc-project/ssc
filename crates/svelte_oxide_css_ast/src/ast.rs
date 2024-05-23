@@ -3,17 +3,15 @@ use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use super::macros::define_constant_string;
-use crate::ast::Attribute;
-
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StyleSheet<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub attributes: Vec<'a, Attribute<'a>>,
-    pub children: Vec<'a, AtruleOrRule<'a>>,
+    // TODO: add `attributes`
+    // pub attributes: Vec<'a, Attribute<'a>>,
+    pub children: Vec<'a, Rule<'a>>,
     pub content: StyleSheetContent<'a>,
 }
 
@@ -28,30 +26,30 @@ pub struct StyleSheetContent<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum AtruleOrRule<'a> {
-    Atrule(Atrule<'a>),
-    Rule(Rule<'a>),
+pub enum Rule<'a> {
+    AtRule(AtRule<'a>),
+    StyleRule(StyleRule<'a>),
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Atrule<'a> {
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Atrule"))]
+pub struct AtRule<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
     pub prelude: Atom<'a>,
-    pub block: Option<CssBlock<'a>>,
+    pub block: Option<Block<'a>>,
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Rule<'a> {
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Rule"))]
+pub struct StyleRule<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub prelude: SelectorList<'a>,
-    pub block: CssBlock<'a>,
+    pub block: Block<'a>,
     #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RuleMetadata,
 }
@@ -170,17 +168,6 @@ pub struct PercentageSelector<'a> {
     pub value: Atom<'a>,
 }
 
-define_constant_string!(NestingSelectorName => "&");
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct NestingSelector {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub name: NestingSelectorName,
-}
-
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Nth"))]
@@ -188,6 +175,14 @@ pub struct NthSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct NestingSelector {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
 }
 
 #[derive(Debug)]
@@ -226,7 +221,7 @@ pub struct Combinator<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct CssBlock<'a> {
+pub struct Block<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub children: Vec<'a, BlockChild<'a>>,
@@ -237,8 +232,8 @@ pub struct CssBlock<'a> {
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub enum BlockChild<'a> {
     Declaration(Declaration<'a>),
-    Rule(Rule<'a>),
-    Atrule(Atrule<'a>),
+    StyleRule(StyleRule<'a>),
+    Atrule(AtRule<'a>),
 }
 
 #[derive(Debug)]
@@ -254,15 +249,15 @@ pub struct Declaration<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum CssNode<'a> {
+pub enum Node<'a> {
     StyleSheet(StyleSheet<'a>),
-    Rule(Rule<'a>),
-    Atrule(Atrule<'a>),
+    Rule(StyleRule<'a>),
+    Atrule(AtRule<'a>),
     SelectorList(SelectorList<'a>),
-    Block(CssBlock<'a>),
+    Block(Block<'a>),
     ComplexSelector(ComplexSelector<'a>),
     RelativeSelector(RelativeSelector<'a>),
     Combinator(Combinator<'a>),
     SimpleSelector(SimpleSelector<'a>),
-    Declaration(Declaration<'a>),
+    Declaration(Rule<'a>),
 }
