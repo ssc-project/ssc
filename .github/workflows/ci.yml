@@ -52,7 +52,7 @@ jobs:
       # Only need to build the test to create a warm cache on the main branch
       - name: Build cache by Cargo Check and Cargo Test
         if: ${{ github.ref_name == 'main' }}
-        run: cargo test --quiet --no-run
+        run: cargo test --quiet --no-run --workspace --exclude 'oxc_*'
 
   typos:
     name: Spell Check
@@ -169,4 +169,4 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - name: Install Rust
         uses: ./.github/actions/rustup
-      - run: cargo test --quiet
+      - run: cargo test --quiet --workspace --exclude 'oxc_*'
