@@ -77,7 +77,7 @@ Svelte oxide is free and open-source software licensed under the [MIT License](.
 
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://github.com/a-rustacean/svelte-oxide/blob/main/LICENSE
-[ci-badge]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml/badge.svg?event=push&branch=master
-[ci-url]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml?query=event%3Apush+branch%3Amaster
+[ci-badge]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [code-size-badge]: https://img.shields.io/github/languages/code-size/a-rustacean/svelte-oxide
 [code-size-url]: https://github.com/a-rustacean/svelte-oxide
