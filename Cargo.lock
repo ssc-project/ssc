@@ -583,10 +583,8 @@ name = "svelte_oxide_css_codegen"
 version = "0.1.0"
 dependencies = [
  "base64",
- "bitflags",
  "oxc_allocator",
  "oxc_sourcemap",
- "oxc_span",
  "oxc_syntax",
  "svelte_oxide_css_ast",
  "svelte_oxide_css_parser",

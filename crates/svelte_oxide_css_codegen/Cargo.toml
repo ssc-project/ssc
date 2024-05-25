@@ -16,11 +16,9 @@ categories.workspace   = true
 doctest = false
 
 [dependencies]
-oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_sourcemap = { workspace = true }
-bitflags      = { workspace = true }
 
 svelte_oxide_css_ast = { workspace = true }
 
