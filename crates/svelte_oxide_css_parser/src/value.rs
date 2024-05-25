@@ -6,7 +6,7 @@ use crate::{Kind, ParserImpl};
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_value(&mut self) -> Result<Atom<'a>> {
         let mut in_url = false;
-        let span = self.start_span();
+        let start = self.prev_token_end;
 
         while !self.at(Kind::Eof) {
             if in_url {
@@ -16,10 +16,24 @@ impl<'a> ParserImpl<'a> {
                     self.eat(self.cur_kind());
                 }
             } else if self.at(Kind::Semicolon) || self.at(Kind::LCurly) || self.at(Kind::RCurly) {
-                let span = self.end_span(span);
-                return Ok(Atom::from(
-                    &self.source_text[(span.start as usize)..(span.end as usize)],
-                ));
+                let end = self.prev_token_end;
+                let starting_source = &self.source_text[(start as usize)..];
+                let ending_source = &self.source_text[..(end as usize)];
+                let end_trimmed = ending_source.trim_end();
+                let end = if ending_source != end_trimmed {
+                    let offset = (ending_source.len() - end_trimmed.len()) as u32;
+                    (end - offset).max(start)
+                } else {
+                    end
+                };
+                let start_trimmed = starting_source.trim_start();
+                let start = if start_trimmed != starting_source {
+                    let offset = (starting_source.len() - start_trimmed.len()) as u32;
+                    (start + offset).min(end)
+                } else {
+                    start
+                };
+                return Ok(Atom::from(&self.source_text[(start as usize)..(end as usize)]));
             } else {
                 self.eat(self.cur_kind());
             }
@@ -29,16 +43,34 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_identifier(&mut self) -> Result<Atom<'a>> {
-        let span = self.start_span();
+        let start = self.cur_token().start;
+
+        if !self.eat(Kind::Ident)
+            && !self.eat(Kind::Minus)
+            && !self.eat(Kind::Of)
+            && !self.eat(Kind::Even)
+            && !self.eat(Kind::Odd)
+            && !self.eat(Kind::Url)
+            && !self.eat(Kind::N)
+        {
+            return Err(self.unexpected());
+        }
 
         while !self.at(Kind::Eof) {
-            if self.eat(Kind::Ident) || self.eat(Kind::Minus) {
+            if self.prev_token_end == self.cur_token().start
+                && (self.eat(Kind::Ident)
+                    || self.eat(Kind::Minus)
+                    || self.eat(Kind::Of)
+                    || self.eat(Kind::Even)
+                    || self.eat(Kind::Odd)
+                    || self.eat(Kind::Url)
+                    || self.eat(Kind::Number)
+                    || self.eat(Kind::N))
+            {
                 continue;
             } else {
-                let span = self.end_span(span);
-                return Ok(Atom::from(
-                    &self.source_text[(span.start as usize)..(span.end as usize)],
-                ));
+                let ident = &self.source_text[(start as usize)..(self.prev_token_end as usize)];
+                return Ok(Atom::from(ident));
             }
         }
         Err(self.unexpected())
