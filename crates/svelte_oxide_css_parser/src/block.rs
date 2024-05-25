@@ -5,7 +5,6 @@ use crate::{Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_block(&mut self) -> Result<Block<'a>> {
-        println!("parsing block");
         self.expect(Kind::LCurly)?;
         let mut children = self.ast.new_vec();
         let span = self.start_span();
@@ -24,7 +23,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_block_child(&mut self) -> Result<BlockChild<'a>> {
-        println!("parsing block child");
         if self.at(Kind::At) {
             return self.parse_at_rule().map(BlockChild::AtRule);
         }
@@ -44,7 +42,6 @@ impl<'a> ParserImpl<'a> {
     fn parse_declaration(&mut self) -> Result<Declaration<'a>> {
         let span = self.start_span();
 
-        self.expect_without_advance(Kind::Ident)?;
         let property = self.parse_identifier()?;
         self.expect(Kind::Colon)?;
         let value = self.parse_value()?;

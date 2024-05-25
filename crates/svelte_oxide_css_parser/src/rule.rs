@@ -36,7 +36,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_style_rule(&mut self) -> Result<StyleRule<'a>> {
-        println!("parsing style rule");
         let span = self.start_span();
         let prelude = self.parse_selector_list(false)?;
         let block = self.parse_block()?;

@@ -9,7 +9,6 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         inside_pseudo_class: bool,
     ) -> Result<SelectorList<'a>> {
-        println!("parsing selector list");
         let span = self.start_span();
         let mut children = self.ast.new_vec();
         let ending_kind = if inside_pseudo_class { Kind::RParen } else { Kind::LCurly };
@@ -29,7 +28,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_selector(&mut self, inside_pseudo_class: bool) -> Result<ComplexSelector<'a>> {
-        println!("parsing selector");
         let list_span = self.start_span();
         let mut children = self.ast.new_vec();
         let ending_kind = if inside_pseudo_class { Kind::RParen } else { Kind::LCurly };
