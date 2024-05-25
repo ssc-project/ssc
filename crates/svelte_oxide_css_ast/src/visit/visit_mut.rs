@@ -163,7 +163,7 @@ pub mod walk_mut {
         match child {
             BlockChild::Declaration(decl) => visitor.visit_declaration(decl),
             BlockChild::StyleRule(rule) => visitor.visit_style_rule(rule),
-            BlockChild::Atrule(rule) => visitor.visit_at_rule(rule),
+            BlockChild::AtRule(rule) => visitor.visit_at_rule(rule),
         }
     }
 

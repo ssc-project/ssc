@@ -250,7 +250,7 @@ pub struct Block<'a> {
 pub enum BlockChild<'a> {
     Declaration(Declaration<'a>),
     StyleRule(StyleRule<'a>),
-    Atrule(AtRule<'a>),
+    AtRule(AtRule<'a>),
 }
 
 #[derive(Debug)]
