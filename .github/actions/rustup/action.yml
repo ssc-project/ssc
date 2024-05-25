@@ -3,6 +3,10 @@ name: Rustup
 description: Install Rust with minimal profile and additional components
 
 inputs:
+  nightly:
+    default: false
+    required: false
+    type: boolean
   # See https://rust-lang.github.io/rustup/concepts/components.html
   clippy:
     default: false
@@ -54,10 +58,29 @@ runs:
       run: |
         sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
         cat rust-toolchain.toml
+        
+    - name: Change to nightly channel on MacOS
+      shell: bash
+      if: ${{ (inputs.nightly == 'true') && (runner.os == 'macOS') }}
+      run: |
+        sed -i '' -e 's/channel = "*"/channel = "nightly"/g' rust-toolchain.toml
+        cat rust-toolchain.toml
+
+    - name: Change to nightly channel on non-MacOS
+      shell: bash
+      if: ${{ (inputs.nightly == 'true') && (runner.os != 'macOS') }}
+      run: |
+        sed -i -e 's/channel = "*"/channel = "nightly"/g' rust-toolchain.toml
+        cat rust-toolchain.toml
 
     - name: Set minimal
       shell: bash
       run: rustup set profile minimal
+
+    - name: Install nightly toolchain
+      shell: bash
+      if: ${{ inputs.nightly = 'true' }}
+      run: rustup toolchain install nightly
 
     - name: Add Clippy
       shell: bash
