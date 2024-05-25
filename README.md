@@ -21,23 +21,23 @@ Here's a feature roadmap:
 
 - [x] AST
 - [x] CSS AST
-- [ ] CSS Parser
-  - [ ] Rule
-    - [ ] AtRule
-    - [ ] StyleRule
-  - [ ] Selector
-    - [ ] TypeSelector
-    - [ ] IdSelector
-    - [ ] ClassSelector
-    - [ ] AttributeSelector
-    - [ ] PseudoElementSelector
-    - [ ] PseudoClassSelector
-    - [ ] PercentageSelector
-    - [ ] NthSelector
-    - [ ] NestingSelector
-    - [ ] Combinator
-  - [ ] Block
-  - [ ] Declaration
+- [x] CSS Parser
+  - [x] Rule
+    - [x] AtRule
+    - [x] StyleRule
+  - [x] Selector
+    - [x] TypeSelector
+    - [x] IdSelector
+    - [x] ClassSelector
+    - [x] AttributeSelector
+    - [x] PseudoElementSelector
+    - [x] PseudoClassSelector
+    - [x] PercentageSelector
+    - [x] NthSelector
+    - [x] NestingSelector
+    - [x] Combinator
+  - [x] Block
+  - [x] Declaration
 - [ ] Parser
   - [ ] Script
   - [ ] StyleSheet
