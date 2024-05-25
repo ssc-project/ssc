@@ -39,89 +39,89 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
 
             // this is a workaround, because if-let chains arn't stable yet.
-            'matching: {
-                if self.eat(Kind::Amp) {
+            let continue_checking = if self.eat(Kind::Amp) {
+                relative_selector.selectors.push(self.ast.nesting_selector(self.end_span(span)));
+                false
+            } else if self.eat(Kind::Star) {
+                let name =
+                    if self.eat(Kind::Pipe) { self.parse_identifier()? } else { Atom::from("*") };
+
+                relative_selector.selectors.push(self.ast.type_selector(span, name));
+                false
+            } else if self.eat(Kind::Hash) {
+                let name = self.parse_identifier()?;
+                relative_selector.selectors.push(self.ast.id_selector(self.end_span(span), name));
+                false
+            } else if self.eat(Kind::Dot) {
+                let name = self.parse_identifier()?;
+                relative_selector
+                    .selectors
+                    .push(self.ast.class_selector(self.end_span(span), name));
+                false
+            } else if self.eat(Kind::Colon2) {
+                let name = self.parse_identifier()?;
+                relative_selector.selectors.push(self.ast.pseudo_element_selector(span, name));
+
+                // We parse the inner selectors of a pseudo element to ensure it parses correctly,
+                // but we don't do anything with the result
+                if self.eat(Kind::LParen) {
+                    self.parse_selector_list(true)?;
+                    self.expect(Kind::RParen)?;
+                }
+                false
+            } else if self.eat(Kind::Colon) {
+                let name = self.parse_identifier()?;
+
+                let args = if self.eat(Kind::LParen) {
+                    let args = self.parse_selector_list(true)?;
+                    self.expect(Kind::RParen)?;
+                    Some(args)
+                } else {
+                    None
+                };
+
+                relative_selector.selectors.push(self.ast.pseudo_class_selector(
+                    self.end_span(span),
+                    name,
+                    args,
+                ));
+                false
+            } else if self.eat(Kind::LBrack) {
+                let name = self.parse_identifier()?;
+                let matcher = self.parse_matcher()?;
+
+                let value =
+                    if matcher.is_some() { Some(self.parse_attribute_value()?) } else { None };
+
+                let flags = self
+                    .parse_identifier()
+                    .ok()
+                    .and_then(|flags| (!flags.as_str().is_empty()).then_some(flags));
+
+                self.expect(Kind::RBrack)?;
+
+                relative_selector.selectors.push(self.ast.attribute_selector(
+                    self.end_span(span),
+                    name,
+                    matcher,
+                    value,
+                    flags,
+                ));
+                false
+            } else if inside_pseudo_class {
+                if let Some(value) = self.parse_nth_selector()? {
                     relative_selector
                         .selectors
-                        .push(self.ast.nesting_selector(self.end_span(span)));
-                } else if self.eat(Kind::Star) {
-                    let name = if self.eat(Kind::Pipe) {
-                        self.parse_identifier()?
-                    } else {
-                        Atom::from("*")
-                    };
-
-                    relative_selector.selectors.push(self.ast.type_selector(span, name));
-                } else if self.eat(Kind::Hash) {
-                    let name = self.parse_identifier()?;
-                    relative_selector
-                        .selectors
-                        .push(self.ast.id_selector(self.end_span(span), name));
-                } else if self.eat(Kind::Dot) {
-                    let name = self.parse_identifier()?;
-                    relative_selector
-                        .selectors
-                        .push(self.ast.class_selector(self.end_span(span), name));
-                } else if self.eat(Kind::Colon2) {
-                    let name = self.parse_identifier()?;
-                    relative_selector.selectors.push(self.ast.pseudo_element_selector(span, name));
-
-                    // We parse the inner selectors of a pseudo element to ensure it parses correctly,
-                    // but we don't do anything with the result
-                    if self.eat(Kind::LParen) {
-                        self.parse_selector_list(true)?;
-                        self.expect(Kind::RParen)?;
-                    }
-                } else if self.eat(Kind::Colon) {
-                    let name = self.parse_identifier()?;
-
-                    let args = if self.eat(Kind::LParen) {
-                        let args = self.parse_selector_list(true)?;
-                        self.expect(Kind::RParen)?;
-                        Some(args)
-                    } else {
-                        None
-                    };
-
-                    relative_selector.selectors.push(self.ast.pseudo_class_selector(
-                        self.end_span(span),
-                        name,
-                        args,
-                    ));
-                } else if self.eat(Kind::LBrack) {
-                    let name = self.parse_identifier()?;
-                    println!("Name: {}", name);
-                    let matcher = self.parse_matcher()?;
-
-                    println!("Matcher: {:?}", matcher);
-
-                    let value =
-                        if matcher.is_some() { Some(self.parse_attribute_value()?) } else { None };
-
-                    println!("Value: {:?}", value);
-
-                    let flags = self
-                        .parse_identifier()
-                        .ok()
-                        .and_then(|flags| (!flags.as_str().is_empty()).then_some(flags));
-
-                    self.expect(Kind::RBrack)?;
-
-                    relative_selector.selectors.push(self.ast.attribute_selector(
-                        self.end_span(span),
-                        name,
-                        matcher,
-                        value,
-                        flags,
-                    ));
-                } else if inside_pseudo_class {
-                    if let Some(value) = self.parse_nth_selector()? {
-                        relative_selector
-                            .selectors
-                            .push(self.ast.nth_selector(self.end_span(span), value));
-                        break 'matching;
-                    }
-                } else if let Some(value) = self.parse_percentage_selector()? {
+                        .push(self.ast.nth_selector(self.end_span(span), value));
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            };
+            if continue_checking {
+                if let Some(value) = self.parse_percentage_selector()? {
                     relative_selector
                         .selectors
                         .push(self.ast.percentage_selector(self.end_span(span), value));
@@ -253,7 +253,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_nth_selector_end(&mut self) -> Result<()> {
-        if self.eat(Kind::Comma) || self.eat(Kind::RParen) || self.eat(Kind::Of) {
+        if self.at(Kind::Comma) || self.at(Kind::RParen) || self.eat(Kind::Of) {
             return Ok(());
         }
         Err(self.unexpected())
