@@ -79,7 +79,7 @@ runs:
 
     - name: Install nightly toolchain
       shell: bash
-      if: ${{ inputs.nightly = 'true' }}
+      if: ${{ inputs.nightly == 'true' }}
       run: rustup toolchain install nightly
 
     - name: Add Clippy
