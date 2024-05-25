@@ -135,9 +135,33 @@ pub struct AttributeSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
-    pub matcher: Option<Atom<'a>>,
+    pub matcher: Option<AttributeMatcher>,
     pub value: Option<Atom<'a>>,
     pub flags: Option<Atom<'a>>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(untagged))]
+pub enum AttributeMatcher {
+    #[cfg_attr(feature = "serialize", serde(rename = "~="))]
+    /// `~=`
+    Substring,
+    #[cfg_attr(feature = "serialize", serde(rename = "^="))]
+    /// `^=`
+    Prefix,
+    #[cfg_attr(feature = "serialize", serde(rename = "$="))]
+    /// `$=`
+    Suffix,
+    #[cfg_attr(feature = "serialize", serde(rename = "*="))]
+    /// `*=`
+    Includes,
+    #[cfg_attr(feature = "serialize", serde(rename = "|="))]
+    /// `|=`
+    DashMatch,
+    #[cfg_attr(feature = "serialize", serde(rename = "="))]
+    /// `=`
+    Equal,
 }
 
 #[derive(Debug)]
