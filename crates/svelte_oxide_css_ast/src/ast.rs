@@ -95,7 +95,7 @@ pub struct ComplexSelectorMetadata {
 pub struct RelativeSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub combinator: Option<Combinator<'a>>,
+    pub combinator: Option<Combinator>,
     pub selectors: Vec<'a, SimpleSelector<'a>>,
     #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RelativeSelectorMetadata,
@@ -212,10 +212,27 @@ pub struct RelativeSelectorMetadata {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Combinator<'a> {
+pub struct Combinator {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: Atom<'a>,
+    #[cfg_attr(feature = "serialize", serde(rename = "name"))]
+    pub kind: CombinatorKind,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(untagged))]
+pub enum CombinatorKind {
+    #[cfg_attr(feature = "serialize", serde(rename = "+"))]
+    NextSibling,
+    #[cfg_attr(feature = "serialize", serde(rename = "~"))]
+    LaterSibling,
+    #[cfg_attr(feature = "serialize", serde(rename = ">"))]
+    Child,
+    #[cfg_attr(feature = "serialize", serde(rename = "||"))]
+    Column,
+    #[cfg_attr(feature = "serialize", serde(rename = " "))]
+    Descendant,
 }
 
 #[derive(Debug)]
@@ -257,7 +274,7 @@ pub enum Node<'a> {
     Block(Block<'a>),
     ComplexSelector(ComplexSelector<'a>),
     RelativeSelector(RelativeSelector<'a>),
-    Combinator(Combinator<'a>),
+    Combinator(Combinator),
     SimpleSelector(SimpleSelector<'a>),
     Declaration(Rule<'a>),
 }

@@ -56,7 +56,7 @@ ast_kinds! {
     PercentageSelector(&'a PercentageSelector<'a>),
     NthSelector(&'a NthSelector<'a>),
     NestingSelector(&'a NestingSelector),
-    Combinator(&'a Combinator<'a>),
+    Combinator(&'a Combinator),
     Declaration(&'a Declaration<'a>),
 }
 

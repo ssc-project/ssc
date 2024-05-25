@@ -101,7 +101,7 @@ pub trait VisitMut<'a>: Sized {
         walk_nesting_selector_mut(self, selector);
     }
 
-    fn visit_combinator(&mut self, combinator: &mut Combinator<'a>) {
+    fn visit_combinator(&mut self, combinator: &mut Combinator) {
         walk_combinator_mut(self, combinator);
     }
 }
@@ -320,10 +320,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_combinator_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        _combinator: &mut Combinator<'a>,
-    ) {
+    pub fn walk_combinator_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _combinator: &mut Combinator) {
         let kind = AstType::Combinator;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
