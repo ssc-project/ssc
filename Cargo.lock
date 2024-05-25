@@ -544,6 +544,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "svelte_oxide_css_parser"
+version = "0.13.1"
+dependencies = [
+ "assert-unchecked",
+ "memchr",
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+ "seq-macro",
+ "static_assertions",
+ "svelte_oxide_css_ast",
+]
+
+[[package]]
 name = "svelte_oxide_parser"
 version = "0.1.0"
 
