@@ -294,6 +294,7 @@ mod test {
     // Source with length MAX_LEN + 1 fails to parse.
     // Skip this test on 32-bit systems as impossible to allocate a string
     // longer than `isize::MAX`.
+    #[cfg(not(debug_assertions))]
     #[cfg(target_pointer_width = "64")]
     #[test]
     fn overlong_source() {
