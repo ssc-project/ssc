@@ -22,6 +22,7 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
+          nightly: true
           docs: true
 
       - name: Create rustdoc
