@@ -1,0 +1,39 @@
+name: Docs
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  push:
+    branches:
+      -  main
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  rustdoc:
+    name: Rustdoc
+    runs-on: macos-latest
+
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+
+      - name: Create rustdoc
+        run: cargo doc --all --no-deps -Zunstable-options -Zrustdoc-scrape-examples
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: target/doc
+          clean: true
+          git-config-email: a-rustacean@outlook.com
+          commit-message: "Update documentation"
+          single-commit: true
