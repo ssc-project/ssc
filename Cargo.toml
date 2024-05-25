@@ -3,48 +3,46 @@ members  = ["crates/*"]
 resolver = "2"
 
 
-  [workspace.package]
-  authors      = ["Dilshad <a-rustacean@outlook.com>"]
-  categories   = ["development-tools", "web-programming", "compilers"]
-  description  = "A collection of Svelte tools written in Rust."
-  edition      = "2021"
-  homepage     = "https://github.com/a-rustacean/svelte-oxide#readme"
-  keywords     = ["svelte", "compiler"]
-  license      = "MIT"
-  readme       = "README.md"
-  repository   = "https://github.com/a-rustacean/svelte-oxide"
-  rust-version = "1.74"
+[workspace.package]
+authors      = ["Dilshad <a-rustacean@outlook.com>"]
+categories   = ["compilers", "development-tools", "web-programming"]
+description  = "A collection of Svelte tools written in Rust."
+edition      = "2021"
+homepage     = "https://github.com/a-rustacean/svelte-oxide#readme"
+keywords     = ["compiler", "svelte"]
+license      = "MIT"
+readme       = "README.md"
+repository   = "https://github.com/a-rustacean/svelte-oxide"
+rust-version = "1.74"
 
-  [workspace.dependencies]
-  assert-unchecked  = "0.1.2"
-  bitflags          = "2.5.0"
-  memchr            = "2.7.2"
-  num-bigint        = "0.4.4"
-  num-traits        = "0.2.18"
-  rustc-hash        = "1.1.0"
-  seq-macro         = "0.3.5"
-  static_assertions = "1.1.0"
+[workspace.dependencies]
+assert-unchecked  = "0.1.2"
+bitflags          = "2.5.0"
+memchr            = "2.7.2"
+num-bigint        = "0.4.4"
+num-traits        = "0.2.18"
+rustc-hash        = "1.1.0"
+seq-macro         = "0.3.5"
+static_assertions = "1.1.0"
+base64            = "0.22.0"
 
-  # Oxc
-  oxc_allocator   = "0.13.1"
-  oxc_ast         = "0.13.1"
-  oxc_diagnostics = "0.13.1"
-  oxc_parser      = { version = "0.13.1", path = "crates/oxc_parser" }
-  oxc_span        = "0.13.1"
-  oxc_syntax      = "0.13.1"
+# Oxc
+oxc_allocator   = "0.13.1"
+oxc_ast         = "0.13.1"
+oxc_diagnostics = "0.13.1"
+oxc_parser      = { version = "0.13.1", path = "crates/oxc_parser" }
+oxc_span        = "0.13.1"
+oxc_syntax      = "0.13.1"
+oxc_sourcemap   = "0.13.1"
 
-  # Svelte Oxide
-  svelte_oxide          = { version = "0.1.0", path = "crates/svelte_oxide" }
-  svelte_oxide_analyzer = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
-  svelte_oxide_ast      = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
-  svelte_oxide_css_ast  = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
-  svelte_oxide_parser   = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
+# Svelte Oxide
+svelte_oxide             = { version = "0.1.0", path = "crates/svelte_oxide" }
+svelte_oxide_analyzer    = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
+svelte_oxide_ast         = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
+svelte_oxide_css_ast     = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
+svelte_oxide_parser      = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
+svelte_oxide_css_codegen = { version = "0.1.0", path = "crates/svelte_oxide_css_codegen" }
+svelte_oxide_css_parser  = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
 
-  [workspace.metadata.cargo-shear]
-  ignored = [
-    "oxc_parser",
-    "svelte_oxide_ast",
-    "svelte_oxide_analyzer",
-    "svelte_oxide",
-    "svelte_oxide_parser",
-  ]
+[workspace.metadata.cargo-shear]
+ignored = ["oxc_parser", "svelte_oxide", "svelte_oxide_analyzer", "svelte_oxide_ast", "svelte_oxide_parser"]
