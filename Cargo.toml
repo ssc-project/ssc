@@ -45,4 +45,11 @@ svelte_oxide_css_codegen = { version = "0.1.0", path = "crates/svelte_oxide_css_
 svelte_oxide_css_parser  = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["oxc_parser", "svelte_oxide", "svelte_oxide_analyzer", "svelte_oxide_ast", "svelte_oxide_parser"]
+ignored = [
+  "oxc_parser",
+  "svelte_oxide",
+  "svelte_oxide_analyzer",
+  "svelte_oxide_ast",
+  "svelte_oxide_css_codegen",
+  "svelte_oxide_parser",
+]
