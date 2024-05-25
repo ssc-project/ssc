@@ -2,10 +2,10 @@ name: Docs
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: "0 * * * *"
   push:
     branches:
-      -  main
+      - main
 
 env:
   CARGO_INCREMENTAL: 0
@@ -19,13 +19,13 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
         with:
-          profile: minimal
+          docs: true
 
       - name: Create rustdoc
-        run: cargo doc --all --no-deps -Zunstable-options -Zrustdoc-scrape-examples
+        run: cargo +nightly doc --all --no-deps -Zunstable-options -Zrustdoc-scrape-examples
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.8
