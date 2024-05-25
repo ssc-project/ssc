@@ -47,31 +47,25 @@ runs:
 
     - name: Change to minimal profile on MacOS
       shell: bash
-      if: runner.os == 'macOS'
+      if: ${{ (inputs.nightly != 'true') && (runner.os == 'macOS') }}
       run: |
         sed -i '' -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
         cat rust-toolchain.toml
 
     - name: Change to minimal profile on non-MacOS
       shell: bash
-      if: runner.os != 'macOS'
+      if: ${{ (inputs.nightly != 'true') && (runner.os != 'macOS') }}
       run: |
         sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
         cat rust-toolchain.toml
-        
-    - name: Change to nightly channel on MacOS
-      shell: bash
-      if: ${{ (inputs.nightly == 'true') && (runner.os == 'macOS') }}
-      run: |
-        sed -i '' -e 's/channel = "*"/channel = "nightly"/g' rust-toolchain.toml
-        cat rust-toolchain.toml
 
-    - name: Change to nightly channel on non-MacOS
+    - name: Update rust-toolchain.toml
       shell: bash
-      if: ${{ (inputs.nightly == 'true') && (runner.os != 'macOS') }}
+      if: ${{ (inputs.nightly == 'true') }}
       run: |
-        sed -i -e 's/channel = "*"/channel = "nightly"/g' rust-toolchain.toml
+        echo -e "[toolchain]\nchannel = \"nightly\"\nprofile = \"minimal\"" > rust-toolchain.toml
         cat rust-toolchain.toml
+        rustup toolchain install nightly
 
     - name: Set minimal
       shell: bash
