@@ -40,6 +40,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AtRule<'a> {
         p.print_indent();
         p.print(b'@');
         p.print_str(self.name.as_bytes());
+        p.print_hard_space();
         p.print_str(self.prelude.as_bytes());
         if let Some(block) = self.block.as_ref() {
             p.print_soft_space();
