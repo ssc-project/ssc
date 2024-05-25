@@ -19,8 +19,12 @@ where
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for StyleSheet<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
-        for child in &self.children {
+        let len = self.children.len();
+        for (i, child) in self.children.iter().enumerate() {
             child.gen(p);
+            if (i + 1) != len {
+                p.print_soft_newline();
+            }
         }
     }
 }
