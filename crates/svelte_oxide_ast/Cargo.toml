@@ -24,4 +24,4 @@ rustc-hash = { workspace = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
-serialize = ["dep:serde", "oxc_span/serialize", "oxc_ast/serialize"]
+serialize = ["dep:serde", "oxc_ast/serialize", "oxc_span/serialize"]
