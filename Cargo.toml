@@ -55,5 +55,6 @@ ignored = [
   "svelte_oxide_analyzer",
   "svelte_oxide_ast",
   "svelte_oxide_css_codegen",
+  "svelte_oxide_css_transformer",
   "svelte_oxide_parser",
 ]
