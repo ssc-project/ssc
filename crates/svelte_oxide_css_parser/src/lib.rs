@@ -135,7 +135,7 @@ mod parser_parse {
     impl<'a> Parser<'a> {
         /// Main entry point
         ///
-        /// Returns an empty `Program` on unrecoverable error,
+        /// Returns an empty `StyleSheet` on unrecoverable error,
         /// Recoverable errors are stored inside `errors`.
         pub fn parse(self) -> ParserReturn<'a> {
             let unique = UniquePromise::new();
