@@ -7,7 +7,7 @@ use std::{
 
 use oxc_span::Span;
 
-/// Single or multiline comment
+/// Comment
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
     pub end: u32,
