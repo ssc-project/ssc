@@ -21,7 +21,7 @@ svelte_oxide_css_ast = { workspace = true }
 
 rustc-hash = { workspace = true }
 
-serde = { version = "1", features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 serialize = ["dep:serde", "oxc_ast/serialize", "oxc_span/serialize"]
