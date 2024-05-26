@@ -29,5 +29,10 @@ static_assertions = { workspace = true }
 
 memchr = { workspace = true }
 
+[dev-dependencies]
+svelte_oxide_css_ast = { workspace = true, features = ["serialize"] }
+serde_json           = { workspace = true }
+ouroboros            = { workspace = true }
+
 [features]
 benchmarking = []
