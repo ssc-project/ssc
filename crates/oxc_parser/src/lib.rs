@@ -232,6 +232,19 @@ mod parser_parse {
             );
             parser.parse()
         }
+
+        pub fn parse_from_position(self, pos: u32) -> ParserReturn<'a> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new_from_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                pos,
+                unique,
+            );
+            parser.parse()
+        }
     }
 }
 use parser_parse::UniquePromise;
@@ -287,6 +300,29 @@ impl<'a> ParserImpl<'a> {
     ) -> Self {
         Self {
             lexer: Lexer::new(allocator, source_text, source_type, unique),
+            source_type,
+            source_text,
+            errors: vec![],
+            token: Token::default(),
+            prev_token_end: 0,
+            state: ParserState::default(),
+            ctx: Self::default_context(source_type, options),
+            ast: AstBuilder::new(allocator),
+            preserve_parens: options.preserve_parens,
+        }
+    }
+
+    #[inline]
+    pub fn new_from_position(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParserOptions,
+        pos: u32,
+        unique: UniquePromise,
+    ) -> Self {
+        Self {
+            lexer: Lexer::new_from_position(allocator, source_text, source_type, pos, unique),
             source_type,
             source_text,
             errors: vec![],

@@ -135,6 +135,36 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub(super) fn new_from_position(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        pos: u32,
+        unique: UniquePromise,
+    ) -> Self {
+        let mut source = Source::new(source_text, unique);
+
+        source.set_position(unsafe { source.position().add(pos as usize) });
+
+        // The first token is at the start of file, so is allows on a new line
+        let token = Token::new_on_new_line();
+        Self {
+            allocator,
+            source,
+            source_type,
+            token,
+            errors: vec![],
+            lookahead: VecDeque::with_capacity(4), /* 4 is the maximum
+                                                    * lookahead for
+                                                    * TypeScript */
+            context: LexerContext::Regular,
+            trivia_builder: TriviaBuilder::default(),
+            escaped_strings: FxHashMap::default(),
+            escaped_templates: FxHashMap::default(),
+            multi_line_comment_end_finder: None,
+        }
+    }
+
     /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for
     /// benchmarks. This function must NOT be exposed in public API as it
     /// breaks safety invariants.
