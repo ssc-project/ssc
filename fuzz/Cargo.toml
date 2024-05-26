@@ -1,0 +1,21 @@
+[package]
+name    = "svelte_oxide_fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[package.metadata]
+cargo-fuzz = true
+
+[[bin]]
+name = "css_parser"
+path = "fuzz_targets/css_parser.rs"
+
+[dependencies]
+oxc_allocator = { version = "0.13.1" }
+svelte_oxide_css_parser = { path = "../crates/svelte_oxide_css_parser" }
+libfuzzer-sys = "0.4.7"
