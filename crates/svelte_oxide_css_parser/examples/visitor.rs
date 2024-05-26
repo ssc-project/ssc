@@ -24,10 +24,10 @@ fn main() -> std::io::Result<()> {
         println!("{error:?}");
     }
 
-    let program = ret.stylesheet;
+    let stylesheet = ret.stylesheet;
 
     let mut ast_pass = CountASTNodes::default();
-    ast_pass.visit_stylesheet(&program);
+    ast_pass.visit_stylesheet(&stylesheet);
     println!("{ast_pass:?}");
 
     Ok(())
