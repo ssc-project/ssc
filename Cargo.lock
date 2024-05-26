@@ -607,6 +607,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "svelte_oxide_css_transformer"
+version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_span",
+ "svelte_oxide_css_ast",
+ "svelte_oxide_css_codegen",
+ "svelte_oxide_css_parser",
+]
+
+[[package]]
 name = "svelte_oxide_parser"
 version = "0.1.0"
 

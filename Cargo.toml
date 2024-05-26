@@ -36,13 +36,14 @@ oxc_syntax      = "0.13.1"
 oxc_sourcemap   = "0.13.1"
 
 # Svelte Oxide
-svelte_oxide             = { version = "0.1.0", path = "crates/svelte_oxide" }
-svelte_oxide_analyzer    = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
-svelte_oxide_ast         = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
-svelte_oxide_css_ast     = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
-svelte_oxide_parser      = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
-svelte_oxide_css_codegen = { version = "0.1.0", path = "crates/svelte_oxide_css_codegen" }
-svelte_oxide_css_parser  = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
+svelte_oxide                 = { version = "0.1.0", path = "crates/svelte_oxide" }
+svelte_oxide_analyzer        = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
+svelte_oxide_ast             = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
+svelte_oxide_css_ast         = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
+svelte_oxide_parser          = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
+svelte_oxide_css_codegen     = { version = "0.1.0", path = "crates/svelte_oxide_css_codegen" }
+svelte_oxide_css_parser      = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
+svelte_oxide_css_transformer = { version = "0.1.0", path = "crates/svelte_oxide_css_transformer" }
 
 [workspace.metadata.cargo-shear]
 ignored = [
