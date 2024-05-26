@@ -19,7 +19,7 @@ pub trait VisitMut<'a>: Sized {
         walk_fragment_mut(self, fragment);
     }
 
-    fn visit_fragment_node(&mut self, node: &mut FragmentNodeKind<'a>) {
+    fn visit_fragment_node(&mut self, node: &mut FragmentNode<'a>) {
         walk_fragment_node_mut(self, node);
     }
 
@@ -159,13 +159,13 @@ pub mod walk_mut {
 
     pub fn walk_fragment_node_mut<'a, V: VisitMut<'a>>(
         visitor: &mut V,
-        node: &mut FragmentNodeKind<'a>,
+        node: &mut FragmentNode<'a>,
     ) {
         match node {
-            FragmentNodeKind::Text(text) => visitor.visit_text(text),
-            FragmentNodeKind::Tag(tag) => visitor.visit_tag(tag),
-            FragmentNodeKind::Element(element) => visitor.visit_element(element),
-            FragmentNodeKind::Block(block) => visitor.visit_block(block),
+            FragmentNode::Text(text) => visitor.visit_text(text),
+            FragmentNode::Tag(tag) => visitor.visit_tag(tag),
+            FragmentNode::Element(element) => visitor.visit_element(element),
+            FragmentNode::Block(block) => visitor.visit_block(block),
         }
     }
 

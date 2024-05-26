@@ -74,11 +74,7 @@ impl<'a> AstBuilder<'a> {
         Root { span, options: None, fragment, css, instance, module, metadata: RootMetadata { ts } }
     }
 
-    pub fn fragment(
-        &self,
-        nodes: Vec<'a, FragmentNodeKind<'a>>,
-        transparent: bool,
-    ) -> Fragment<'a> {
+    pub fn fragment(&self, nodes: Vec<'a, FragmentNode<'a>>, transparent: bool) -> Fragment<'a> {
         Fragment { nodes, transparent }
     }
 }

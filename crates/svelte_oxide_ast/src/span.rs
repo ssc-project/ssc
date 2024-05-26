@@ -2,13 +2,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::ast::*;
 
-impl<'a> GetSpan for FragmentNodeKind<'a> {
+impl<'a> GetSpan for FragmentNode<'a> {
     fn span(&self) -> Span {
         match self {
-            FragmentNodeKind::Text(text) => text.span,
-            FragmentNodeKind::Tag(tag) => tag.span(),
-            FragmentNodeKind::Element(element) => element.span(),
-            FragmentNodeKind::Block(block) => block.span(),
+            FragmentNode::Text(text) => text.span,
+            FragmentNode::Tag(tag) => tag.span(),
+            FragmentNode::Element(element) => element.span(),
+            FragmentNode::Block(block) => block.span(),
         }
     }
 }

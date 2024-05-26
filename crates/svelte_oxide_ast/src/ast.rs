@@ -96,14 +96,14 @@ pub struct BindingMetadata {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Fragment<'a> {
-    pub nodes: Vec<'a, FragmentNodeKind<'a>>,
+    pub nodes: Vec<'a, FragmentNode<'a>>,
     pub transparent: bool,
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum FragmentNodeKind<'a> {
+pub enum FragmentNode<'a> {
     Text(Text<'a>),
     Tag(Tag<'a>),
     Element(Element<'a>),
