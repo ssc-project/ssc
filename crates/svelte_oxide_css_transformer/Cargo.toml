@@ -20,5 +20,5 @@ svelte_oxide_css_ast = { workspace = true }
 [dev-dependencies]
 oxc_allocator = { workspace = true }
 
-svelte_oxide_css_parser = { workspace = true }
+svelte_oxide_css_parser  = { workspace = true }
 svelte_oxide_css_codegen = { workspace = true }
