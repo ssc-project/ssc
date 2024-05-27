@@ -27,3 +27,7 @@ seq-macro         = { workspace = true }
 static_assertions = { workspace = true }
 
 memchr = { workspace = true }
+
+[features]
+# Expose Lexer for benchmarks
+benchmarking = []
