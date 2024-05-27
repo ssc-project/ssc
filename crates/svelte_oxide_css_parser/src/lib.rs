@@ -42,7 +42,7 @@ pub mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use svelte_oxide_css_ast::{ast::StyleSheet, AstBuilder, Trivias};
 
 pub use crate::lexer::Kind; // re-export for codegen
@@ -142,6 +142,13 @@ mod parser_parse {
             let parser = ParserImpl::new(self.allocator, self.source_text, unique);
             parser.parse()
         }
+
+        pub fn parse_from_position(self, pos: u32) -> ParserReturn<'a> {
+            let unique = UniquePromise::new();
+            let parser =
+                ParserImpl::new_from_position(self.allocator, self.source_text, pos, unique);
+            parser.parse()
+        }
     }
 }
 use parser_parse::UniquePromise;
@@ -186,6 +193,23 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[inline]
+    pub fn new_from_position(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        pos: u32,
+        unique: UniquePromise,
+    ) -> Self {
+        Self {
+            lexer: Lexer::new_from_position(allocator, source_text, pos, unique),
+            source_text,
+            errors: vec![],
+            token: Token::default(),
+            prev_token_end: 0,
+            ast: AstBuilder::new(allocator),
+        }
+    }
+
     /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for
     /// unit tests. This function must NOT be exposed in public API as it
     /// breaks safety invariants.
@@ -206,8 +230,7 @@ impl<'a> ParserImpl<'a> {
             Ok(stylesheet) => (stylesheet, false),
             Err(error) => {
                 self.error(self.overlong_error().unwrap_or(error));
-                let stylesheet =
-                    self.ast.stylesheet(Span::default(), self.ast.new_vec(), Atom::from(""));
+                let stylesheet = self.ast.stylesheet(Span::default(), self.ast.new_vec());
                 (stylesheet, true)
             }
         };
@@ -224,11 +247,7 @@ impl<'a> ParserImpl<'a> {
 
         let children = self.parse_rules()?;
 
-        Ok(self.ast.stylesheet(
-            self.end_span(span),
-            children,
-            Atom::from(&self.cur_src()[(span.start as usize)..(span.end as usize)]),
-        ))
+        Ok(self.ast.stylesheet(self.end_span(span), children))
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
