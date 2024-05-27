@@ -2,11 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::{
     ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern, BooleanLiteral,
     CallExpression, CatchClause, Class, ClassBody, ExportSpecifier, Expression, Function,
-    IdentifierName, ImportDeclaration, ImportDefaultSpecifier, ImportNamespaceSpecifier,
-    ImportSpecifier, MemberExpression, MethodDefinition, ModuleDeclaration, NullLiteral,
-    NumericLiteral, ObjectExpression, ObjectProperty, PrivateIdentifier, Program,
-    PropertyDefinition, RegExpLiteral, SpreadElement, Statement, StringLiteral, Super, SwitchCase,
-    TemplateElement, VariableDeclaration, VariableDeclarator,
+    IdentifierName, IdentifierReference, ImportDeclaration, ImportDefaultSpecifier,
+    ImportNamespaceSpecifier, ImportSpecifier, MemberExpression, MethodDefinition,
+    ModuleDeclaration, NullLiteral, NumericLiteral, ObjectExpression, ObjectProperty,
+    PrivateIdentifier, Program, PropertyDefinition, RegExpLiteral, SpreadElement, Statement,
+    StringLiteral, Super, SwitchCase, TemplateElement, VariableDeclaration, VariableDeclarator,
 };
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
@@ -17,7 +17,7 @@ use svelte_oxide_css_ast::ast::{Node as CssNode, StyleSheet};
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct Binding<'a> {
-    pub node: IdentifierName<'a>,
+    pub node: IdentifierReference<'a>,
     pub kind: BindingKind,
     pub declaration_kind: DeclarationKind,
     pub initial: Option<BindingInitial<'a>>,
@@ -82,7 +82,7 @@ pub enum BindingInitial<'a> {
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct BindingReferences<'a> {
-    pub node: IdentifierName<'a>,
+    pub node: IdentifierReference<'a>,
     pub path: Vec<'a, SvelteNode<'a>>,
 }
 
@@ -173,7 +173,7 @@ pub struct ConstTag<'a> {
 pub struct DebugTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub identifiers: Vec<'a, IdentifierName<'a>>,
+    pub identifiers: Vec<'a, IdentifierReference<'a>>,
 }
 
 #[derive(Debug)]
@@ -407,7 +407,7 @@ pub struct EachBlock<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct EachBlockMetadata<'a> {
     pub contains_group_binding: bool,
-    pub array_name: Option<IdentifierName<'a>>,
+    pub array_name: Option<IdentifierReference<'a>>,
     pub index: IdentifierName<'a>,
     pub item: IdentifierName<'a>,
     pub declarations: FxHashMap<Atom<'a>, Binding<'a>>,
@@ -482,7 +482,7 @@ pub enum Node<'a> {
     ClassBody(ClassBody<'a>),
     Expression(Expression<'a>),
     Function(Function<'a>),
-    Identifier(IdentifierName<'a>),
+    Identifier(IdentifierReference<'a>),
     Literal(Literal<'a>),
     MethodDefinition(MethodDefinition<'a>),
     ModuleDeclaration(ModuleDeclaration<'a>),
@@ -636,7 +636,7 @@ pub enum CustomElementPropType {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum CustomElementExtend<'a> {
     ArrowFunction(ArrowFunctionExpression<'a>),
-    Identifier(IdentifierName<'a>),
+    Identifier(IdentifierReference<'a>),
 }
 
 #[derive(Debug)]
@@ -748,14 +748,14 @@ pub struct BindDirective<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum BindDirectiveExpression<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(IdentifierReference<'a>),
     MemberExpression(MemberExpression<'a>),
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct BindDirectiveMetadata<'a> {
-    pub binding_group_name: IdentifierName<'a>,
+    pub binding_group_name: IdentifierReference<'a>,
     pub parent_each_blocks: Vec<'a, &'a EachBlock<'a>>,
 }
 
@@ -791,7 +791,7 @@ pub struct LetDirective<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum LetDirectiveExpression<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(IdentifierReference<'a>),
     ArrayExpression(ArrayExpression<'a>),
     ObjectExpression(ObjectExpression<'a>),
 }
