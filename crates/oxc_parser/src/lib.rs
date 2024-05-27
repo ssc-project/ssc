@@ -176,6 +176,8 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
+    use oxc_ast::ast::{Expression, IdentifierReference};
+
     use super::*;
 
     /// `UniquePromise` is a way to use the type system to enforce the invariant
@@ -244,6 +246,34 @@ mod parser_parse {
                 unique,
             );
             parser.parse()
+        }
+
+        pub fn parse_expression_from_position(self, pos: u32) -> Result<Expression<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_from_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                pos,
+                unique,
+            );
+            parser.bump_any();
+            parser.parse_expression()
+        }
+
+        pub fn parse_identifier_from_position(self, pos: u32) -> Result<IdentifierReference<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_from_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                pos,
+                unique,
+            );
+            parser.bump_any();
+            parser.parse_identifier_reference()
         }
     }
 }
