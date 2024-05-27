@@ -62,11 +62,12 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn root(
         &self,
         span: Span,
         fragment: Fragment<'a>,
-        css: Option<StyleSheet<'a>>,
+        css: Option<Style<'a>>,
         instance: Option<Script<'a>>,
         module: Option<Script<'a>>,
         ts: bool,

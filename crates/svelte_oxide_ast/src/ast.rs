@@ -544,11 +544,30 @@ pub struct Root<'a> {
     pub span: Span,
     pub options: Option<SvelteOptions<'a>>,
     pub fragment: Fragment<'a>,
-    pub css: Option<StyleSheet<'a>>,
+    pub css: Option<Style<'a>>,
     pub instance: Option<Script<'a>>,
     pub module: Option<Script<'a>>,
     #[cfg_attr(feature = "serialize", serde(skip_serializing))]
     pub metadata: RootMetadata,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(rename = "StyleSheet", tag = "type"))]
+pub struct Style<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub attributes: Vec<'a, Attribute<'a>>,
+    pub stylesheet: StyleSheet<'a>,
+    pub content: StyleContent<'a>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct StyleContent<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub styles: Atom<'a>,
 }
 
 #[derive(Debug)]

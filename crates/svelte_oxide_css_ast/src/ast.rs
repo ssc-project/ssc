@@ -9,18 +9,7 @@ use serde::Serialize;
 pub struct StyleSheet<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    // TODO: add `attributes`
-    // pub attributes: Vec<'a, Attribute<'a>>,
     pub children: Vec<'a, Rule<'a>>,
-    pub content: StyleSheetContent<'a>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct StyleSheetContent<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub styles: Atom<'a>,
 }
 
 #[derive(Debug)]
