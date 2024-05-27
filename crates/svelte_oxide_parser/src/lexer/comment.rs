@@ -19,7 +19,6 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a> Lexer<'a> {
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_comment(&mut self) -> Kind {
-        println!("Skipping comment");
         // If `is_on_new_line` is already set, go directly to faster search
         // which only looks for `-->`
         if self.token.is_on_new_line {
