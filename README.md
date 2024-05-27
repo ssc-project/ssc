@@ -39,22 +39,22 @@ Here's a feature roadmap:
   - [x] Block
   - [x] Declaration
 - [ ] Parser
-  - [ ] Script
-  - [ ] StyleSheet
-  - [ ] Element
-    - [ ] Component
-    - [ ] TitleElement
-    - [ ] SlotElement
-    - [ ] RegularElement
-    - [ ] SvelteBody
-    - [ ] SvelteComponent
-    - [ ] SvelteDocument
-    - [ ] SvelteElement
-    - [ ] SvelteFragment
-    - [ ] SvelteHead
-    - [ ] SvelteOptionsRaw
-    - [ ] SvelteSelf
-    - [ ] SvelteWindow
+  - [x] Script
+  - [x] Style
+  - [x] Element
+    - [x] Component
+    - [x] TitleElement
+    - [x] SlotElement
+    - [x] RegularElement
+    - [x] SvelteBody
+    - [x] SvelteComponent
+    - [x] SvelteDocument
+    - [x] SvelteElement
+    - [x] SvelteFragment
+    - [x] SvelteHead
+    - [x] SvelteOptionsRaw
+    - [x] SvelteSelf
+    - [x] SvelteWindow
   - [ ] Block
     - [ ] EachBlock
     - [ ] IfBlock
@@ -67,7 +67,7 @@ Here's a feature roadmap:
     - [ ] ConstTag
     - [ ] DebugTag
     - [ ] RenderTag
-  - [ ] Text
+  - [x] Text
 - [ ] Analyzer
 - [ ] Transformer
 
