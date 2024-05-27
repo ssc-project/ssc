@@ -24,5 +24,11 @@ rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
-default   = []
-serialize = ["dep:serde", "oxc_allocator/serialize", "oxc_ast/serialize", "oxc_span/serialize"]
+default = []
+serialize = [
+  "dep:serde",
+  "oxc_allocator/serialize",
+  "oxc_ast/serialize",
+  "oxc_span/serialize",
+  "svelte_oxide_css_ast/serialize",
+]
