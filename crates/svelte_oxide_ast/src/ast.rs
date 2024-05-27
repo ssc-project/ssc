@@ -221,6 +221,56 @@ pub enum ElementAttribute<'a> {
     Directive(Directive<'a>),
 }
 
+impl<'a> ElementAttribute<'a> {
+    pub fn as_attribute(&self) -> Option<&Attribute<'a>> {
+        if let ElementAttribute::Attribute(attribute) = self {
+            Some(attribute)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_spread_attribute(&self) -> Option<&SpreadAttribute<'a>> {
+        if let ElementAttribute::SpreadAttribute(attribute) = self {
+            Some(attribute)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_directive(&self) -> Option<&Directive<'a>> {
+        if let ElementAttribute::Directive(directive) = self {
+            Some(directive)
+        } else {
+            None
+        }
+    }
+
+    pub fn attribute(self) -> Option<Attribute<'a>> {
+        if let ElementAttribute::Attribute(attribute) = self {
+            Some(attribute)
+        } else {
+            None
+        }
+    }
+
+    pub fn spread_attribute(self) -> Option<SpreadAttribute<'a>> {
+        if let ElementAttribute::SpreadAttribute(attribute) = self {
+            Some(attribute)
+        } else {
+            None
+        }
+    }
+
+    pub fn directive(self) -> Option<Directive<'a>> {
+        if let ElementAttribute::Directive(directive) = self {
+            Some(directive)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
