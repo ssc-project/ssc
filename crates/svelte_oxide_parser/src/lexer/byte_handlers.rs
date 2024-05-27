@@ -324,6 +324,9 @@ ascii_byte_handler!(SEM(lexer) {
 ascii_byte_handler!(LSS(lexer) {
     lexer.consume_char();
     if lexer.remaining().starts_with("!--") {
+        lexer.consume_char();
+        lexer.consume_char();
+        lexer.consume_char();
         lexer.skip_comment()
     } else {
         Kind::LAngle

@@ -19,8 +19,9 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a> Lexer<'a> {
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_comment(&mut self) -> Kind {
+        println!("Skipping comment");
         // If `is_on_new_line` is already set, go directly to faster search
-        // which only looks for `*/`
+        // which only looks for `-->`
         if self.token.is_on_new_line {
             return self.skip_comment_after_line_break(self.source.position());
         }
@@ -85,7 +86,7 @@ impl<'a> Lexer<'a> {
                     })
                 } else {
                     // Regular line break.
-                    // No need to look for more line breaks, so switch to faster search just for `*/`.
+                    // No need to look for more line breaks, so switch to faster search just for `-->`.
                     self.token.is_on_new_line = true;
                     // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
                     let after_line_break = unsafe { pos.add(1) };
@@ -112,15 +113,15 @@ impl<'a> Lexer<'a> {
         // would impose pointless cost on files which don't. So this is
         // the fastest solution.
         if self.multi_line_comment_end_finder.is_none() {
-            self.multi_line_comment_end_finder = Some(Finder::new("*/"));
+            self.multi_line_comment_end_finder = Some(Finder::new("-->"));
         }
         let finder = self.multi_line_comment_end_finder.as_ref().unwrap();
 
         let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
         if let Some(index) = finder.find(remaining) {
-            // SAFETY: `pos + index + 2` is end of `*/`, so a valid
+            // SAFETY: `pos + index + 2` is end of `-->`, so a valid
             // `SourcePosition`
-            self.source.set_position(unsafe { pos.add(index + 2) });
+            self.source.set_position(unsafe { pos.add(index + 3) });
             self.trivia_builder.add_comment(self.token.start, self.offset());
             Kind::Skip
         } else {
