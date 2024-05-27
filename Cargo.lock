@@ -687,6 +687,23 @@ dependencies = [
 [[package]]
 name = "svelte_oxide_parser"
 version = "0.1.0"
+dependencies = [
+ "assert-unchecked",
+ "memchr",
+ "ouroboros",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+ "seq-macro",
+ "serde_json",
+ "static_assertions",
+ "svelte_oxide_ast",
+ "svelte_oxide_css_parser",
+]
 
 [[package]]
 name = "syn"
