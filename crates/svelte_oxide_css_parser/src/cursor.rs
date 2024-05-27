@@ -40,18 +40,6 @@ impl<'a> ParserImpl<'a> {
         self.token.kind
     }
 
-    /// Get current source text
-    pub(crate) fn cur_src(&self) -> &'a str {
-        let range = self.cur_token().span();
-        // SAFETY:
-        // range comes from the parser, which are ensured to meeting the
-        // criteria of `get_unchecked`.
-        #[allow(unsafe_code)]
-        unsafe {
-            self.source_text.get_unchecked(range.start as usize..range.end as usize)
-        }
-    }
-
     /// Get current string
     pub(crate) fn cur_string(&self) -> &'a str {
         self.lexer.get_string(self.token)
