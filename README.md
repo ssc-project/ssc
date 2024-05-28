@@ -61,12 +61,12 @@ Here's a feature roadmap:
     - [ ] AwaitBlock
     - [ ] KeyBlock
     - [ ] SnippetBlock
-  - [ ] Tag
-    - [ ] ExpressionTag
-    - [ ] HtmlTag
-    - [ ] ConstTag
-    - [ ] DebugTag
-    - [ ] RenderTag
+  - [x] Tag
+    - [x] ExpressionTag
+    - [x] HtmlTag
+    - [x] ConstTag
+    - [x] DebugTag
+    - [x] RenderTag
   - [x] Text
 - [ ] Analyzer
 - [ ] Transformer
