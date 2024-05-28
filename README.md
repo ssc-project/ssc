@@ -14,8 +14,10 @@ The goal is to build a parser, analyzer, transformer, formatter, linter, languag
 
 ## Development
 
-Svelte oxide is still in it's early stages of development, a lot of features still need to be implemented before it
-is ready for production use.
+> [!Warning]
+> Svelte Oxide is still in it's early stages of development and should not be used in production code.
+
+A lot of features still need to be implemented before it is ready for production use.
 
 Here's a feature roadmap:
 
@@ -38,7 +40,7 @@ Here's a feature roadmap:
     - [x] Combinator
   - [x] Block
   - [x] Declaration
-- [ ] Parser
+- [x] Parser
   - [x] Script
   - [x] Style
   - [x] Element
@@ -55,12 +57,12 @@ Here's a feature roadmap:
     - [x] SvelteOptionsRaw
     - [x] SvelteSelf
     - [x] SvelteWindow
-  - [ ] Block
-    - [ ] EachBlock
-    - [ ] IfBlock
-    - [ ] AwaitBlock
-    - [ ] KeyBlock
-    - [ ] SnippetBlock
+  - [x] Block
+    - [x] EachBlock
+    - [x] IfBlock
+    - [x] AwaitBlock
+    - [x] KeyBlock
+    - [x] SnippetBlock
   - [x] Tag
     - [x] ExpressionTag
     - [x] HtmlTag
@@ -70,6 +72,8 @@ Here's a feature roadmap:
   - [x] Text
 - [ ] Analyzer
 - [ ] Transformer
+
+This roadmap just shows which part is implemented, none of the code is properly tested.
 
 ## License
 
