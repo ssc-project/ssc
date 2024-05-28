@@ -98,19 +98,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for
-    /// benchmarks. This function must NOT be exposed in public API as it
-    /// breaks safety invariants.
-    #[cfg(feature = "benchmarking")]
-    pub fn new_for_benchmarks(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, unique)
-    }
-
     /// Remaining string from `Source`
     pub fn remaining(&self) -> &'a str {
         self.source.remaining()
