@@ -295,6 +295,7 @@ mod parser_parse {
                 pos,
                 unique,
             );
+            parser.bump_any();
             parser.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Clause),
                 kind,
@@ -311,6 +312,7 @@ mod parser_parse {
                 pos,
                 unique,
             );
+            parser.bump_any();
             parser.parse_binding_pattern(true)
         }
     }
