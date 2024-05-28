@@ -1,8 +1,11 @@
 use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_ast::ast::{Expression, IdentifierReference, Program, VariableDeclaration};
-use oxc_span::{Atom, Span};
+use oxc_ast::ast::{
+    BindingPattern, Expression, IdentifierName, IdentifierReference, Program, VariableDeclaration,
+};
+use oxc_span::{Atom, Span, SPAN};
+use rustc_hash::FxHashMap;
 use svelte_oxide_css_ast::ast::StyleSheet;
 
 use crate::ast::*;
@@ -413,5 +416,84 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn render_tag(&self, span: Span, expression: RenderTagExpression<'a>) -> RenderTag<'a> {
         RenderTag { span, expression }
+    }
+
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    pub fn each_block(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        context: BindingPattern<'a>,
+        body: Fragment<'a>,
+        fallback: Option<Fragment<'a>>,
+        index: Option<IdentifierName<'a>>,
+        key: Option<Expression<'a>>,
+    ) -> EachBlock<'a> {
+        EachBlock {
+            span,
+            expression,
+            context,
+            body,
+            fallback,
+            index,
+            key,
+            metadata: EachBlockMetadata {
+                contains_group_binding: false,
+                array_name: None,
+                index: IdentifierName::new(SPAN, self.new_atom("")),
+                item: IdentifierName::new(SPAN, self.new_atom("")),
+                declarations: FxHashMap::default(),
+                references: self.new_vec(),
+                is_controlled: false,
+            },
+        }
+    }
+
+    #[inline]
+    pub fn if_block(
+        &self,
+        span: Span,
+        elseif: bool,
+        test: Expression<'a>,
+        consequent: Fragment<'a>,
+        alternate: Option<Fragment<'a>>,
+    ) -> IfBlock<'a> {
+        IfBlock { span, elseif, test, consequent, alternate }
+    }
+
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    pub fn await_block(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        value: Option<BindingPattern<'a>>,
+        error: Option<BindingPattern<'a>>,
+        pending: Option<Fragment<'a>>,
+        then: Option<Fragment<'a>>,
+        catch: Option<Fragment<'a>>,
+    ) -> AwaitBlock<'a> {
+        AwaitBlock { span, expression, value, error, pending, then, catch }
+    }
+
+    #[inline]
+    pub fn key_block(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        fragment: Fragment<'a>,
+    ) -> KeyBlock<'a> {
+        KeyBlock { span, expression, fragment }
+    }
+
+    pub fn snippet_block(
+        &self,
+        span: Span,
+        expression: IdentifierName<'a>,
+        parameters: Vec<'a, BindingPattern<'a>>,
+        body: Fragment<'a>,
+    ) -> SnippetBlock<'a> {
+        SnippetBlock { span, expression, parameters, body }
     }
 }
