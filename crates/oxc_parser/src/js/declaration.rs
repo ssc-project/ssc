@@ -70,7 +70,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
     }
 
-    fn parse_variable_declarator(
+    pub(crate) fn parse_variable_declarator(
         &mut self,
         decl_ctx: VariableDeclarationContext,
         kind: VariableDeclarationKind,

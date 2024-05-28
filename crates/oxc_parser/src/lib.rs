@@ -176,7 +176,11 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
-    use oxc_ast::ast::{Expression, IdentifierReference};
+    use oxc_ast::ast::{
+        Expression, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
+    };
+
+    use self::js::{VariableDeclarationContext, VariableDeclarationParent};
 
     use super::*;
 
@@ -274,6 +278,26 @@ mod parser_parse {
             );
             parser.bump_any();
             parser.parse_identifier_reference()
+        }
+
+        pub fn parse_variable_declarator_from_position(
+            self,
+            pos: u32,
+            kind: VariableDeclarationKind,
+        ) -> Result<VariableDeclarator<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_from_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                pos,
+                unique,
+            );
+            parser.parse_variable_declarator(
+                VariableDeclarationContext::new(VariableDeclarationParent::Clause),
+                kind,
+            )
         }
     }
 }
