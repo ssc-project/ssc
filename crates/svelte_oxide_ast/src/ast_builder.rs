@@ -1,7 +1,7 @@
 use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_ast::ast::{Expression, Program};
+use oxc_ast::ast::{Expression, IdentifierReference, Program, VariableDeclaration};
 use oxc_span::{Atom, Span};
 use svelte_oxide_css_ast::ast::StyleSheet;
 
@@ -280,15 +280,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn expression_tag(&self, span: Span, expression: Expression<'a>) -> ExpressionTag<'a> {
-        ExpressionTag {
-            span,
-            expression,
-            metadata: ExpressionTagMetadata { contains_call_expression: false, dynamic: false },
-        }
-    }
-
-    #[inline]
     pub fn animate_directive(
         &self,
         span: Span,
@@ -389,5 +380,38 @@ impl<'a> AstBuilder<'a> {
         expression: Option<Expression<'a>>,
     ) -> Directive<'a> {
         Directive::UseDirective(UseDirective { span, name, expression })
+    }
+
+    #[inline]
+    pub fn expression_tag(&self, span: Span, expression: Expression<'a>) -> ExpressionTag<'a> {
+        ExpressionTag {
+            span,
+            expression,
+            metadata: ExpressionTagMetadata { contains_call_expression: false, dynamic: false },
+        }
+    }
+
+    #[inline]
+    pub fn html_tag(&self, span: Span, expression: Expression<'a>) -> HtmlTag<'a> {
+        HtmlTag { span, expression }
+    }
+
+    #[inline]
+    pub fn const_tag(&self, span: Span, declaration: VariableDeclaration<'a>) -> ConstTag<'a> {
+        ConstTag { span, declaration }
+    }
+
+    #[inline]
+    pub fn debug_tag(
+        &self,
+        span: Span,
+        identifiers: Vec<'a, IdentifierReference<'a>>,
+    ) -> DebugTag<'a> {
+        DebugTag { span, identifiers }
+    }
+
+    #[inline]
+    pub fn render_tag(&self, span: Span, expression: RenderTagExpression<'a>) -> RenderTag<'a> {
+        RenderTag { span, expression }
     }
 }
