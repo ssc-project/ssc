@@ -19,10 +19,10 @@ impl<'a> ParserImpl<'a> {
                 let element = self.parse_element()?;
                 nodes.push(FragmentNode::Element(element));
             } else if self.at(Kind::LCurly) {
-                if self.peek_at(Kind::Hash)
-                    || self.peek_at(Kind::Colon)
-                    || self.peek_at(Kind::Slash)
-                {
+                if self.peek_at(Kind::Colon) || self.peek_at(Kind::Slash) {
+                    break;
+                }
+                if self.peek_at(Kind::Hash) {
                     let block = self.parse_block()?;
                     nodes.push(FragmentNode::Block(block));
                 } else {

@@ -456,6 +456,7 @@ ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char
 
 ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char {
     "cript" => Kind::Script,
+    "nippet" => Kind::Snippet,
     "tyle" => Kind::Style,
     _ => Kind::Ident,
 });

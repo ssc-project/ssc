@@ -553,7 +553,7 @@ impl<'a> SourcePosition<'a> {
     /// make it before the start of `Source` this `SourcePosition` was
     /// created from.
     #[inline]
-    pub(super) unsafe fn sub(self, n: usize) -> Self {
+    pub(crate) unsafe fn sub(self, n: usize) -> Self {
         Self::new(self.ptr.sub(n))
     }
 
