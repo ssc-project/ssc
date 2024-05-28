@@ -12,10 +12,15 @@ members = ["."]
 cargo-fuzz = true
 
 [[bin]]
+name = "parser"
+path = "fuzz_targets/parser.rs"
+
+[[bin]]
 name = "css_parser"
 path = "fuzz_targets/css_parser.rs"
 
 [dependencies]
 oxc_allocator = { version = "0.13.1" }
+svelte_oxide_parser = { path = "../crates/svelte_oxide_parser" }
 svelte_oxide_css_parser = { path = "../crates/svelte_oxide_css_parser" }
 libfuzzer-sys = "0.4.7"
