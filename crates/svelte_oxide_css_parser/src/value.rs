@@ -1,7 +1,7 @@
 use oxc_diagnostics::Result;
-use oxc_span::Atom;
+use oxc_span::{Atom, Span};
 
-use crate::{Kind, ParserImpl};
+use crate::{diagnostics, Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_value(&mut self) -> Result<Atom<'a>> {
@@ -39,7 +39,8 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Err(self.unexpected())
+        let end = self.cur_token().start;
+        Err(diagnostics::unexpected_end(Span::new(end, end)))
     }
 
     pub(crate) fn parse_identifier(&mut self) -> Result<Atom<'a>> {
@@ -73,6 +74,7 @@ impl<'a> ParserImpl<'a> {
                 return Ok(Atom::from(ident));
             }
         }
-        Err(self.unexpected())
+        let end = self.cur_token().start;
+        Err(diagnostics::unexpected_end(Span::new(end, end)))
     }
 }

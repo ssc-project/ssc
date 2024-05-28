@@ -2,7 +2,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 use svelte_oxide_css_ast::ast::*;
 
-use crate::{diagnostics::invalid_css_selector, Kind, ParserImpl};
+use crate::{diagnostics, diagnostics::invalid_css_selector, Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_selector_list(
@@ -24,7 +24,8 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::Comma)?;
         }
 
-        Err(self.unexpected())
+        let end = self.cur_token().start;
+        Err(diagnostics::unexpected_end(Span::new(end, end)))
     }
 
     fn parse_selector(&mut self, inside_pseudo_class: bool) -> Result<ComplexSelector<'a>> {
@@ -173,7 +174,8 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Err(self.unexpected())
+        let end = self.cur_token().start;
+        Err(diagnostics::unexpected_end(Span::new(end, end)))
     }
 
     fn parse_matcher(&mut self) -> Result<Option<AttributeMatcher>> {

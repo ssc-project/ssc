@@ -46,3 +46,8 @@ pub fn unterminated_string(span0: Span) -> OxcDiagnostic {
 pub fn invalid_css_selector(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid selector").with_labels([span0.into()])
 }
+
+#[cold]
+pub fn unexpected_end(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected end of file").with_labels([span0.into()])
+}
