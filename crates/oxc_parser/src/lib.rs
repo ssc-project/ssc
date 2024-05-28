@@ -177,7 +177,8 @@ impl<'a> Parser<'a> {
 
 mod parser_parse {
     use oxc_ast::ast::{
-        Expression, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
+        BindingPattern, Expression, IdentifierReference, VariableDeclarationKind,
+        VariableDeclarator,
     };
 
     use self::js::{VariableDeclarationContext, VariableDeclarationParent};
@@ -298,6 +299,19 @@ mod parser_parse {
                 VariableDeclarationContext::new(VariableDeclarationParent::Clause),
                 kind,
             )
+        }
+
+        pub fn parse_binding_pattern_from_position(self, pos: u32) -> Result<BindingPattern<'a>> {
+            let unique = UniquePromise::new();
+            let mut parser = ParserImpl::new_from_position(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                pos,
+                unique,
+            );
+            parser.parse_binding_pattern(true)
         }
     }
 }
