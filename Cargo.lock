@@ -617,6 +617,16 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "svelte_oxide"
 version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_span",
+ "svelte_oxide_ast",
+ "svelte_oxide_css_ast",
+ "svelte_oxide_css_codegen",
+ "svelte_oxide_css_parser",
+ "svelte_oxide_css_transformer",
+ "svelte_oxide_parser",
+]
 
 [[package]]
 name = "svelte_oxide_analyzer"

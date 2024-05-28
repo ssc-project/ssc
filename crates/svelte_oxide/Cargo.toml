@@ -13,3 +13,22 @@ rust-version.workspace = true
 version                = "0.1.0"
 
 [dependencies]
+oxc_allocator = { workspace = true }
+oxc_span      = { workspace = true }
+
+svelte_oxide_ast    = { workspace = true }
+svelte_oxide_parser = { workspace = true }
+
+svelte_oxide_css_ast         = { workspace = true, optional = true }
+svelte_oxide_css_parser      = { workspace = true, optional = true }
+svelte_oxide_css_codegen     = { workspace = true, optional = true }
+svelte_oxide_css_transformer = { workspace = true, optional = true }
+
+[features]
+default = []
+css = [
+  "dep:svelte_oxide_css_ast",
+  "dep:svelte_oxide_css_codegen",
+  "dep:svelte_oxide_css_parser",
+  "dep:svelte_oxide_css_transformer",
+]
