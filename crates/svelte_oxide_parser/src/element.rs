@@ -465,8 +465,9 @@ impl<'a> ParserImpl<'a> {
             Ok(self.ast.new_vec_single(AttributeSequenceValue::ExpressionTag(
                 self.ast.expression_tag(self.end_span(span), expression),
             )))
-        } else if self.eat(Kind::Str) {
+        } else if self.at(Kind::Str) {
             let raw = self.cur_string();
+            self.bump_any();
             if raw.is_empty() {
                 return Ok(self.ast.new_vec_single(AttributeSequenceValue::Text(
                     self.ast.text(self.end_span(span), self.ast.new_atom(raw)),
@@ -493,7 +494,7 @@ impl<'a> ParserImpl<'a> {
                         SourceType::default().with_typescript(self.ts),
                     );
                     let expression = parser.parse_expression_from_position(span.start + i + 1)?;
-                    i = expression.span().end;
+                    i = expression.span().end - span.start - 1;
                     if raw.as_bytes()[i as usize] == b'}' {
                         i += 1;
                     } else {
@@ -504,9 +505,10 @@ impl<'a> ParserImpl<'a> {
                         ));
                     }
                     cur_chunk_start = i;
-                    list.push(AttributeSequenceValue::ExpressionTag(
-                        self.ast.expression_tag(Span::new(start, i), expression),
-                    ));
+                    list.push(AttributeSequenceValue::ExpressionTag(self.ast.expression_tag(
+                        Span::new(span.start + start + 1, span.start + i + 1),
+                        expression,
+                    )));
                 } else {
                     i += 1;
                 }
