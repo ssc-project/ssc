@@ -46,3 +46,91 @@ pub fn unterminated_string(span0: Span) -> OxcDiagnostic {
 pub fn unexpected_end(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected end of file").with_labels([span0.into()])
 }
+
+#[cold]
+pub fn invalid_render_tag_expression(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("`{@render ...}` tags can only contain call expression")
+        .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn invalid_modifier(span0: Span, name: &str, valid: &[&str]) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Invalid modifier `{}`, valid modifiers are: {}",
+        name,
+        valid.join(", ")
+    ))
+    .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn duplicate_script(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element").with_labels([
+        LabeledSpan::new_with_span(Some("First top-level script defined here".to_string()), span0),
+        LabeledSpan::new_with_span(Some("It cannot be redefined here".to_string()), span1)
+    ])
+}
+
+#[cold]
+pub fn duplicate_style(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A component can have a single top-level `<style>` element").with_labels([
+        LabeledSpan::new_with_span(
+            Some("First top-level `<style>` element first defined here".to_string()),
+            span0,
+        ),
+        LabeledSpan::new_with_span(Some("It cannot be redefined here".to_string()), span1),
+    ])
+}
+
+#[cold]
+pub fn missing_directive_name(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Missing directive name").with_labels([span0.into()])
+}
+
+#[cold]
+pub fn invalid_directive_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Directive value must be a JavaScript expression enclosed in curly braces")
+        .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn invalid_bind_directive_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Bind directive value must be an identifier or a member expression")
+        .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn missing_class_directive_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Missing class directive value").with_labels([span0.into()])
+}
+
+#[cold]
+pub fn invalid_let_directive_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Let directive value must one of identifier, array expression, or object expression",
+    )
+    .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn unknown_directive_type(span0: Span, name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Unknown directive `{}`, valid directives are: `animate`, `bind`, `class`, `let`, `on`, `style`, `transition`, `in`, `out`, `use`", name)).with_labels([span0.into()])
+}
+
+#[cold]
+pub fn svelte_component_missing_this(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("`<svelte:component>` must have a 'this' attribute")
+        .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn svelte_component_invalid_this(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid component definition - must be an `{expression}`")
+        .with_labels([span0.into()])
+}
+
+#[cold]
+pub fn svelte_element_missing_this(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("`<svelte:element>` must have a 'this' attribute")
+        .with_labels([span0.into()])
+}

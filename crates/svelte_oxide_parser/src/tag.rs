@@ -4,7 +4,7 @@ use oxc_ast::ast::{
 use oxc_diagnostics::Result;
 use svelte_oxide_ast::ast::*;
 
-use crate::{Kind, ParserImpl};
+use crate::{diagnostics, Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_tag(&mut self) -> Result<Tag<'a>> {
@@ -41,21 +41,22 @@ impl<'a> ParserImpl<'a> {
                 Tag::DebugTag(self.ast.debug_tag(self.end_span(span), identifiers))
             } else if self.eat(Kind::Render) {
                 let expression = self.parse_js_expression()?;
+                self.expect(Kind::RCurly)?;
+                let span = self.end_span(span);
                 let expression = match expression {
                     Expression::ChainExpression(expr) => {
                         if let ChainElement::CallExpression(expr) = expr.unbox().expression {
                             RenderTagExpression::Chain(expr.unbox())
                         } else {
-                            todo!("report error")
+                            return Err(diagnostics::invalid_render_tag_expression(span));
                         }
                     }
                     Expression::CallExpression(expr) => RenderTagExpression::Call(expr.unbox()),
                     _ => {
-                        todo!("report error")
+                        return Err(diagnostics::invalid_render_tag_expression(span));
                     }
                 };
-                self.expect(Kind::RCurly)?;
-                Tag::RenderTag(self.ast.render_tag(self.end_span(span), expression))
+                Tag::RenderTag(self.ast.render_tag(span, expression))
             } else {
                 return Err(self.unexpected());
             };

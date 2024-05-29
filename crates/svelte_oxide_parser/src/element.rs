@@ -7,24 +7,22 @@ use svelte_oxide_ast::{ast::*, AstBuilder};
 use crate::{diagnostics, Kind, ParserImpl};
 
 macro_rules! parse_modifiers {
-    ($ident: ident ($alloc: expr) {$($value: literal => $mod: expr),* $(,)?}) => {
+    ($ident: ident ($start: expr) in ($alloc: expr) {$($value: literal => $mod: expr),* $(,)?}) => {
         {
-            let count: usize = [$({
-                #[allow(clippy::no_effect)]
-                $value;
-                1
-            }),*].into_iter().sum();
-            if $ident.len() > count {
-                todo!("report error")
-            }
             let mut modifiers = Vec::new_in($alloc);
+            let mut start = $start;
             for modifier in $ident.iter() {
                 modifiers.push(match *modifier {
                     $($value => $mod),*,
                     _ => {
-                        todo!("report error")
+                        return Err(diagnostics::invalid_modifier(
+                            Span::new(start, start + modifier.len() as u32),
+                            modifier,
+                            &[$($value),*]
+                        ));
                     }
                 });
+                start += modifier.len() as u32 + 1;
             }
             modifiers
         }
@@ -37,9 +35,9 @@ impl<'a> ParserImpl<'a> {
         &mut self,
     ) -> Result<(Fragment<'a>, Option<Style<'a>>, Option<Script<'a>>, Option<Script<'a>>)> {
         let mut nodes = self.ast.new_vec();
-        let mut stylesheet = None;
-        let mut script = None;
-        let mut module = None;
+        let mut style: Option<Style<'a>> = None;
+        let mut script: Option<Script<'a>> = None;
+        let mut module: Option<Script<'a>> = None;
 
         while !self.at(Kind::Eof) {
             if self.prev_token_end != self.cur_token().start {
@@ -50,23 +48,28 @@ impl<'a> ParserImpl<'a> {
                     let cur_script = self.parse_script()?;
 
                     if cur_script.context == ScriptContext::Default {
-                        if script.is_some() {
-                            todo!("report error")
+                        if let Some(script) = script {
+                            return Err(diagnostics::duplicate_script(
+                                script.span,
+                                cur_script.span,
+                            ));
                         } else {
                             script = Some(cur_script);
                         }
-                    } else if module.is_some() {
-                        todo!("report error")
+                        continue;
+                    }
+                    if let Some(module) = module {
+                        return Err(diagnostics::duplicate_script(module.span, cur_script.span));
                     } else {
                         module = Some(cur_script);
                     }
                 } else if self.peek_at(Kind::Style) {
-                    let cur_stylesheet = self.parse_style()?;
+                    let cur_style = self.parse_style()?;
 
-                    if stylesheet.is_some() {
-                        todo!("report error")
+                    if let Some(style) = style {
+                        return Err(diagnostics::duplicate_style(style.span, cur_style.span));
                     } else {
-                        stylesheet = Some(cur_stylesheet);
+                        style = Some(cur_style);
                     }
                 } else {
                     let element = self.parse_element()?;
@@ -90,7 +93,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let fragment = self.ast.fragment(nodes, false);
-        Ok((fragment, stylesheet, script, module))
+        Ok((fragment, style, script, module))
     }
 
     pub(crate) fn parse_script(&mut self) -> Result<Script<'a>> {
@@ -293,22 +296,27 @@ impl<'a> ParserImpl<'a> {
             }
         } else {
             let name = self.parse_identifier()?;
-            let value = if self.eat(Kind::Eq) {
-                AttributeValue::Sequence(self.parse_attribute_value()?)
+            let (value, value_span) = if self.eat(Kind::Eq) {
+                let span = self.start_span();
+                let value = AttributeValue::Sequence(self.parse_attribute_value()?);
+                (value, self.end_span(span))
             } else {
-                AttributeValue::Bool(true)
+                let start = self.cur_token().start;
+                (AttributeValue::Bool(true), Span::new(start, start))
             };
 
             if let Some(colon_index) = name.as_str().chars().position(|ch| ch == ':') {
                 let directive_type = &name[..colon_index];
                 let rest = &name[(colon_index + 1).min(name.len() - 1)..];
                 let mut modifiers = rest.split('|');
-                let Some(directive_name) = modifiers.next() else { todo!("return error") };
+                let Some(directive_name) = modifiers.next() else {
+                    return Err(diagnostics::missing_directive_name(self.end_span(span)));
+                };
                 let modifiers: std::vec::Vec<_> = modifiers.collect();
 
                 if directive_type == "style" {
                     let modifiers = parse_modifiers! {
-                        modifiers (self.allocator) {
+                        modifiers (span.start + 2 + (directive_type.len() as u32) + (directive_name.len() as u32)) in (self.allocator) {
                             "important" => StyleDirectiveModifier::Important
                         }
                     };
@@ -324,12 +332,12 @@ impl<'a> ParserImpl<'a> {
                     let first = seq.remove(0);
                     let expression = if let AttributeSequenceValue::ExpressionTag(tag) = first {
                         if !seq.is_empty() {
-                            todo!("report error")
+                            return Err(diagnostics::invalid_directive_value(value_span));
                         } else {
                             tag.expression
                         }
                     } else {
-                        todo!("report error")
+                        return Err(diagnostics::invalid_directive_value(value_span));
                     };
                     Some(expression)
                 } else {
@@ -362,9 +370,7 @@ impl<'a> ParserImpl<'a> {
                                 MemberExpression::PrivateFieldExpression(expr),
                             )
                         }
-                        _ => {
-                            todo!("report error")
-                        }
+                        _ => return Err(diagnostics::invalid_bind_directive_value(value_span)),
                     };
                     Ok(ElementAttribute::Directive(self.ast.bind_directive(
                         self.end_span(span),
@@ -372,7 +378,9 @@ impl<'a> ParserImpl<'a> {
                         expression,
                     )))
                 } else if directive_type == "class" {
-                    let Some(expression) = expression else { todo!("report error") };
+                    let Some(expression) = expression else {
+                        return Err(diagnostics::missing_class_directive_value(value_span));
+                    };
                     Ok(ElementAttribute::Directive(self.ast.class_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
@@ -381,18 +389,18 @@ impl<'a> ParserImpl<'a> {
                 } else if directive_type == "let" {
                     let expression = expression.map(|expression| match expression {
                         Expression::Identifier(ident) => {
-                            LetDirectiveExpression::Identifier(ident.unbox())
+                            Ok(LetDirectiveExpression::Identifier(ident.unbox()))
                         }
                         Expression::ArrayExpression(expr) => {
-                            LetDirectiveExpression::ArrayExpression(expr.unbox())
+                            Ok(LetDirectiveExpression::ArrayExpression(expr.unbox()))
                         }
                         Expression::ObjectExpression(expr) => {
-                            LetDirectiveExpression::ObjectExpression(expr.unbox())
+                            Ok(LetDirectiveExpression::ObjectExpression(expr.unbox()))
                         }
-                        _ => {
-                            todo!("report error")
-                        }
+                        _ => Err(diagnostics::invalid_let_directive_value(value_span)),
                     });
+                    let expression =
+                        if let Some(expression) = expression { Some(expression?) } else { None };
                     Ok(ElementAttribute::Directive(self.ast.let_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
@@ -413,7 +421,7 @@ impl<'a> ParserImpl<'a> {
                     || directive_type == "transition"
                 {
                     let modifiers = parse_modifiers! {
-                        modifiers (self.allocator) {
+                        modifiers (span.start + 2 + (directive_type.len() as u32) + (directive_name.len() as u32)) in (self.allocator) {
                             "local" => TransitionDirectiveModifier::Local,
                             "global" => TransitionDirectiveModifier::Global,
                         }
@@ -434,7 +442,10 @@ impl<'a> ParserImpl<'a> {
                         expression,
                     )))
                 } else {
-                    todo!("report error")
+                    return Err(diagnostics::unknown_directive_type(
+                        self.end_span(span),
+                        directive_type,
+                    ));
                 }
             } else {
                 Ok(ElementAttribute::Attribute(self.ast.attribute(
@@ -486,7 +497,11 @@ impl<'a> ParserImpl<'a> {
                     if raw.as_bytes()[i as usize] == b'}' {
                         i += 1;
                     } else {
-                        todo!("return error")
+                        return Err(diagnostics::expect_token(
+                            "}",
+                            &raw.as_bytes()[i as usize].to_string(),
+                            Span::new(span.start + i + 1, span.start + i + 2),
+                        ));
                     }
                     cur_chunk_start = i;
                     list.push(AttributeSequenceValue::ExpressionTag(
@@ -533,22 +548,22 @@ fn create_element<'a>(
             let this_attribute = if let Some(this_attribute_index) = this_attribute_index {
                 attributes.remove(this_attribute_index)
             } else {
-                todo!("return error")
+                return Err(diagnostics::svelte_component_missing_this(span));
             };
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
             let mut values = if let AttributeValue::Sequence(seq) = this_attribute.value {
                 seq
             } else {
-                todo!("return error");
+                return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             };
             if values.len() != 1 {
-                todo!("return error");
+                return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             }
             let value = values.remove(0);
             let expression = if let AttributeSequenceValue::ExpressionTag(tag) = value {
                 tag.expression
             } else {
-                todo!("return error")
+                return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             };
             ast.svelte_component(span, attributes, fragment, expression)
         }
@@ -564,16 +579,16 @@ fn create_element<'a>(
             let this_attribute = if let Some(this_attribute_index) = this_attribute_index {
                 attributes.remove(this_attribute_index)
             } else {
-                todo!("return error")
+                return Err(diagnostics::svelte_element_missing_this(span));
             };
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
             let mut values = if let AttributeValue::Sequence(seq) = this_attribute.value {
                 seq
             } else {
-                todo!("return error");
+                return Err(diagnostics::svelte_element_missing_this(span));
             };
             if values.len() != 1 {
-                todo!("return error");
+                return Err(diagnostics::svelte_element_missing_this(span));
             }
             let value = values.remove(0);
             let expression = match value {
