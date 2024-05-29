@@ -432,8 +432,8 @@ impl<'a> ParserImpl<'a> {
                         self.ast.new_atom(directive_name),
                         expression,
                         modifiers,
-                        directive_type == "in",
-                        directive_type == "out",
+                        directive_type == "in" || directive_name == "transition",
+                        directive_type == "out" || directive_name == "transition",
                     )))
                 } else if directive_type == "use" {
                     Ok(ElementAttribute::Directive(self.ast.use_directive(
