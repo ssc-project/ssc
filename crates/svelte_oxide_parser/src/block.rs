@@ -58,25 +58,35 @@ impl<'a> ParserImpl<'a> {
         } else if self.eat(Kind::Await) {
             let expression = self.parse_js_expression()?;
             let (value, error, pending, then, catch) = if self.eat(Kind::Then) {
-                let value = self.parse_js_binding_pattern()?;
-                self.expect(Kind::RCurly)?;
+                let value = if self.eat(Kind::RCurly) {
+                    None
+                } else {
+                    let value = self.parse_js_binding_pattern()?;
+                    self.expect(Kind::RCurly)?;
+                    Some(value)
+                };
                 let then_nodes = self.parse_fragment_nodes()?;
                 let then = self.ast.fragment(then_nodes, false);
                 self.expect(Kind::LCurly)?;
                 self.expect(Kind::Slash)?;
                 self.expect(Kind::Await)?;
                 self.expect(Kind::RCurly)?;
-                (Some(value), None, None, Some(then), None)
+                (value, None, None, Some(then), None)
             } else if self.eat(Kind::Catch) {
-                let error = self.parse_js_binding_pattern()?;
-                self.expect(Kind::RCurly)?;
+                let error = if self.eat(Kind::RCurly) {
+                    None
+                } else {
+                    let error = self.parse_js_binding_pattern()?;
+                    self.expect(Kind::RCurly)?;
+                    Some(error)
+                };
                 let catch_nodes = self.parse_fragment_nodes()?;
                 let catch = self.ast.fragment(catch_nodes, false);
                 self.expect(Kind::LCurly)?;
                 self.expect(Kind::Slash)?;
                 self.expect(Kind::Await)?;
                 self.expect(Kind::RCurly)?;
-                (None, Some(error), None, None, Some(catch))
+                (None, error, None, None, Some(catch))
             } else {
                 self.expect(Kind::RCurly)?;
                 let pending_nodes = self.parse_fragment_nodes()?;
@@ -84,31 +94,46 @@ impl<'a> ParserImpl<'a> {
                 self.expect(Kind::LCurly)?;
                 let (value, error, then, catch) = if self.eat(Kind::Colon) {
                     if self.eat(Kind::Then) {
-                        let value = self.parse_js_binding_pattern()?;
-                        self.expect(Kind::RCurly)?;
+                        let value = if self.eat(Kind::RCurly) {
+                            None
+                        } else {
+                            let value = self.parse_js_binding_pattern()?;
+                            self.expect(Kind::RCurly)?;
+                            Some(value)
+                        };
                         let then_nodes = self.parse_fragment_nodes()?;
                         let then = self.ast.fragment(then_nodes, false);
                         self.expect(Kind::LCurly)?;
                         let (error, catch) = if self.eat(Kind::Colon) {
                             self.expect(Kind::Catch)?;
-                            let error = self.parse_js_binding_pattern()?;
-                            self.expect(Kind::RCurly)?;
+                            let error = if self.eat(Kind::RCurly) {
+                                None
+                            } else {
+                                let error = self.parse_js_binding_pattern()?;
+                                self.expect(Kind::RCurly)?;
+                                Some(error)
+                            };
                             let catch_nodes = self.parse_fragment_nodes()?;
                             let catch = self.ast.fragment(catch_nodes, false);
                             self.expect(Kind::LCurly)?;
-                            (Some(error), Some(catch))
+                            (error, Some(catch))
                         } else {
                             (None, None)
                         };
-                        (Some(value), error, Some(then), catch)
+                        (value, error, Some(then), catch)
                     } else {
                         self.expect(Kind::Catch)?;
-                        let error = self.parse_js_binding_pattern()?;
-                        self.expect(Kind::RCurly)?;
+                        let error = if self.eat(Kind::RCurly) {
+                            None
+                        } else {
+                            let error = self.parse_js_binding_pattern()?;
+                            self.expect(Kind::RCurly)?;
+                            Some(error)
+                        };
                         let catch_nodes = self.parse_fragment_nodes()?;
                         let catch = self.ast.fragment(catch_nodes, false);
                         self.expect(Kind::LCurly)?;
-                        (None, Some(error), None, Some(catch))
+                        (None, error, None, Some(catch))
                     }
                 } else {
                     (None, None, None, None)
