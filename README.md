@@ -27,7 +27,7 @@ Here's a feature roadmap:
 - [x] CSS Codegen
 - [x] CSS Transformer
 - [x] Parser
-- [ ] Codegen
+- [x] Codegen
 - [ ] Analyzer
 - [ ] Transformer
 
