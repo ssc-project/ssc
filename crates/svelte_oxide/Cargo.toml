@@ -16,8 +16,9 @@ version                = "0.1.0"
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 
-svelte_oxide_ast    = { workspace = true }
-svelte_oxide_parser = { workspace = true }
+svelte_oxide_ast     = { workspace = true }
+svelte_oxide_parser  = { workspace = true }
+svelte_oxide_codegen = { workspace = true }
 
 svelte_oxide_css_ast         = { workspace = true, optional = true }
 svelte_oxide_css_parser      = { workspace = true, optional = true }

@@ -318,6 +318,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7def90851267da78e76382b3dc60da96794b3ae0db9b8fd3601d30eb5c0a7d03"
 
 [[package]]
+name = "oxc_codegen"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e04bfb5bf0f4e250a4a186e55822b4dd26bf361a37bceb722386cfe160062a5"
+dependencies = [
+ "bitflags",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_sourcemap",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_diagnostics"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -621,6 +635,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_span",
  "svelte_oxide_ast",
+ "svelte_oxide_codegen",
  "svelte_oxide_css_ast",
  "svelte_oxide_css_codegen",
  "svelte_oxide_css_parser",
@@ -642,6 +657,20 @@ dependencies = [
  "rustc-hash",
  "serde",
  "svelte_oxide_css_ast",
+]
+
+[[package]]
+name = "svelte_oxide_codegen"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "oxc_allocator",
+ "oxc_codegen",
+ "oxc_sourcemap",
+ "oxc_syntax",
+ "svelte_oxide_ast",
+ "svelte_oxide_css_codegen",
+ "svelte_oxide_parser",
 ]
 
 [[package]]

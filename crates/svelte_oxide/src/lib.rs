@@ -22,6 +22,11 @@ pub mod parser {
     pub use svelte_oxide_parser::*;
 }
 
+pub mod codegen {
+    #[doc(inline)]
+    pub use svelte_oxide_codegen::*;
+}
+
 #[cfg(feature = "css")]
 pub mod css_ast {
     #[doc(inline)]

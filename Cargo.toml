@@ -37,6 +37,7 @@ oxc_parser      = { version = "0.13.1", path = "crates/oxc_parser" }
 oxc_span        = "0.13.1"
 oxc_syntax      = "0.13.1"
 oxc_sourcemap   = "0.13.1"
+oxc_codegen     = "0.13.1"
 
 # Svelte Oxide
 svelte_oxide                 = { version = "0.1.0", path = "crates/svelte_oxide" }
@@ -44,6 +45,7 @@ svelte_oxide_analyzer        = { version = "0.1.0", path = "crates/svelte_oxide_
 svelte_oxide_ast             = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
 svelte_oxide_css_ast         = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
 svelte_oxide_parser          = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
+svelte_oxide_codegen         = { version = "0.1.0", path = "crates/svelte_oxide_codegen" }
 svelte_oxide_css_codegen     = { version = "0.1.0", path = "crates/svelte_oxide_css_codegen" }
 svelte_oxide_css_parser      = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
 svelte_oxide_css_transformer = { version = "0.1.0", path = "crates/svelte_oxide_css_transformer" }
