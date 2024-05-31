@@ -253,6 +253,7 @@ mod parser_parse {
             parser.parse()
         }
 
+        /// # Errors
         pub fn parse_expression_from_position(self, pos: u32) -> Result<Expression<'a>> {
             let unique = UniquePromise::new();
             let mut parser = ParserImpl::new_from_position(
@@ -267,6 +268,7 @@ mod parser_parse {
             parser.parse_expression()
         }
 
+        /// # Errors
         pub fn parse_identifier_from_position(self, pos: u32) -> Result<IdentifierReference<'a>> {
             let unique = UniquePromise::new();
             let mut parser = ParserImpl::new_from_position(
@@ -281,6 +283,7 @@ mod parser_parse {
             parser.parse_identifier_reference()
         }
 
+        /// # Errors
         pub fn parse_variable_declarator_from_position(
             self,
             pos: u32,
@@ -302,6 +305,7 @@ mod parser_parse {
             )
         }
 
+        /// # Errors
         pub fn parse_binding_pattern_from_position(self, pos: u32) -> Result<BindingPattern<'a>> {
             let unique = UniquePromise::new();
             let mut parser = ParserImpl::new_from_position(
