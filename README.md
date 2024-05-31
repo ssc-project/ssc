@@ -6,16 +6,16 @@
 
 </div>
 
-## Svelte Oxide
+## SSC
 
-Svelte Oxide is a set of tools for Svelte.
+SSC (stands for `Speedy Svelte Compiler`) is a super-fast Svelte compiler written in Rust.
 
 The goal is to build a parser, analyzer, transformer, formatter, linter, language server .. all wriiten in Rust.
 
 ## Development
 
 > [!Warning]
-> Svelte Oxide is still in it's early stages of development and should not be used in production code.
+> SSC is still in it's early stages of development and should not be used in production code.
 
 A lot of features still need to be implemented before it is ready for production use.
 
@@ -24,10 +24,10 @@ Here's a feature roadmap:
 - [x] AST
 - [x] CSS AST
 - [x] CSS Parser
-- [x] CSS Codegen
+- [x] CSS Printer (codegen)
 - [x] CSS Transformer
 - [x] Parser
-- [x] Codegen
+- [x] Printer (codegen)
 - [ ] Analyzer
 - [ ] Transformer
 
@@ -35,11 +35,11 @@ This roadmap just shows which part is implemented, none of the code is properly 
 
 ## License
 
-Svelte oxide is free and open-source software licensed under the [MIT License](./LICENSE).
+SSC is free and open-source software licensed under the [MIT License](./LICENSE).
 
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license-url]: https://github.com/a-rustacean/svelte-oxide/blob/main/LICENSE
-[ci-badge]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/a-rustacean/svelte-oxide/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
-[code-size-badge]: https://img.shields.io/github/languages/code-size/a-rustacean/svelte-oxide
-[code-size-url]: https://github.com/a-rustacean/svelte-oxide
+[license-url]: https://github.com/ssc-project/ssc/blob/main/LICENSE
+[ci-badge]: https://github.com/ssc-project/ssc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/ssc-project/ssc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[code-size-badge]: https://img.shields.io/github/languages/code-size/ssc-project/ssc
+[code-size-url]: https://github.com/ssc-project/ssc
