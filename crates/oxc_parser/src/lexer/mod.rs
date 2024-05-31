@@ -144,6 +144,7 @@ impl<'a> Lexer<'a> {
     ) -> Self {
         let mut source = Source::new(source_text, unique);
 
+        // SAFETY: the caller must make sure the position is valid
         source.set_position(unsafe { source.position().add(pos as usize) });
 
         // The first token is at the start of file, so is allows on a new line
