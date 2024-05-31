@@ -1,0 +1,30 @@
+[package]
+authors.workspace      = true
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+name                   = "ssc"
+readme.workspace       = true
+repository.workspace   = true
+rust-version.workspace = true
+version                = "0.1.0"
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_span      = { workspace = true }
+
+ssc_ast     = { workspace = true }
+ssc_parser  = { workspace = true }
+ssc_codegen = { workspace = true }
+
+ssc_css_ast         = { workspace = true, optional = true }
+ssc_css_parser      = { workspace = true, optional = true }
+ssc_css_codegen     = { workspace = true, optional = true }
+ssc_css_transformer = { workspace = true, optional = true }
+
+[features]
+default = []
+css     = ["dep:ssc_css_ast", "dep:ssc_css_codegen", "dep:ssc_css_parser", "dep:ssc_css_transformer"]

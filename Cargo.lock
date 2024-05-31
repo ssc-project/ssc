@@ -623,32 +623,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 
 [[package]]
-name = "static_assertions"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
-
-[[package]]
-name = "svelte_oxide"
+name = "ssc"
 version = "0.1.0"
 dependencies = [
  "oxc_allocator",
  "oxc_span",
- "svelte_oxide_ast",
- "svelte_oxide_codegen",
- "svelte_oxide_css_ast",
- "svelte_oxide_css_codegen",
- "svelte_oxide_css_parser",
- "svelte_oxide_css_transformer",
- "svelte_oxide_parser",
+ "ssc_ast",
+ "ssc_codegen",
+ "ssc_css_ast",
+ "ssc_css_codegen",
+ "ssc_css_parser",
+ "ssc_css_transformer",
+ "ssc_parser",
 ]
 
 [[package]]
-name = "svelte_oxide_analyzer"
+name = "ssc_analyzer"
 version = "0.1.0"
 
 [[package]]
-name = "svelte_oxide_ast"
+name = "ssc_ast"
 version = "0.1.0"
 dependencies = [
  "oxc_allocator",
@@ -656,11 +650,11 @@ dependencies = [
  "oxc_span",
  "rustc-hash",
  "serde",
- "svelte_oxide_css_ast",
+ "ssc_css_ast",
 ]
 
 [[package]]
-name = "svelte_oxide_codegen"
+name = "ssc_codegen"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -668,13 +662,13 @@ dependencies = [
  "oxc_codegen",
  "oxc_sourcemap",
  "oxc_syntax",
- "svelte_oxide_ast",
- "svelte_oxide_css_codegen",
- "svelte_oxide_parser",
+ "ssc_ast",
+ "ssc_css_codegen",
+ "ssc_parser",
 ]
 
 [[package]]
-name = "svelte_oxide_css_ast"
+name = "ssc_css_ast"
 version = "0.1.0"
 dependencies = [
  "oxc_allocator",
@@ -683,19 +677,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "svelte_oxide_css_codegen"
+name = "ssc_css_codegen"
 version = "0.1.0"
 dependencies = [
  "base64",
  "oxc_allocator",
  "oxc_sourcemap",
  "oxc_syntax",
- "svelte_oxide_css_ast",
- "svelte_oxide_css_parser",
+ "ssc_css_ast",
+ "ssc_css_parser",
 ]
 
 [[package]]
-name = "svelte_oxide_css_parser"
+name = "ssc_css_parser"
 version = "0.1.0"
 dependencies = [
  "assert-unchecked",
@@ -708,23 +702,23 @@ dependencies = [
  "rustc-hash",
  "seq-macro",
  "serde_json",
+ "ssc_css_ast",
  "static_assertions",
- "svelte_oxide_css_ast",
 ]
 
 [[package]]
-name = "svelte_oxide_css_transformer"
+name = "ssc_css_transformer"
 version = "0.1.0"
 dependencies = [
  "oxc_allocator",
  "oxc_span",
- "svelte_oxide_css_ast",
- "svelte_oxide_css_codegen",
- "svelte_oxide_css_parser",
+ "ssc_css_ast",
+ "ssc_css_codegen",
+ "ssc_css_parser",
 ]
 
 [[package]]
-name = "svelte_oxide_parser"
+name = "ssc_parser"
 version = "0.1.0"
 dependencies = [
  "assert-unchecked",
@@ -739,10 +733,20 @@ dependencies = [
  "rustc-hash",
  "seq-macro",
  "serde_json",
+ "ssc_ast",
+ "ssc_css_parser",
  "static_assertions",
- "svelte_oxide_ast",
- "svelte_oxide_css_parser",
 ]
+
+[[package]]
+name = "ssc_transformer"
+version = "0.1.0"
+
+[[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "syn"

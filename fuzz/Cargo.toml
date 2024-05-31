@@ -1,5 +1,5 @@
 [package]
-name    = "svelte_oxide_fuzz"
+name    = "ssc_fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
@@ -21,6 +21,6 @@ path = "fuzz_targets/css_parser.rs"
 
 [dependencies]
 oxc_allocator = { version = "0.13.1" }
-svelte_oxide_parser = { path = "../crates/svelte_oxide_parser" }
-svelte_oxide_css_parser = { path = "../crates/svelte_oxide_css_parser" }
+ssc_parser = { path = "../crates/ssc_parser" }
+ssc_css_parser = { path = "../crates/ssc_css_parser" }
 libfuzzer-sys = "0.4.7"

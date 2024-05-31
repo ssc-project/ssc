@@ -8,11 +8,11 @@ authors      = ["Dilshad <a-rustacean@outlook.com>"]
 categories   = ["compilers", "development-tools", "web-programming"]
 description  = "A collection of Svelte tools written in Rust."
 edition      = "2021"
-homepage     = "https://github.com/a-rustacean/svelte-oxide#readme"
+homepage     = "https://github.com/ssc-project/ssc#readme"
 keywords     = ["compiler", "svelte"]
 license      = "MIT"
 readme       = "README.md"
-repository   = "https://github.com/a-rustacean/svelte-oxide"
+repository   = "https://github.com/ssc-project/ssc"
 rust-version = "1.74"
 
 [workspace.dependencies]
@@ -39,16 +39,17 @@ oxc_syntax      = "0.13.1"
 oxc_sourcemap   = "0.13.1"
 oxc_codegen     = "0.13.1"
 
-# Svelte Oxide
-svelte_oxide                 = { version = "0.1.0", path = "crates/svelte_oxide" }
-svelte_oxide_analyzer        = { version = "0.1.0", path = "crates/svelte_oxide_analyzer" }
-svelte_oxide_ast             = { version = "0.1.0", path = "crates/svelte_oxide_ast" }
-svelte_oxide_css_ast         = { version = "0.1.0", path = "crates/svelte_oxide_css_ast" }
-svelte_oxide_parser          = { version = "0.1.0", path = "crates/svelte_oxide_parser" }
-svelte_oxide_codegen         = { version = "0.1.0", path = "crates/svelte_oxide_codegen" }
-svelte_oxide_css_codegen     = { version = "0.1.0", path = "crates/svelte_oxide_css_codegen" }
-svelte_oxide_css_parser      = { version = "0.1.0", path = "crates/svelte_oxide_css_parser" }
-svelte_oxide_css_transformer = { version = "0.1.0", path = "crates/svelte_oxide_css_transformer" }
+# Ssc
+ssc                 = { version = "0.1.0", path = "crates/ssc" }
+ssc_analyzer        = { version = "0.1.0", path = "crates/ssc_analyzer" }
+ssc_ast             = { version = "0.1.0", path = "crates/ssc_ast" }
+ssc_css_ast         = { version = "0.1.0", path = "crates/ssc_css_ast" }
+ssc_parser          = { version = "0.1.0", path = "crates/ssc_parser" }
+ssc_codegen         = { version = "0.1.0", path = "crates/ssc_codegen" }
+ssc_transformer     = { version = "0.1.0", path = "crates/ssc_transformer" }
+ssc_css_codegen     = { version = "0.1.0", path = "crates/ssc_css_codegen" }
+ssc_css_parser      = { version = "0.1.0", path = "crates/ssc_css_parser" }
+ssc_css_transformer = { version = "0.1.0", path = "crates/ssc_css_transformer" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["svelte_oxide", "svelte_oxide_analyzer"]
+ignored = ["ssc", "ssc_analyzer", "ssc_transformer"]

@@ -1,7 +1,7 @@
 #![no_main]
 
 use oxc_allocator::Allocator;
-use svelte_oxide_css_parser::Parser;
+use ssc_css_parser::Parser;
 
 libfuzzer_sys::fuzz_target!(|data: &[u8]| {
     if let Ok(s) = std::str::from_utf8(data) {

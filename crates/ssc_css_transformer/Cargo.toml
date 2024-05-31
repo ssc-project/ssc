@@ -1,0 +1,24 @@
+[package]
+name                   = "ssc_css_transformer"
+version                = "0.1.0"
+authors.workspace      = true
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+readme.workspace       = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+oxc_span = { workspace = true }
+
+ssc_css_ast = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
+
+ssc_css_parser  = { workspace = true }
+ssc_css_codegen = { workspace = true }
