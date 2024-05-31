@@ -8,7 +8,6 @@ on:
       - "**/*.md"
       - "**/*.yml"
       - "!.github/workflows/ci.yml"
-      - "!.github/actions/clone-submodules/action.yml"
   push:
     branches:
       - main
@@ -27,38 +26,72 @@ env:
   RUSTFLAGS: "-D warnings"
 
 jobs:
-  cache: # Warm cache factory for all other CI jobs
-    name: Check and Build
+  test:
+    name: Test
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          # - os: windows-latest # See `test-windows` job below
           - os: ubuntu-latest
           - os: macos-14
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
+          # warm cache factory for all other CI jobs
+          # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm
+      - run: cargo test --quiet --workspace --exclude 'oxc_*'
+      - run: cargo ck
 
-      - name: Cargo check
-        run: cargo ck
+  test-windows:
+    name: Test (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: samypr100/setup-dev-drive@v2
+        with:
+          workspace-copy: true
+          drive-size: 8GB
 
-      # Only need to build the test to create a warm cache on the main branch
-      - name: Build cache by Cargo Check and Cargo Test
-        if: ${{ github.ref_name == 'main' }}
-        run: cargo test --quiet --no-run --workspace --exclude 'oxc_*'
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+        shell: bash
+        run: |
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: ${{ github.ref_name == 'main' }}
+          shared-key: windows-latest
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+
+      - name: Run
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+        shell: bash
+        run: |
+          cargo test --quiet --workspace --exclude 'oxc_*'
 
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
       - uses: crate-ci/typos@master
         with:
           files: .
@@ -76,14 +109,11 @@ jobs:
             src:
               - 'Cargo.lock'
 
-      - name: Install cargo-deny
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-deny
-
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
+          tools: cargo-deny
 
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
@@ -101,7 +131,7 @@ jobs:
               - '**/*.rs'
               - '**/Cargo.toml'
               - 'Cargo.lock'
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
@@ -117,13 +147,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          fmt: true
+          components: rustfmt
           restore-cache: false
-
       - run: cargo fmt --all -- --check
 
   lint:
@@ -131,41 +158,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          clippy: true
-
-      - name: Run Clippy
-        run: cargo lint -- -D warnings
-
-  doc:
-    name: Doc
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-        with:
-          docs: true
-
-      - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
-
-  test:
-    name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-          - os: ubuntu-latest
-          - os: macos-14
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-      - run: cargo test --quiet --workspace --exclude 'oxc_*'
+          cache-key: warm
+          components: clippy
+      - run: cargo lint -- -D warnings

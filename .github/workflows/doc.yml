@@ -23,13 +23,12 @@ jobs:
       - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+        uses: Boshen/setup-rust@main
         with:
-          nightly: true
-          docs: true
+          components: rust-docs
 
-      - name: Create rustdoc
-        run: cargo +nightly doc --all --no-deps -Zunstable-options -Zrustdoc-scrape-examples
+      - name: Generate documentation
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --all --no-deps
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.6.1
