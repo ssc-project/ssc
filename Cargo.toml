@@ -1,7 +1,6 @@
 [workspace]
-members  = ["crates/*"]
 resolver = "2"
-
+members  = ["crates/*"]
 
 [workspace.package]
 authors      = ["Dilshad <a-rustacean@outlook.com>"]
@@ -14,6 +13,61 @@ license      = "MIT"
 readme       = "README.md"
 repository   = "https://github.com/ssc-project/ssc"
 rust-version = "1.74"
+
+[workspace.lints.rust]
+unsafe_code                            = "warn"
+absolute_paths_not_starting_with_crate = "warn"
+non_ascii_idents                       = "warn"
+unit-bindings                          = "warn"
+
+[workspace.lints.clippy]
+all        = { level = "warn" }
+empty_docs = { level = "allow", priority = 1 } # from `Tsify`
+# restriction
+dbg_macro     = "warn"
+todo          = "warn"
+unimplemented = "warn"
+# I like the explicitness of this rule as it removes confusion around `clone`.
+# This increases readability, avoids `clone` mindlessly and heap allocating on accident.
+clone_on_ref_ptr = "warn"
+# These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
+self_named_module_files         = "warn" # "-Wclippy::mod_module_files"
+empty_drop                      = "warn"
+empty_structs_with_brackets     = "warn"
+exit                            = "warn"
+filetype_is_file                = "warn"
+get_unwrap                      = "warn"
+impl_trait_in_params            = "warn"
+rc_buffer                       = "warn"
+rc_mutex                        = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+unnecessary_safety_comment      = "warn"
+undocumented_unsafe_blocks      = "warn"
+infinite_loop                   = "warn"
+# I want to write the best Rust code so pedantic is enabled.
+# We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
+pedantic = { level = "warn", priority = -1 }
+# Allowed rules
+# pedantic
+# This rule is too pedantic, I don't want to force this because naming things are hard.
+module_name_repetitions = "allow"
+# All triggers are mostly ignored in our codebase, so this is ignored globally.
+struct_excessive_bools = "allow"
+too_many_lines         = "allow"
+# #[must_use] is creating too much noise for this codebase, it does not add much value except nagging
+# the programmer to add a #[must_use] after clippy has been run.
+# Having #[must_use] every where also hinders readability.
+must_use_candidate = "allow"
+# used_underscore_binding= "allow"
+doc_markdown = "allow"
+# nursery
+# `const` functions do not make sense for our project because this is not a `const` library.
+# This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
+missing_const_for_fn = "allow"
+# cargo
+cargo                   = { level = "warn", priority = -1 }
+multiple_crate_versions = "allow"
+cargo_common_metadata   = "allow" # TODO: fix this
 
 [workspace.dependencies]
 assert-unchecked  = "0.1.2"
@@ -28,6 +82,9 @@ base64            = "0.22.0"
 serde             = "1.0.119"
 serde_json        = "1.0.116"
 ouroboros         = "0.18.3"
+tsify               = "0.4.5"
+wasm-bindgen        = "0.2"
+serde-wasm-bindgen  = "0.6.5"
 
 # Oxc
 oxc_allocator   = "0.13.1"

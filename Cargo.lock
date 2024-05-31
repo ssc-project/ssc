@@ -627,6 +627,7 @@ name = "ssc"
 version = "0.1.0"
 dependencies = [
  "oxc_allocator",
+ "oxc_diagnostics",
  "oxc_span",
  "ssc_ast",
  "ssc_codegen",
