@@ -12,6 +12,11 @@ pub mod span {
     pub use oxc_span::*;
 }
 
+pub mod diagnostics {
+    #[doc(inline)]
+    pub use oxc_diagnostics::*;
+}
+
 pub mod ast {
     #[doc(inline)]
     pub use ssc_ast::*;
