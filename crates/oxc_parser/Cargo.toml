@@ -1,15 +1,21 @@
 [package]
-authors.workspace      = true
-categories.workspace   = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-name                   = "oxc_parser"
-repository.workspace   = true
-rust-version.workspace = true
-version                = "0.13.1"
+name         = "oxc_parser"
+version      = "0.13.1"
+authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
+categories   = ["compilers", "development-tools", "web-programming"]
+description  = "A collection of JavaScript tools written in Rust."
+edition      = "2021"
+homepage     = "https://oxc-project.github.io"
+keywords     = ["JavaScript", "TypeScript", "linter", "minifier", "parser"]
+license      = "MIT"
+repository   = "https://github.com/oxc-project/oxc"
+rust-version = "1.74"
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
 
 [dependencies]
 oxc_allocator   = { workspace = true }
