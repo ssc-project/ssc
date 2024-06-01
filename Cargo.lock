@@ -989,6 +989,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ssc_parser_wasm"
+version = "0.0.1"
+dependencies = [
+ "serde",
+ "serde-wasm-bindgen",
+ "ssc",
+ "tsify",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "ssc_transformer"
 version = "0.1.0"
 

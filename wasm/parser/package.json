@@ -1,0 +1,39 @@
+{
+  "name": "@ssc-parser/wasm",
+  "version": "0.1.0",
+  "description": "Wasm target for the ssc parser.",
+  "keywords": [
+    "Svelte",
+    "parser"
+  ],
+  "author": "Dilshad <a-rustacean@outlook.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/ssc-project/ssc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ssc-project/ssc",
+    "directory": "wasm/parser"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/a-rustacean"
+  },
+  "main": "./node/ssc_parser_wasm.js",
+  "browser": "./web/ssc_parser_wasm.js",
+  "types": "./node/ssc_parser_wasm.d.ts",
+  "files": [
+    "node",
+    "web"
+  ],
+  "scripts": {
+    "build": "pnpm run build-node && pnpm run build-web && pnpm run copy-files && pnpm run clean-files",
+    "build-node": "pnpm run build-base --target nodejs --out-dir ../../npm/parser-wasm/node .",
+    "build-web": "pnpm run build-base --target web --out-dir ../../npm/parser-wasm/web .",
+    "build-base": "wasm-pack build --release --no-pack",
+    "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md",
+    "clean-files": "rm ../../npm/parser-wasm/*/.gitignore",
+    "test": "node ./test-node.mjs"
+  },
+  "devDependencies": {
+    "wasm-pack": "^0.12.1"
+  }
+}
