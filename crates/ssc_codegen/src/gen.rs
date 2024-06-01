@@ -90,7 +90,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ElementAttribute<'a> {
         match self {
             Self::Attribute(attribute) => attribute.gen(p),
             Self::SpreadAttribute(attribute) => attribute.gen(p),
-            Self::Directive(directive) => directive.gen(p),
+            Self::DirectiveAttribute(directive) => directive.gen(p),
         };
     }
 }
@@ -159,7 +159,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SpreadAttribute<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for DirectiveAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         match self {
             Self::AnimateDirective(directive) => directive.gen(p),

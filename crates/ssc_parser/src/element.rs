@@ -317,7 +317,7 @@ impl<'a> ParserImpl<'a> {
                             "important" => StyleDirectiveModifier::Important
                         }
                     };
-                    return Ok(ElementAttribute::Directive(self.ast.style_directive(
+                    return Ok(ElementAttribute::DirectiveAttribute(self.ast.style_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         value,
@@ -342,7 +342,7 @@ impl<'a> ParserImpl<'a> {
                 };
 
                 if directive_type == "animate" {
-                    Ok(ElementAttribute::Directive(self.ast.animate_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.animate_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -369,7 +369,7 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => return Err(diagnostics::invalid_bind_directive_value(value_span)),
                     };
-                    Ok(ElementAttribute::Directive(self.ast.bind_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.bind_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -378,7 +378,7 @@ impl<'a> ParserImpl<'a> {
                     let Some(expression) = expression else {
                         return Err(diagnostics::missing_class_directive_value(value_span));
                     };
-                    Ok(ElementAttribute::Directive(self.ast.class_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.class_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -398,7 +398,7 @@ impl<'a> ParserImpl<'a> {
                     });
                     let expression =
                         if let Some(expression) = expression { Some(expression?) } else { None };
-                    Ok(ElementAttribute::Directive(self.ast.let_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.let_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -407,7 +407,7 @@ impl<'a> ParserImpl<'a> {
                     let on_directive_modifiers = self.ast.new_vec_from_iter(
                         modifiers.into_iter().map(|modifier| self.ast.new_atom(modifier)),
                     );
-                    Ok(ElementAttribute::Directive(self.ast.on_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.on_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -424,7 +424,7 @@ impl<'a> ParserImpl<'a> {
                         }
                     };
 
-                    Ok(ElementAttribute::Directive(self.ast.transition_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.transition_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
@@ -433,7 +433,7 @@ impl<'a> ParserImpl<'a> {
                         directive_type == "out" || directive_name == "transition",
                     )))
                 } else if directive_type == "use" {
-                    Ok(ElementAttribute::Directive(self.ast.use_directive(
+                    Ok(ElementAttribute::DirectiveAttribute(self.ast.use_directive(
                         self.end_span(span),
                         self.ast.new_atom(directive_name),
                         expression,
