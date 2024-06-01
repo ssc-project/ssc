@@ -982,7 +982,6 @@ dependencies = [
  "napi-derive",
  "oxc_allocator",
  "oxc_diagnostics",
- "oxc_span",
  "serde_json",
  "ssc_ast",
  "ssc_parser",

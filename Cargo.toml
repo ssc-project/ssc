@@ -114,4 +114,4 @@ ssc_css_parser      = { version = "0.1.0", path = "crates/ssc_css_parser" }
 ssc_css_transformer = { version = "0.1.0", path = "crates/ssc_css_transformer" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["ssc_analyzer", "ssc_transformer"]
+ignored = ["ssc_analyzer", "ssc_transformer", "napi"]
