@@ -1,0 +1,25 @@
+{
+  "name": "speedy-svelte-compiler",
+  "version": "0.0.1",
+  "description": "The Svelte compiler rewritten in Rust.",
+  "keywords": [],
+  "author": "Dilshad <a-rustacean@outlook.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/ssc-project/ssc",
+  "bugs": "https://github.com/ssc-project/ssc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ssc-project/ssc",
+    "directory": "npm/ssc"
+  },
+  "bin": "bin/ssc",
+  "funding": {
+    "url": "https://github.com/sponsors/a-rustacean"
+  },
+  "engines": {
+    "node": ">=14.*"
+  },
+  "files": [
+    "bin/ssc"
+  ]
+}

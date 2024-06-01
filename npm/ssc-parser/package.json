@@ -1,0 +1,25 @@
+{
+  "name": "ssc-parser",
+  "version": "0.0.1",
+  "description": "Ssc Parser Node API",
+  "keywords": [
+    "Parser"
+  ],
+  "author": "Dilshad <a-rustacean@outlook.com>",
+  "license": "MIT",
+  "homepage": "https://ssc-project.github.io",
+  "bugs": "https://github.com/ssc-project/ssc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ssc-project/ssc.git",
+    "directory": "npm/ssc-parser"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/a-rustacean"
+  },
+  "main": "index.js",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ]
+}
