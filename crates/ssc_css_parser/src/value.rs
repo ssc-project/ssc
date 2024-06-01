@@ -1,3 +1,5 @@
+#![allow(clippy::cast_possible_truncation)]
+
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 
@@ -20,18 +22,18 @@ impl<'a> ParserImpl<'a> {
                 let starting_source = &self.source_text[(start as usize)..];
                 let ending_source = &self.source_text[..(end as usize)];
                 let end_trimmed = ending_source.trim_end();
-                let end = if ending_source != end_trimmed {
+                let end = if ending_source == end_trimmed {
+                    end
+                } else {
                     let offset = (ending_source.len() - end_trimmed.len()) as u32;
                     (end - offset).max(start)
-                } else {
-                    end
                 };
                 let start_trimmed = starting_source.trim_start();
-                let start = if start_trimmed != starting_source {
+                let start = if start_trimmed == starting_source {
+                    start
+                } else {
                     let offset = (starting_source.len() - start_trimmed.len()) as u32;
                     (start + offset).min(end)
-                } else {
-                    start
                 };
                 return Ok(Atom::from(&self.source_text[(start as usize)..(end as usize)]));
             } else {
@@ -69,10 +71,9 @@ impl<'a> ParserImpl<'a> {
                     || self.eat(Kind::N))
             {
                 continue;
-            } else {
-                let ident = &self.source_text[(start as usize)..(self.prev_token_end as usize)];
-                return Ok(Atom::from(ident));
             }
+            let ident = &self.source_text[(start as usize)..(self.prev_token_end as usize)];
+            return Ok(Atom::from(ident));
         }
         let end = self.cur_token().start;
         Err(diagnostics::unexpected_end(Span::new(end, end)))

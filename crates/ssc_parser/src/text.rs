@@ -13,9 +13,8 @@ impl<'a> ParserImpl<'a> {
                 self.prev_token_end = end;
                 let text = &self.source_text[(start as usize)..(end as usize)];
                 return self.ast.text(Span::new(start, end), Atom::from(text));
-            } else {
-                self.bump_any();
             }
+            self.bump_any();
         }
     }
 }

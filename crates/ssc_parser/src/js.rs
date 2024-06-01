@@ -1,3 +1,5 @@
+#![allow(unsafe_code)]
+
 use oxc_ast::ast::{
     BindingPattern, Expression, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
 };
@@ -15,6 +17,7 @@ impl<'a> ParserImpl<'a> {
         );
         let start_pos = self.lexer.source.position();
         let expression = parser.parse_expression_from_position(self.cur_token().start)?;
+        // SAFETY: the Oxc parser must retrun an expression with valid span
         self.lexer.source.set_position(unsafe {
             if expression.span().end >= self.lexer.offset() {
                 start_pos.add((expression.span().end - self.lexer.offset()) as usize)
@@ -45,6 +48,7 @@ impl<'a> ParserImpl<'a> {
         );
         let start_pos = self.lexer.source.position();
         let expression = parser.parse_expression_from_position(self.cur_token().start)?;
+        // SAFETY: the Oxc parser must retrun an expression with valid span
         self.lexer.source.set_position(unsafe {
             if expression.span().end >= self.lexer.offset() {
                 start_pos.add((expression.span().end - self.lexer.offset()) as usize)
@@ -64,6 +68,7 @@ impl<'a> ParserImpl<'a> {
         );
         let start_pos = self.lexer.source.position();
         let identifier = parser.parse_identifier_from_position(self.cur_token().start)?;
+        // SAFETY: the Oxc parser must retrun an expression with valid span
         self.lexer.source.set_position(unsafe {
             if identifier.span.end >= self.lexer.offset() {
                 start_pos.add((identifier.span.end - self.lexer.offset()) as usize)
@@ -87,6 +92,7 @@ impl<'a> ParserImpl<'a> {
         let start_pos = self.lexer.source.position();
         let variable_declarator =
             parser.parse_variable_declarator_from_position(self.cur_token().start, kind)?;
+        // SAFETY: the Oxc parser must retrun an expression with valid span
         self.lexer.source.set_position(unsafe {
             if variable_declarator.span.end >= self.lexer.offset() {
                 start_pos.add((variable_declarator.span.end - self.lexer.offset()) as usize)
@@ -106,6 +112,7 @@ impl<'a> ParserImpl<'a> {
         );
         let start_pos = self.lexer.source.position();
         let binding_pattern = parser.parse_binding_pattern_from_position(self.cur_token().start)?;
+        // SAFETY: the Oxc parser must retrun an expression with valid span
         self.lexer.source.set_position(unsafe {
             if binding_pattern.span().end >= self.lexer.offset() {
                 start_pos.add((binding_pattern.span().end - self.lexer.offset()) as usize)

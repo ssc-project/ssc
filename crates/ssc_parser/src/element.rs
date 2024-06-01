@@ -1,3 +1,5 @@
+#![allow(clippy::cast_possible_truncation)]
+
 use oxc_allocator::Vec;
 use oxc_ast::ast::{Expression, MemberExpression, StringLiteral};
 use oxc_diagnostics::Result;
@@ -53,24 +55,21 @@ impl<'a> ParserImpl<'a> {
                                 script.span,
                                 cur_script.span,
                             ));
-                        } else {
-                            script = Some(cur_script);
                         }
+                        script = Some(cur_script);
                         continue;
                     }
                     if let Some(module) = module {
                         return Err(diagnostics::duplicate_script(module.span, cur_script.span));
-                    } else {
-                        module = Some(cur_script);
                     }
+                    module = Some(cur_script);
                 } else if self.peek_at(Kind::Style) {
                     let cur_style = self.parse_style()?;
 
                     if let Some(style) = style {
                         return Err(diagnostics::duplicate_style(style.span, cur_style.span));
-                    } else {
-                        style = Some(cur_style);
                     }
+                    style = Some(cur_style);
                 } else {
                     let element = self.parse_element()?;
                     nodes.push(FragmentNode::Element(element));
@@ -329,10 +328,10 @@ impl<'a> ParserImpl<'a> {
                 let expression = if let AttributeValue::Sequence(mut seq) = value {
                     let first = seq.remove(0);
                     let expression = if let AttributeSequenceValue::ExpressionTag(tag) = first {
-                        if !seq.is_empty() {
-                            return Err(diagnostics::invalid_directive_value(value_span));
-                        } else {
+                        if seq.is_empty() {
                             tag.expression
+                        } else {
+                            return Err(diagnostics::invalid_directive_value(value_span));
                         }
                     } else {
                         return Err(diagnostics::invalid_directive_value(value_span));
@@ -550,10 +549,10 @@ fn create_element<'a>(
             } else {
                 return Err(diagnostics::svelte_component_missing_this(span));
             };
+            #[allow(unsafe_code)]
+            // SAFETY: checked that this is an `Attribute` variant
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
-            let mut values = if let AttributeValue::Sequence(seq) = this_attribute.value {
-                seq
-            } else {
+            let AttributeValue::Sequence(mut values) = this_attribute.value else {
                 return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             };
             if values.len() != 1 {
@@ -581,10 +580,10 @@ fn create_element<'a>(
             } else {
                 return Err(diagnostics::svelte_element_missing_this(span));
             };
+            #[allow(unsafe_code)]
+            // SAFETY: checked that this is an `Attribute` variant
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
-            let mut values = if let AttributeValue::Sequence(seq) = this_attribute.value {
-                seq
-            } else {
+            let AttributeValue::Sequence(mut values) = this_attribute.value else {
                 return Err(diagnostics::svelte_element_missing_this(span));
             };
             if values.len() != 1 {

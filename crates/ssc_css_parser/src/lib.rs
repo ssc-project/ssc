@@ -299,9 +299,9 @@ mod test {
         let allocator = Allocator::default();
         let sources = [
             "/* line comment */",
-            r#"p {
+            "p {
                 color: /* informational comment */ blue;
-            }"#,
+            }",
         ];
         for source in sources {
             let ret = Parser::new(&allocator, source).parse();

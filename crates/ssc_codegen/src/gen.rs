@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_codegen::{Gen as OxcGen, GenExpr};
+use oxc_codegen::{Context, Gen as OxcGen, GenExpr};
 use oxc_syntax::precedence::Precedence;
 #[allow(clippy::wildcard_imports)]
 use ssc_ast::ast::*;
@@ -41,7 +41,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Script<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<script");
-        for attr in self.attributes.iter() {
+        for attr in &self.attributes {
             p.print_hard_space();
             attr.gen(p);
         }
@@ -51,7 +51,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Script<'a> {
             enable_typescript: p.options.enable_typescript,
         };
         let source =
-            oxc_codegen::Codegen::<MINIFY>::new("", "", options).build(&self.content).source_text;
+            oxc_codegen::Codegen::<MINIFY>::new("", "", options).build(&self.program).source_text;
         if !source.is_empty() {
             p.print_soft_newline();
             p.indent();
@@ -66,7 +66,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Style<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<style");
-        for attr in self.attributes.iter() {
+        for attr in &self.attributes {
             p.print_hard_space();
             attr.gen(p);
         }
@@ -122,7 +122,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, AttributeSequenceValue<'a>>
             tag.gen(p);
         } else {
             p.print(b'"');
-            for el in self.iter() {
+            for el in self {
                 match el {
                     AttributeSequenceValue::Text(text) => {
                         p.print_str(text.data.as_bytes());
@@ -137,7 +137,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, AttributeSequenceValue<'a>>
                         tag.expression.gen_expr(
                             &mut codegen,
                             Precedence::lowest(),
-                            Default::default(),
+                            Context::default(),
                         );
                         let source = codegen.into_source_text();
                         p.print_str(source.as_bytes());
@@ -234,7 +234,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for OnDirective<'a> {
         p.add_source_mapping(self.span.start);
         p.print_str(b"on:");
         p.print_str(self.name.as_bytes());
-        for modifier in self.modifiers.iter() {
+        for modifier in &self.modifiers {
             p.print(b'|');
             p.print_str(modifier.as_bytes());
         }
@@ -251,7 +251,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StyleDirective<'a> {
         p.add_source_mapping(self.span.start);
         p.print_str(b"style:");
         p.print_str(self.name.as_bytes());
-        for modifier in self.modifiers.iter() {
+        for modifier in &self.modifiers {
             let modifier_name = match modifier {
                 StyleDirectiveModifier::Important => "important",
             };
@@ -276,7 +276,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TransitionDirective<'a> {
             p.print_str(b"transition:");
         }
         p.print_str(self.name.as_bytes());
-        for modifier in self.modifiers.iter() {
+        for modifier in &self.modifiers {
             let modifier_name = match modifier {
                 TransitionDirectiveModifier::Local => "local",
                 TransitionDirectiveModifier::Global => "global",
@@ -516,8 +516,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RenderTag<'a> {
         p.add_source_mapping(self.span.start);
         p.print_str(b"{@render ");
         match &self.expression {
-            RenderTagExpression::Call(expr) => print_oxc_gen_expr(expr, p),
-            RenderTagExpression::Chain(expr) => print_oxc_gen_expr(expr, p),
+            RenderTagExpression::Call(expr) | RenderTagExpression::Chain(expr) => {
+                print_oxc_gen_expr(expr, p);
+            }
         };
         p.print(b'}');
     }
@@ -548,7 +549,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Component<'a> {
         p.add_source_mapping(self.span.start);
         p.print(b'<');
         p.print_str(self.name.as_bytes());
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -572,7 +573,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TitleElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<title");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -594,7 +595,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SlotElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<slot");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -617,7 +618,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegularElement<'a> {
         p.add_source_mapping(self.span.start);
         p.print(b'<');
         p.print_str(self.name.as_bytes());
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -641,7 +642,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteBody<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:body");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -665,7 +666,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteComponent<'a> {
         p.print_str(b"<svelte:component this={");
         print_oxc_gen_expr(&self.expression, p);
         p.print(b'}');
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -687,7 +688,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteDocument<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svele:document");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -711,7 +712,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteElement<'a> {
         p.print_str(b"<svelte:element this={");
         print_oxc_gen_expr(&self.expression, p);
         p.print(b'}');
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -733,7 +734,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteFragment<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:fragment");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -755,7 +756,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteHead<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:head");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -777,7 +778,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteOptionsRaw<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:options");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -799,7 +800,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteSelf<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:self");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -821,7 +822,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteWindow<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"<svelte:window");
-        for attribute in self.attributes.iter() {
+        for attribute in &self.attributes {
             p.print_hard_space();
             attribute.gen(p);
         }
@@ -1035,7 +1036,7 @@ fn print_oxc_gen_expr<const MINIFY: bool, T: GenExpr<MINIFY>>(x: &T, p: &mut Cod
         enable_typescript: p.options.enable_typescript,
     };
     let mut codegen = oxc_codegen::Codegen::<MINIFY>::new("", "", options);
-    x.gen_expr(&mut codegen, Precedence::lowest(), Default::default());
+    x.gen_expr(&mut codegen, Precedence::lowest(), Context::default());
     let source = codegen.into_source_text();
     p.print_str(source.as_bytes());
 }
@@ -1046,7 +1047,7 @@ fn print_oxc_gen<const MINIFY: bool, T: OxcGen<MINIFY>>(x: &T, p: &mut Codegen<{
         enable_typescript: p.options.enable_typescript,
     };
     let mut codegen = oxc_codegen::Codegen::<MINIFY>::new("", "", options);
-    x.gen(&mut codegen, Default::default());
+    x.gen(&mut codegen, Context::default());
     let source = codegen.into_source_text();
     p.print_str(source.as_bytes());
 }

@@ -220,16 +220,16 @@ pub mod walk_mut {
             SimpleSelector::IdSelector(selector) => visitor.visit_id_selector(selector),
             SimpleSelector::ClassSelector(selector) => visitor.visit_class_selector(selector),
             SimpleSelector::AttributeSelector(selector) => {
-                visitor.visit_attribute_selector(selector)
+                visitor.visit_attribute_selector(selector);
             }
             SimpleSelector::PseudoElementSelector(selector) => {
-                visitor.visit_pseudo_element_selector(selector)
+                visitor.visit_pseudo_element_selector(selector);
             }
             SimpleSelector::PseudoClassSelector(selector) => {
-                visitor.visit_pseudo_class_selector(selector)
+                visitor.visit_pseudo_class_selector(selector);
             }
             SimpleSelector::PercentageSelector(selector) => {
-                visitor.visit_percentage_selector(selector)
+                visitor.visit_percentage_selector(selector);
             }
             SimpleSelector::NthSelector(selector) => visitor.visit_nth_selector(selector),
             SimpleSelector::NestingSelector(selector) => visitor.visit_nesting_selector(selector),

@@ -70,7 +70,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Block<'a> {
         p.indent();
         p.print(b'{');
         p.print_soft_newline();
-        for child in self.children.iter() {
+        for child in &self.children {
             child.gen(p);
             p.print_soft_newline();
         }
@@ -116,7 +116,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SelectorList<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ComplexSelector<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
-        for selector in self.children.iter() {
+        for selector in &self.children {
             selector.gen(p);
         }
     }
@@ -125,16 +125,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ComplexSelector<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for RelativeSelector<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         if let Some(combinator) = self.combinator.as_ref() {
-            if combinator.kind != CombinatorKind::Descendant {
+            if combinator.kind == CombinatorKind::Descendant {
+                p.print_hard_space();
+            } else {
                 p.print_soft_space();
                 combinator.gen(p);
                 p.print_soft_space();
-            } else {
-                p.print_hard_space();
             }
         }
 
-        for selector in self.selectors.iter() {
+        for selector in &self.selectors {
             selector.gen(p);
         }
     }

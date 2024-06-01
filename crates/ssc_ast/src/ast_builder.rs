@@ -89,10 +89,10 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         context: ScriptContext,
-        content: Program<'a>,
+        program: Program<'a>,
         attributes: Vec<'a, Attribute<'a>>,
     ) -> Script<'a> {
-        Script { span, context, content, attributes }
+        Script { span, context, program, attributes }
     }
 
     #[inline]

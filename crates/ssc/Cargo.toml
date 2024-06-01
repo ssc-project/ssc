@@ -19,8 +19,8 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_span      = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_span        = { workspace = true }
 oxc_diagnostics = { workspace = true }
 
 ssc_ast     = { workspace = true }

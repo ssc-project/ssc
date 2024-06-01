@@ -239,22 +239,22 @@ pub mod walk {
             Element::TitleElement(title_element) => visitor.visit_title_element(title_element),
             Element::SlotElement(slot_element) => visitor.visit_slot_element(slot_element),
             Element::RegularElement(regular_element) => {
-                visitor.visit_regular_element(regular_element)
+                visitor.visit_regular_element(regular_element);
             }
             Element::SvelteBody(svelte_body) => visitor.visit_svelte_body(svelte_body),
             Element::SvelteComponent(svelte_component) => {
-                visitor.visit_svelte_component(svelte_component)
+                visitor.visit_svelte_component(svelte_component);
             }
             Element::SvelteDocument(svelte_document) => {
-                visitor.visit_svelte_document(svelte_document)
+                visitor.visit_svelte_document(svelte_document);
             }
             Element::SvelteElement(svelte_element) => visitor.visit_svelte_element(svelte_element),
             Element::SvelteFragment(svelte_fragment) => {
-                visitor.visit_svelte_fragment(svelte_fragment)
+                visitor.visit_svelte_fragment(svelte_fragment);
             }
             Element::SvelteHead(svelte_head) => visitor.visit_svelte_head(svelte_head),
             Element::SvelteOptionsRaw(svelte_options_raw) => {
-                visitor.visit_svelte_options_raw(svelte_options_raw)
+                visitor.visit_svelte_options_raw(svelte_options_raw);
             }
             Element::SvelteSelf(svelte_self) => visitor.visit_svelte_self(svelte_self),
             Element::SvelteWindow(svelte_window) => visitor.visit_svelte_window(svelte_window),

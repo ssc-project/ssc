@@ -49,10 +49,9 @@ impl<'a> ParserImpl<'a> {
                     || self.eat(Kind::Pipe))
             {
                 continue;
-            } else {
-                let ident = &self.source_text[(start as usize)..(self.prev_token_end as usize)];
-                return Ok(Atom::from(ident));
             }
+            let ident = &self.source_text[(start as usize)..(self.prev_token_end as usize)];
+            return Ok(Atom::from(ident));
         }
 
         Err(self.unexpected())

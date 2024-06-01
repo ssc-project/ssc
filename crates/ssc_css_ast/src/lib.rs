@@ -1,3 +1,5 @@
+#![allow(clippy::wildcard_imports)]
+
 //! # SSC CSS AST
 //!
 //! ## Cargo Features

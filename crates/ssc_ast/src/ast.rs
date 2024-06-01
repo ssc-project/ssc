@@ -696,7 +696,8 @@ pub struct Script<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub context: ScriptContext,
-    pub content: Program<'a>,
+    #[cfg_attr(feature = "serialize", serde(rename = "content"))]
+    pub program: Program<'a>,
     pub attributes: Vec<'a, Attribute<'a>>,
 }
 

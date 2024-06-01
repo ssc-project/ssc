@@ -114,7 +114,7 @@ pub fn invalid_let_directive_value(span0: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn unknown_directive_type(span0: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Unknown directive `{}`, valid directives are: `animate`, `bind`, `class`, `let`, `on`, `style`, `transition`, `in`, `out`, `use`", name)).with_labels([span0.into()])
+    OxcDiagnostic::error(format!("Unknown directive `{name}`, valid directives are: `animate`, `bind`, `class`, `let`, `on`, `style`, `transition`, `in`, `out`, `use`")).with_labels([span0.into()])
 }
 
 #[cold]

@@ -34,9 +34,12 @@ impl<'a> Lexer<'a> {
                     // SAFETY: Next byte is `-` (ASCII) so after it is UTF-8 char boundary
                     let after_minus = unsafe { pos.add(1) };
                     if after_minus.addr() < self.source.end_addr() {
+                        // SAFETY: Have checked there's at least 1 further byte to read
                         if unsafe { after_minus.read() } == b'-' {
+                            // SAFETY: Next byte is `-` (ASCII) so after it is UTF-8 char boundary
                             let after_minus2 = unsafe { pos.add(2) };
                             if after_minus2.addr() < self.source.end_addr() {
+                                // SAFETY: Have checked there's at least 2 further byte to read
                                 if unsafe { after_minus2.read() } == b'>' {
                                     // Consume `-->`
                                     // SAFETY: Consuming `-->` leaves `pos` on a UTF-8 char boundary

@@ -280,11 +280,11 @@ impl<'a> ParserImpl<'a> {
         let mut span = self.start_span();
         let kind = self.parse_combinator_kind(space)?;
 
-        span.end = if kind != CombinatorKind::Descendant {
+        span.end = if kind == CombinatorKind::Descendant {
+            self.cur_token().start
+        } else {
             self.eat(self.cur_kind());
             self.prev_token_end
-        } else {
-            self.cur_token().start
         };
 
         Some(self.ast.combinator(span, kind))
