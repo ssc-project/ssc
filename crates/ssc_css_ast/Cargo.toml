@@ -24,6 +24,9 @@ oxc_span      = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
 
+tsify        = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+
 [features]
 default   = []
-serialize = ["dep:serde", "oxc_allocator/serialize", "oxc_span/serialize"]
+serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_allocator/serialize", "oxc_span/serialize"]

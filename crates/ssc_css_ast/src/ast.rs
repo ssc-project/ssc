@@ -1,10 +1,15 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StyleSheet<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -13,7 +18,7 @@ pub struct StyleSheet<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Rule<'a> {
     AtRule(AtRule<'a>),
@@ -21,7 +26,7 @@ pub enum Rule<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Atrule"))]
 pub struct AtRule<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -32,7 +37,7 @@ pub struct AtRule<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Rule"))]
 pub struct StyleRule<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -52,7 +57,7 @@ pub struct RuleMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SelectorList<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -61,7 +66,7 @@ pub struct SelectorList<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ComplexSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -72,14 +77,14 @@ pub struct ComplexSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct ComplexSelectorMetadata {
     // TODO: add `rule`
     pub used: bool,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RelativeSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -91,7 +96,7 @@ pub struct RelativeSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TypeSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -100,7 +105,7 @@ pub struct TypeSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct IdSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -109,7 +114,7 @@ pub struct IdSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ClassSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -118,7 +123,7 @@ pub struct ClassSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AttributeSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -130,7 +135,7 @@ pub struct AttributeSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AttributeMatcher {
     #[cfg_attr(feature = "serialize", serde(rename = "~="))]
@@ -154,7 +159,7 @@ pub enum AttributeMatcher {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct PseudoElementSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -163,7 +168,7 @@ pub struct PseudoElementSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct PseudoClassSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -173,7 +178,7 @@ pub struct PseudoClassSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Percentage"))]
 pub struct PercentageSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -182,7 +187,7 @@ pub struct PercentageSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Nth"))]
 pub struct NthSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -191,7 +196,7 @@ pub struct NthSelector<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NestingSelector {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -199,7 +204,7 @@ pub struct NestingSelector {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum SimpleSelector<'a> {
     TypeSelector(TypeSelector<'a>),
@@ -223,7 +228,7 @@ pub struct RelativeSelectorMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Combinator {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -233,7 +238,7 @@ pub struct Combinator {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum CombinatorKind {
     #[cfg_attr(feature = "serialize", serde(rename = "+"))]
@@ -249,7 +254,7 @@ pub enum CombinatorKind {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Block<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -258,7 +263,7 @@ pub struct Block<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub enum BlockChild<'a> {
     Declaration(Declaration<'a>),
@@ -267,27 +272,11 @@ pub enum BlockChild<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Declaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub property: Atom<'a>,
     pub value: Atom<'a>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Node<'a> {
-    StyleSheet(StyleSheet<'a>),
-    Rule(StyleRule<'a>),
-    Atrule(AtRule<'a>),
-    SelectorList(SelectorList<'a>),
-    Block(Block<'a>),
-    ComplexSelector(ComplexSelector<'a>),
-    RelativeSelector(RelativeSelector<'a>),
-    Combinator(Combinator),
-    SimpleSelector(SimpleSelector<'a>),
-    Declaration(Rule<'a>),
 }
