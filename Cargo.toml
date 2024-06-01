@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*"]
+members  = ["crates/*", "napi/*"]
 
 [workspace.package]
 authors      = ["Dilshad <a-rustacean@outlook.com>"]
@@ -85,6 +85,11 @@ ouroboros          = "0.18.3"
 tsify              = "0.4.5"
 wasm-bindgen       = "0.2"
 serde-wasm-bindgen = "0.6.5"
+tokio              = "1"
+
+napi        = "2"
+napi-derive = "2"
+napi-build  = "2"
 
 # Oxc
 oxc_allocator   = "0.13.1"
