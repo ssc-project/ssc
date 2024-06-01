@@ -33,5 +33,13 @@ tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
-default   = []
-serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_allocator/serialize", "oxc_ast/serialize", "oxc_span/serialize", "ssc_css_ast/serialize"]
+default = []
+serialize = [
+  "dep:serde",
+  "dep:tsify",
+  "dep:wasm-bindgen",
+  "oxc_allocator/serialize",
+  "oxc_ast/serialize",
+  "oxc_span/serialize",
+  "ssc_css_ast/serialize",
+]

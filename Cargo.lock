@@ -688,6 +688,8 @@ dependencies = [
  "oxc_allocator",
  "oxc_span",
  "serde",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
