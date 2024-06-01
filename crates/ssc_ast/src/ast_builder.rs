@@ -4,8 +4,7 @@ use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_ast::ast::{
     BindingPattern, Expression, IdentifierName, IdentifierReference, Program, VariableDeclaration,
 };
-use oxc_span::{Atom, Span, SPAN};
-use rustc_hash::FxHashMap;
+use oxc_span::{Atom, Span};
 use ssc_css_ast::ast::StyleSheet;
 
 use crate::ast::*;
@@ -288,8 +287,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: Atom<'a>,
         expression: Option<Expression<'a>>,
-    ) -> Directive<'a> {
-        Directive::AnimateDirective(AnimateDirective { span, name, expression })
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::AnimateDirective(AnimateDirective { span, name, expression })
     }
 
     #[inline]
@@ -298,8 +297,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: Atom<'a>,
         expression: BindDirectiveExpression<'a>,
-    ) -> Directive<'a> {
-        Directive::BindDirective(BindDirective { span, name, expression })
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::BindDirective(BindDirective { span, name, expression })
     }
 
     #[inline]
@@ -308,8 +307,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: Atom<'a>,
         expression: Expression<'a>,
-    ) -> Directive<'a> {
-        Directive::ClassDirective(ClassDirective {
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::ClassDirective(ClassDirective {
             span,
             name,
             expression,
@@ -323,8 +322,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: Atom<'a>,
         expression: Option<LetDirectiveExpression<'a>>,
-    ) -> Directive<'a> {
-        Directive::LetDirective(LetDirective { span, name, expression })
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::LetDirective(LetDirective { span, name, expression })
     }
 
     #[inline]
@@ -334,8 +333,8 @@ impl<'a> AstBuilder<'a> {
         name: Atom<'a>,
         expression: Option<Expression<'a>>,
         modifiers: Vec<'a, Atom<'a>>,
-    ) -> Directive<'a> {
-        Directive::OnDirective(OnDirective { span, name, expression, modifiers })
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::OnDirective(OnDirective { span, name, expression, modifiers })
     }
 
     #[inline]
@@ -345,8 +344,8 @@ impl<'a> AstBuilder<'a> {
         name: Atom<'a>,
         value: AttributeValue<'a>,
         modifiers: Vec<'a, StyleDirectiveModifier>,
-    ) -> Directive<'a> {
-        Directive::StyleDirective(StyleDirective {
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::StyleDirective(StyleDirective {
             span,
             name,
             value,
@@ -364,8 +363,8 @@ impl<'a> AstBuilder<'a> {
         modifiers: Vec<'a, TransitionDirectiveModifier>,
         intro: bool,
         outro: bool,
-    ) -> Directive<'a> {
-        Directive::TransitionDirective(TransitionDirective {
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::TransitionDirective(TransitionDirective {
             span,
             name,
             expression,
@@ -381,8 +380,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: Atom<'a>,
         expression: Option<Expression<'a>>,
-    ) -> Directive<'a> {
-        Directive::UseDirective(UseDirective { span, name, expression })
+    ) -> DirectiveAttribute<'a> {
+        DirectiveAttribute::UseDirective(UseDirective { span, name, expression })
     }
 
     #[inline]
@@ -430,24 +429,7 @@ impl<'a> AstBuilder<'a> {
         index: Option<IdentifierName<'a>>,
         key: Option<Expression<'a>>,
     ) -> EachBlock<'a> {
-        EachBlock {
-            span,
-            expression,
-            context,
-            body,
-            fallback,
-            index,
-            key,
-            metadata: EachBlockMetadata {
-                contains_group_binding: false,
-                array_name: None,
-                index: IdentifierName::new(SPAN, self.new_atom("")),
-                item: IdentifierName::new(SPAN, self.new_atom("")),
-                declarations: FxHashMap::default(),
-                references: self.new_vec(),
-                is_controlled: false,
-            },
-        }
+        EachBlock { span, expression, context, body, fallback, index, key }
     }
 
     #[inline]

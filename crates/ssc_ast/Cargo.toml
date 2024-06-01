@@ -29,6 +29,9 @@ rustc-hash = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
 
+tsify        = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+
 [features]
 default   = []
-serialize = ["dep:serde", "oxc_allocator/serialize", "oxc_ast/serialize", "oxc_span/serialize", "ssc_css_ast/serialize"]
+serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_allocator/serialize", "oxc_ast/serialize", "oxc_span/serialize", "ssc_css_ast/serialize"]

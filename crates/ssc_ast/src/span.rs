@@ -49,7 +49,7 @@ impl<'a> GetSpan for ElementAttribute<'a> {
     fn span(&self) -> Span {
         match self {
             ElementAttribute::Attribute(attribute) => attribute.span,
-            ElementAttribute::Directive(directive) => directive.span(),
+            ElementAttribute::DirectiveAttribute(directive) => directive.span(),
             ElementAttribute::SpreadAttribute(spread_attribute) => spread_attribute.span,
         }
     }
@@ -76,17 +76,19 @@ impl<'a> GetSpan for AttributeSequenceValue<'a> {
     }
 }
 
-impl<'a> GetSpan for Directive<'a> {
+impl<'a> GetSpan for DirectiveAttribute<'a> {
     fn span(&self) -> Span {
         match self {
-            Directive::AnimateDirective(animate_directive) => animate_directive.span,
-            Directive::BindDirective(bind_directive) => bind_directive.span,
-            Directive::ClassDirective(class_directive) => class_directive.span,
-            Directive::LetDirective(let_directive) => let_directive.span,
-            Directive::OnDirective(on_directive) => on_directive.span,
-            Directive::StyleDirective(style_directive) => style_directive.span,
-            Directive::TransitionDirective(transition_directive) => transition_directive.span,
-            Directive::UseDirective(use_directive) => use_directive.span,
+            DirectiveAttribute::AnimateDirective(animate_directive) => animate_directive.span,
+            DirectiveAttribute::BindDirective(bind_directive) => bind_directive.span,
+            DirectiveAttribute::ClassDirective(class_directive) => class_directive.span,
+            DirectiveAttribute::LetDirective(let_directive) => let_directive.span,
+            DirectiveAttribute::OnDirective(on_directive) => on_directive.span,
+            DirectiveAttribute::StyleDirective(style_directive) => style_directive.span,
+            DirectiveAttribute::TransitionDirective(transition_directive) => {
+                transition_directive.span
+            }
+            DirectiveAttribute::UseDirective(use_directive) => use_directive.span,
         }
     }
 }

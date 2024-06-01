@@ -33,5 +33,6 @@ ssc_css_codegen     = { workspace = true, optional = true }
 ssc_css_transformer = { workspace = true, optional = true }
 
 [features]
-default = []
-css     = ["dep:ssc_css_ast", "dep:ssc_css_codegen", "dep:ssc_css_parser", "dep:ssc_css_transformer"]
+default   = []
+serialize = ["ssc_ast/serialize", "ssc_css_ast/serialize"]
+css       = ["dep:ssc_css_ast", "dep:ssc_css_codegen", "dep:ssc_css_parser", "dep:ssc_css_transformer"]

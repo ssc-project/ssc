@@ -1,99 +1,37 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_allocator::Vec;
 use oxc_ast::ast::{
-    ArrayExpression, ArrowFunctionExpression, BigIntLiteral, BindingPattern, BooleanLiteral,
-    CallExpression, CatchClause, Class, ClassBody, ExportSpecifier, Expression, Function,
-    IdentifierName, IdentifierReference, ImportDeclaration, ImportDefaultSpecifier,
-    ImportNamespaceSpecifier, ImportSpecifier, MemberExpression, MethodDefinition,
-    ModuleDeclaration, NullLiteral, NumericLiteral, ObjectExpression, ObjectProperty,
-    PrivateIdentifier, Program, PropertyDefinition, RegExpLiteral, SpreadElement, Statement,
-    StringLiteral, Super, SwitchCase, TemplateElement, VariableDeclaration, VariableDeclarator,
+    ArrayExpression, ArrowFunctionExpression, BindingPattern, CallExpression, Expression,
+    IdentifierName, IdentifierReference, MemberExpression, ObjectExpression, Program,
+    VariableDeclaration,
 };
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
-use ssc_css_ast::ast::{Node as CssNode, StyleSheet};
+use ssc_css_ast::ast::StyleSheet;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct Binding<'a> {
-    pub node: IdentifierReference<'a>,
-    pub kind: BindingKind,
-    pub declaration_kind: DeclarationKind,
-    pub initial: Option<BindingInitial<'a>>,
-    pub is_called: bool,
-    pub references: BindingReferences<'a>,
-    pub mutated: bool,
-    pub reassigned: bool,
-    // TODO: add scope
-    // pub scope: Scope,
-    pub legacy_dependencies: Vec<'a, Binding<'a>>,
-    pub prop_alias: Option<Atom<'a>>,
-    // TODO: add `expression` and mutation fields
-    // pub expression: BindingExpression<'a>,
-    // pub mutation: BindingMutation<'a>,
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct Root<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub options: Option<SvelteOptions<'a>>,
+    pub fragment: Fragment<'a>,
+    pub css: Option<Style<'a>>,
+    pub instance: Option<Script<'a>>,
+    pub module: Option<Script<'a>>,
     #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: Option<BindingMetadata>,
+    pub metadata: RootMetadata,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
-pub enum BindingKind {
-    Normal,
-    Prop,
-    BindableProp,
-    RestProp,
-    State,
-    FrozenState,
-    Derived,
-    Each,
-    Snippet,
-    StoreSub,
-    LegacyReactive,
-    LegacyReactiveImport,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "snake_case"))]
-pub enum DeclarationKind {
-    Var,
-    Let,
-    Const,
-    Function,
-    Import,
-    Param,
-    RestParam,
-    Synthetic,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum BindingInitial<'a> {
-    Expression(Expression<'a>),
-    FunctionDeclaration(Function<'a>),
-    ClassDeclaration(Class<'a>),
-    ImportDeclaration(ImportDeclaration<'a>),
-    EachBlock(EachBlock<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct BindingReferences<'a> {
-    pub node: IdentifierReference<'a>,
-    pub path: Vec<'a, SvelteNode<'a>>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct BindingMetadata {
-    pub inside_rest: bool,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Fragment<'a> {
     pub nodes: Vec<'a, FragmentNode<'a>>,
@@ -101,7 +39,7 @@ pub struct Fragment<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum FragmentNode<'a> {
     Text(Text<'a>),
@@ -111,7 +49,7 @@ pub enum FragmentNode<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Text<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -121,7 +59,7 @@ pub struct Text<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Tag<'a> {
     ExpressionTag(ExpressionTag<'a>),
@@ -132,7 +70,7 @@ pub enum Tag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ExpressionTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -143,14 +81,14 @@ pub struct ExpressionTag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct ExpressionTagMetadata {
     pub contains_call_expression: bool,
     pub dynamic: bool,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct HtmlTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -159,7 +97,7 @@ pub struct HtmlTag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ConstTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -168,7 +106,7 @@ pub struct ConstTag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct DebugTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -177,7 +115,7 @@ pub struct DebugTag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RenderTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -186,7 +124,7 @@ pub struct RenderTag<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum RenderTagExpression<'a> {
     Call(CallExpression<'a>),
@@ -194,7 +132,7 @@ pub enum RenderTagExpression<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Element<'a> {
     Component(Component<'a>),
@@ -213,12 +151,12 @@ pub enum Element<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ElementAttribute<'a> {
     Attribute(Attribute<'a>),
     SpreadAttribute(SpreadAttribute<'a>),
-    Directive(Directive<'a>),
+    DirectiveAttribute(DirectiveAttribute<'a>),
 }
 
 impl<'a> ElementAttribute<'a> {
@@ -238,8 +176,8 @@ impl<'a> ElementAttribute<'a> {
         }
     }
 
-    pub fn as_directive(&self) -> Option<&Directive<'a>> {
-        if let ElementAttribute::Directive(directive) = self {
+    pub fn as_directive_attribute(&self) -> Option<&DirectiveAttribute<'a>> {
+        if let ElementAttribute::DirectiveAttribute(directive) = self {
             Some(directive)
         } else {
             None
@@ -262,8 +200,8 @@ impl<'a> ElementAttribute<'a> {
         }
     }
 
-    pub fn directive(self) -> Option<Directive<'a>> {
-        if let ElementAttribute::Directive(directive) = self {
+    pub fn directive_attribute(self) -> Option<DirectiveAttribute<'a>> {
+        if let ElementAttribute::DirectiveAttribute(directive) = self {
             Some(directive)
         } else {
             None
@@ -272,7 +210,7 @@ impl<'a> ElementAttribute<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Component<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -283,7 +221,7 @@ pub struct Component<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TitleElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -293,7 +231,7 @@ pub struct TitleElement<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SlotElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -303,7 +241,7 @@ pub struct SlotElement<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RegularElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -316,7 +254,7 @@ pub struct RegularElement<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegularElementMetadata {
     pub svg: bool,
     pub has_spread: bool,
@@ -324,7 +262,7 @@ pub struct RegularElementMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteBody<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -334,7 +272,7 @@ pub struct SvelteBody<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteComponent<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -345,7 +283,7 @@ pub struct SvelteComponent<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteDocument<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -355,7 +293,7 @@ pub struct SvelteDocument<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -368,14 +306,14 @@ pub struct SvelteElement<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct SvelteElementMetadata {
     pub svg: bool,
     pub scoped: bool,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteFragment<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -385,7 +323,7 @@ pub struct SvelteFragment<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteHead<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -395,7 +333,7 @@ pub struct SvelteHead<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteOptionsRaw<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -405,7 +343,7 @@ pub struct SvelteOptionsRaw<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteSelf<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -415,7 +353,7 @@ pub struct SvelteSelf<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SvelteWindow<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -425,7 +363,7 @@ pub struct SvelteWindow<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Block<'a> {
     EachBlock(EachBlock<'a>),
@@ -436,7 +374,7 @@ pub enum Block<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct EachBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -449,24 +387,10 @@ pub struct EachBlock<'a> {
     // compiler uses `String` instead of `IdentifierName`
     pub index: Option<IdentifierName<'a>>,
     pub key: Option<Expression<'a>>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: EachBlockMetadata<'a>,
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct EachBlockMetadata<'a> {
-    pub contains_group_binding: bool,
-    pub array_name: Option<IdentifierReference<'a>>,
-    pub index: IdentifierName<'a>,
-    pub item: IdentifierName<'a>,
-    pub declarations: FxHashMap<Atom<'a>, Binding<'a>>,
-    pub references: Vec<'a, Binding<'a>>,
-    pub is_controlled: bool,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct IfBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -478,7 +402,7 @@ pub struct IfBlock<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AwaitBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -492,7 +416,7 @@ pub struct AwaitBlock<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct KeyBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -502,7 +426,7 @@ pub struct KeyBlock<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SnippetBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -513,97 +437,8 @@ pub struct SnippetBlock<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum SvelteNode<'a> {
-    Node(Node<'a>),
-    TemplateNode(TemplateNode<'a>),
-    Fragment(Fragment<'a>),
-    CssNode(CssNode<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Node<'a> {
-    AssignmentProperty(ObjectProperty<'a>),
-    CatchClause(CatchClause<'a>),
-    Class(Class<'a>),
-    ClassBody(ClassBody<'a>),
-    Expression(Expression<'a>),
-    Function(Function<'a>),
-    Identifier(IdentifierReference<'a>),
-    Literal(Literal<'a>),
-    MethodDefinition(MethodDefinition<'a>),
-    ModuleDeclaration(ModuleDeclaration<'a>),
-    ModuleSpecifier(ModuleSpecifier<'a>),
-    Pattern(BindingPattern<'a>),
-    PrivateIdentifier(PrivateIdentifier<'a>),
-    Program(Program<'a>),
-    // TODO: add `Property` variant
-    PropertyDefinition(PropertyDefinition<'a>),
-    SpreadElement(SpreadElement<'a>),
-    Statement(Statement<'a>),
-    Super(Super),
-    SwitchCase(SwitchCase<'a>),
-    TemplateElement(TemplateElement<'a>),
-    VariableDeclrator(VariableDeclarator<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Literal<'a> {
-    Null(NullLiteral),
-    Number(NumericLiteral<'a>),
-    Boolean(BooleanLiteral),
-    String(StringLiteral<'a>),
-    RegExp(RegExpLiteral<'a>),
-    BigInt(BigIntLiteral<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum ModuleSpecifier<'a> {
-    Import(ImportSpecifier<'a>),
-    ImportDefault(ImportDefaultSpecifier<'a>),
-    ImportNamespace(ImportNamespaceSpecifier<'a>),
-    Export(ExportSpecifier<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum TemplateNode<'a> {
-    Root(Root<'a>),
-    Text(Text<'a>),
-    Tag(Tag<'a>),
-    ElementLike(Element<'a>),
-    Attribute(Attribute<'a>),
-    SpreadAttribute(SpreadAttribute<'a>),
-    Directive(Directive<'a>),
-    Block(Block<'a>),
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
-pub struct Root<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub options: Option<SvelteOptions<'a>>,
-    pub fragment: Fragment<'a>,
-    pub css: Option<Style<'a>>,
-    pub instance: Option<Script<'a>>,
-    pub module: Option<Script<'a>>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: RootMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-#[cfg_attr(feature = "serialize", serde(rename = "StyleSheet", tag = "type"))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename = "Style", tag = "type"))]
 pub struct Style<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
@@ -613,7 +448,7 @@ pub struct Style<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct StyleContent<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
@@ -621,7 +456,7 @@ pub struct StyleContent<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct SvelteOptions<'a> {
     pub span: Span,
@@ -635,7 +470,7 @@ pub struct SvelteOptions<'a> {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum Namespace {
     #[default]
@@ -646,10 +481,12 @@ pub enum Namespace {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct CustomElementOptions<'a> {
     pub tag: Atom<'a>,
+    #[cfg_attr(feature = "serialize", tsify(type = r#""open" | "none" | null"#))]
     pub shadow: Option<CustomElementShadow>,
+    #[cfg_attr(feature = "serialize", tsify(type = r#"Map<Atom, CustomElementProp>"#))]
     pub props: FxHashMap<Atom<'a>, CustomElementProp<'a>>,
     pub extend: Option<CustomElementExtend<'a>>,
 }
@@ -663,11 +500,15 @@ pub enum CustomElementShadow {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct CustomElementProp<'a> {
     pub attribute: Option<Atom<'a>>,
     pub reflect: Option<bool>,
     #[cfg_attr(feature = "serialize", serde(rename = "type"))]
+    #[cfg_attr(
+        feature = "serialize",
+        tsify(type = r#""Array" | "Boolean" | "Number" | "Object" | "String""#)
+    )]
     pub type_: Option<CustomElementPropType>,
 }
 
@@ -682,7 +523,7 @@ pub enum CustomElementPropType {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum CustomElementExtend<'a> {
     ArrowFunction(ArrowFunctionExpression<'a>),
@@ -690,11 +531,12 @@ pub enum CustomElementExtend<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Script<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(feature = "serialize", tsify(type = r#""default" | "module""#))]
     pub context: ScriptContext,
     #[cfg_attr(feature = "serialize", serde(rename = "content"))]
     pub program: Program<'a>,
@@ -716,7 +558,7 @@ pub struct RootMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Attribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -726,7 +568,7 @@ pub struct Attribute<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AttributeValue<'a> {
     Bool(bool), // true
@@ -734,7 +576,7 @@ pub enum AttributeValue<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AttributeSequenceValue<'a> {
     Text(Text<'a>),
@@ -742,7 +584,7 @@ pub enum AttributeSequenceValue<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SpreadAttribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -760,9 +602,9 @@ pub struct SpreadAttributeMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Directive<'a> {
+pub enum DirectiveAttribute<'a> {
     AnimateDirective(AnimateDirective<'a>),
     BindDirective(BindDirective<'a>),
     ClassDirective(ClassDirective<'a>),
@@ -774,7 +616,7 @@ pub enum Directive<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AnimateDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -784,7 +626,7 @@ pub struct AnimateDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BindDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -796,7 +638,7 @@ pub struct BindDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum BindDirectiveExpression<'a> {
     Identifier(IdentifierReference<'a>),
@@ -811,7 +653,7 @@ pub struct BindDirectiveMetadata<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ClassDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -829,7 +671,7 @@ pub struct ClassDirectiveMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct LetDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -839,7 +681,7 @@ pub struct LetDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum LetDirectiveExpression<'a> {
     Identifier(IdentifierReference<'a>),
@@ -848,7 +690,7 @@ pub enum LetDirectiveExpression<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct OnDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -860,7 +702,7 @@ pub struct OnDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StyleDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -873,7 +715,7 @@ pub struct StyleDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum StyleDirectiveModifier {
     Important,
@@ -886,7 +728,7 @@ pub struct StyleDirectiveMetadata {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TransitionDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
@@ -899,7 +741,7 @@ pub struct TransitionDirective<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TransitionDirectiveModifier {
     Local,
@@ -907,7 +749,7 @@ pub enum TransitionDirectiveModifier {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct UseDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
