@@ -43,3 +43,6 @@ serialize = [
   "oxc_span/serialize",
   "ssc_css_ast/serialize",
 ]
+
+[package.metadata.cargo-shear]
+ignored = ["wasm-bindgen"]
