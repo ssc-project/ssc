@@ -24,7 +24,6 @@ doctest    = false
 oxc_allocator    = { workspace = true }
 ssc_parser       = { workspace = true }
 ssc_ast          = { workspace = true, features = ["serialize"] }
-oxc_span         = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 
 tokio       = { workspace = true }
