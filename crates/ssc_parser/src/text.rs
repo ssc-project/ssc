@@ -5,7 +5,14 @@ use crate::{Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_text(&mut self) -> Text<'a> {
-        let start = self.prev_token_end;
+        let start = if self.source_text[(self.prev_token_end as usize)..]
+            .trim_start()
+            .starts_with("<!--")
+        {
+            self.lexer.last_comment_end
+        } else {
+            self.prev_token_end
+        };
 
         loop {
             if self.at(Kind::LCurly) || self.at(Kind::LAngle) || self.at(Kind::Eof) {

@@ -66,7 +66,10 @@ pub struct Lexer<'a> {
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when
     /// first used.
-    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+    comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    /// End position of the last comment
+    pub last_comment_end: u32,
 }
 
 #[allow(clippy::unused_self)]
@@ -94,7 +97,8 @@ impl<'a> Lexer<'a> {
                                                     * TypeScript */
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
-            multi_line_comment_end_finder: None,
+            comment_end_finder: None,
+            last_comment_end: 0,
         }
     }
 
