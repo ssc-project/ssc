@@ -59,6 +59,8 @@ pub enum Kind {
     At,
     // Number
     Number,
+    // Text
+    Text,
 }
 
 #[allow(clippy::enum_glob_use)]
@@ -148,6 +150,7 @@ impl Kind {
             Backtick => "`",
             At => "@",
             Number => "number",
+            Text => "text",
         }
     }
 }

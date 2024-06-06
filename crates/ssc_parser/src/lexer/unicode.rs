@@ -1,10 +1,9 @@
 use oxc_allocator::String;
 use oxc_syntax::identifier::{
-    is_identifier_part, is_identifier_start, is_identifier_start_unicode,
-    is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
+    is_identifier_part, is_identifier_start, CR, FF, LF, LS, PS, TAB, VT,
 };
 
-use super::{Kind, Lexer, Span};
+use super::{Lexer, Span};
 use crate::diagnostics;
 
 enum SurrogatePair {
@@ -17,34 +16,6 @@ enum SurrogatePair {
 }
 
 impl<'a> Lexer<'a> {
-    pub(super) fn unicode_char_handler(&mut self) -> Kind {
-        let c = self.peek().unwrap();
-        match c {
-            c if is_identifier_start_unicode(c) => {
-                let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
-                Kind::Ident
-            }
-            c if is_irregular_whitespace(c) => {
-                self.consume_char();
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
-                Kind::Skip
-            }
-            c if is_irregular_line_terminator(c) => {
-                self.consume_char();
-                self.token.is_on_new_line = true;
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
-                Kind::Skip
-            }
-            _ => {
-                self.consume_char();
-                self.error(diagnostics::invalid_character(c, self.unterminated_range()));
-                Kind::Undetermined
-            }
-        }
-    }
-
     /// Identifier `UnicodeEscapeSequence`
     ///   \u `Hex4Digits`
     ///   \u{ `CodePoint` }

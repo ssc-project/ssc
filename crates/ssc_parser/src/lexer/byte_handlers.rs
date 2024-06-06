@@ -1,3 +1,5 @@
+use memchr::memchr2;
+
 use super::{Kind, Lexer};
 use crate::diagnostics;
 
@@ -470,7 +472,18 @@ ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char
 // NB: Must not use `ascii_byte_handler!` macro, as this handler is for
 // non-ASCII chars.
 byte_handler!(UNI(lexer) {
-    lexer.unicode_char_handler()
+    let len = memchr2(b'{', b'<', lexer.remaining().as_bytes());
+    if let Some(len) = len {
+        // SAFETY: `memchr2` guarantees `len` will be offset from
+        // current position of a `{` or `<`
+        // byte. So must be a valid UTF-8 boundary, and within
+        // bounds of source.
+        let end = unsafe { lexer.source.position().add(len) };
+        lexer.source.set_position(end);
+    } else {
+        lexer.source.advance_to_end();
+    }
+    Kind::Text
 });
 
 // UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8
