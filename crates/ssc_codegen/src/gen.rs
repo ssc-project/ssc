@@ -307,152 +307,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UseDirective<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Fragment<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
-        let mut is_first = true;
-        let mut is_continuing = false;
-        for (i, node) in self.nodes.iter().enumerate() {
+        for node in &self.nodes {
             match node {
-                FragmentNode::Text(text) => {
-                    let trimmed = text.data.trim();
-                    if trimmed.is_empty() {
-                        continue;
-                    }
-                    if is_first {
-                        p.print_soft_newline();
-                        p.print_indent();
-                        is_first = false;
-                    } else if !is_continuing {
-                        p.print_indent();
-                    } else {
-                        is_continuing = false;
-                    }
-
-                    let parts = trimmed.split([
-                        ' ',
-                        '\n',
-                        '\t',
-                        '\r',
-                        0x0009 as char,
-                        0x000B as char,
-                        0x000C as char,
-                        0x00A0 as char,
-                        '\u{FEFF}',
-                    ]);
-                    let num_parts = parts.clone().count();
-                    for (i, part) in parts.enumerate() {
-                        p.print_str(part.as_bytes());
-                        if (i + 1) != num_parts {
-                            p.print_hard_space();
-                        }
-                    }
-
-                    if text.data.trim_end() == text.data {
-                        if let Some(next) = self.nodes.get(i + 1) {
-                            if let FragmentNode::Text(next_text) = next {
-                                if next_text.data.trim_start() == next_text.data {
-                                    is_continuing = true;
-                                    continue;
-                                }
-                            } else {
-                                is_continuing = true;
-                                continue;
-                            }
-                        }
-                    }
-                    if MINIFY {
-                        p.print_hard_space();
-                    } else {
-                        p.print_soft_newline();
-                    }
-                }
-                FragmentNode::Tag(tag) => {
-                    if is_first {
-                        p.print_soft_newline();
-                        p.print_indent();
-                        is_first = false;
-                    } else if !is_continuing {
-                        p.print_indent();
-                    } else {
-                        is_continuing = false;
-                    }
-
-                    tag.gen(p);
-                    if let Some(next) = self.nodes.get(i + 1) {
-                        if let FragmentNode::Text(next_text) = next {
-                            if next_text.data.trim_start() == next_text.data {
-                                is_continuing = true;
-                                continue;
-                            }
-                        } else {
-                            is_continuing = true;
-                            continue;
-                        }
-                    }
-                    if MINIFY {
-                        p.print_hard_space();
-                    } else {
-                        p.print_soft_newline();
-                    }
-                }
-                FragmentNode::Element(element) => {
-                    if is_first {
-                        p.print_soft_newline();
-                        p.print_indent();
-                        is_first = false;
-                    } else if !is_continuing {
-                        p.print_indent();
-                    } else {
-                        is_continuing = false;
-                    }
-
-                    element.gen(p);
-                    if let Some(next) = self.nodes.get(i + 1) {
-                        if let FragmentNode::Text(next_text) = next {
-                            if next_text.data.trim_start() == next_text.data {
-                                is_continuing = true;
-                                continue;
-                            }
-                        } else {
-                            is_continuing = true;
-                            continue;
-                        }
-                    }
-                    if MINIFY {
-                        p.print_hard_space();
-                    } else {
-                        p.print_soft_newline();
-                    }
-                }
-                FragmentNode::Block(block) => {
-                    if is_first {
-                        p.print_soft_newline();
-                        p.print_indent();
-                        is_first = false;
-                    } else if !is_continuing {
-                        p.print_indent();
-                    } else {
-                        is_continuing = false;
-                    }
-
-                    block.gen(p);
-                    if let Some(next) = self.nodes.get(i + 1) {
-                        if let FragmentNode::Text(next_text) = next {
-                            if next_text.data.trim_start() == next_text.data {
-                                is_continuing = true;
-                                continue;
-                            }
-                        } else {
-                            is_continuing = true;
-                            continue;
-                        }
-                    }
-                    if MINIFY {
-                        p.print_hard_space();
-                    } else {
-                        p.print_soft_newline();
-                    }
-                }
+                FragmentNode::Text(text) => text.gen(p),
+                FragmentNode::Tag(tag) => tag.gen(p),
+                FragmentNode::Element(element) => element.gen(p),
+                FragmentNode::Block(block) => block.gen(p),
             }
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for Text<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
+        p.print_str(self.data.as_bytes());
     }
 }
 
@@ -558,10 +426,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Component<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</");
             p.print_str(self.name.as_bytes());
             p.print(b'>');
@@ -582,10 +447,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TitleElement<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</title>");
         }
     }
@@ -604,10 +466,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SlotElement<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</slot>");
         }
     }
@@ -627,10 +486,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegularElement<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</");
             p.print_str(self.name.as_bytes());
             p.print(b'>');
@@ -651,10 +507,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteBody<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:body>");
         }
     }
@@ -675,10 +528,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteComponent<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:component>");
         }
     }
@@ -697,10 +547,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteDocument<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:document>");
         }
     }
@@ -721,10 +568,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteElement<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:element>");
         }
     }
@@ -743,10 +587,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteFragment<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:fragment>");
         }
     }
@@ -765,10 +606,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteHead<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:head>");
         }
     }
@@ -787,10 +625,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteOptionsRaw<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:options>");
         }
     }
@@ -809,10 +644,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteSelf<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:self>");
         }
     }
@@ -831,10 +663,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SvelteWindow<'a> {
             p.print_str(b"/>");
         } else {
             p.print(b'>');
-            p.indent();
             self.fragment.gen(p);
-            p.dedent();
-            p.print_indent();
             p.print_str(b"</svelte:window>");
         }
     }
@@ -871,9 +700,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for EachBlock<'a> {
             p.print(b')');
         }
         p.print(b'}');
-        p.indent();
         self.body.gen(p);
-        p.dedent();
         if let Some(fallback) = self.fallback.as_ref() {
             p.print_str(b"{:else}");
             fallback.gen(p);
@@ -897,9 +724,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
         print_oxc_gen_expr(&self.expression, p);
         if let Some(pending) = self.pending.as_ref() {
             p.print(b'}');
-            p.indent();
             pending.gen(p);
-            p.dedent();
             if let Some(then) = self.then.as_ref() {
                 p.print_str(b"{:then");
                 if let Some(value) = self.value.as_ref() {
@@ -907,9 +732,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
                     print_oxc_gen(value, p);
                 }
                 p.print(b'}');
-                p.indent();
                 then.gen(p);
-                p.dedent();
             }
             if let Some(catch) = self.catch.as_ref() {
                 p.print_str(b"{:catch");
@@ -918,9 +741,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
                     print_oxc_gen(error, p);
                 }
                 p.print(b'}');
-                p.indent();
                 catch.gen(p);
-                p.dedent();
             }
             p.print_str(b"{/await}");
             return;
@@ -932,9 +753,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
                 print_oxc_gen(value, p);
             }
             p.print(b'}');
-            p.indent();
             then.gen(p);
-            p.dedent();
             if let Some(catch) = self.catch.as_ref() {
                 p.print_str(b"{:catch");
                 if let Some(error) = self.error.as_ref() {
@@ -942,9 +761,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
                     print_oxc_gen(error, p);
                 }
                 p.print(b'}');
-                p.indent();
                 catch.gen(p);
-                p.dedent();
             }
             p.print_str(b"{/await}");
             return;
@@ -956,9 +773,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AwaitBlock<'a> {
                 print_oxc_gen(value, p);
             }
             p.print(b'}');
-            p.indent();
             catch.gen(p);
-            p.dedent();
             p.print_str(b"{/await}");
             return;
         }
@@ -972,9 +787,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for KeyBlock<'a> {
         p.print_str(b"{#key ");
         print_oxc_gen_expr(&self.expression, p);
         p.print(b'}');
-        p.indent();
         self.fragment.gen(p);
-        p.dedent();
         p.print_str(b"{/key}");
     }
 }
@@ -994,9 +807,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SnippetBlock<'a> {
             }
         }
         p.print_str(b")}");
-        p.indent();
         self.body.gen(p);
-        p.dedent();
         p.print_str(b"{/snippet}");
     }
 }
@@ -1004,15 +815,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SnippetBlock<'a> {
 fn print_if_block<const MINIFY: bool>(block: &IfBlock<'_>, p: &mut Codegen<{ MINIFY }>) {
     print_oxc_gen_expr(&block.test, p);
     p.print(b'}');
-    p.indent();
     block.consequent.gen(p);
-    p.dedent();
     if let Some(alternate) = block.alternate.as_ref() {
         if alternate.nodes.len() == 1 {
             let first = &alternate.nodes[0];
             if let FragmentNode::Block(Block::IfBlock(if_block)) = first {
                 if if_block.elseif {
-                    p.print_indent();
                     p.add_source_mapping(if_block.span.start);
                     p.print_str(b"{:else if ");
                     print_if_block(if_block, p);
@@ -1020,13 +828,9 @@ fn print_if_block<const MINIFY: bool>(block: &IfBlock<'_>, p: &mut Codegen<{ MIN
                 }
             }
         }
-        p.print_indent();
         p.print_str(b"{:else}");
-        p.indent();
         alternate.gen(p);
-        p.dedent();
     }
-    p.print_indent();
     p.print_str(b"{/if}");
 }
 
