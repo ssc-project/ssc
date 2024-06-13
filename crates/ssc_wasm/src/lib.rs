@@ -28,7 +28,7 @@ pub struct Ssc {
     pub ast: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "FragmentNode[]")]
+    #[tsify(type = "Root[]")]
     pub ir: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
@@ -128,7 +128,7 @@ impl Ssc {
         self.comments = self.map_comments(&ret.trivias);
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
-        self.ir = format!("{:#?}", ret.root.fragment.nodes).into();
+        self.ir = format!("{:#?}", ret.root).into();
 
         let root = allocator.alloc(ret.root);
 
