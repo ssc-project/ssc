@@ -183,13 +183,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Style)?;
         self.expect(Kind::RAngle)?;
 
-        Ok(self.ast.style(
-            self.end_span(span),
-            ret.stylesheet,
-            attributes,
-            Span::new(source_start, source_end),
-            Atom::from(&self.source_text[(source_start as usize)..(source_end as usize)]),
-        ))
+        Ok(self.ast.style(self.end_span(span), ret.stylesheet, attributes))
     }
 
     pub(crate) fn parse_element(&mut self) -> Result<Element<'a>> {
