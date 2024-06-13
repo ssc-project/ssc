@@ -55,3 +55,9 @@ pub mod css_transformer {
     #[doc(inline)]
     pub use ssc_css_transformer::*;
 }
+
+#[cfg(feature = "css")]
+pub mod css_analyzer {
+    #[doc(inline)]
+    pub use ssc_css_analyzer;
+}

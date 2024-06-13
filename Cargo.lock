@@ -861,6 +861,7 @@ dependencies = [
  "oxc_span",
  "ssc_ast",
  "ssc_codegen",
+ "ssc_css_analyzer",
  "ssc_css_ast",
  "ssc_css_codegen",
  "ssc_css_parser",
@@ -898,6 +899,18 @@ dependencies = [
  "ssc_ast",
  "ssc_css_codegen",
  "ssc_parser",
+]
+
+[[package]]
+name = "ssc_css_analyzer"
+version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_index",
+ "oxc_span",
+ "ssc_css_ast",
+ "ssc_css_parser",
 ]
 
 [[package]]
