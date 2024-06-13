@@ -57,6 +57,7 @@ ast_kinds! {
     NthSelector(&'a NthSelector<'a>),
     NestingSelector(&'a NestingSelector),
     Combinator(&'a Combinator),
+    Block(&'a Block<'a>),
     Declaration(&'a Declaration<'a>),
 }
 

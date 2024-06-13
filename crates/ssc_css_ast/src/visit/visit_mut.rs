@@ -154,9 +154,12 @@ pub mod walk_mut {
     /* ----------  Block ---------- */
 
     pub fn walk_block_mut<'a, V: VisitMut<'a>>(visitor: &mut V, block: &mut Block<'a>) {
+        let kind = AstType::Block;
+        visitor.enter_node(kind);
         for child in block.children.iter_mut() {
             visitor.visit_block_child(child);
         }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_block_child_mut<'a, V: VisitMut<'a>>(visitor: &mut V, child: &mut BlockChild<'a>) {

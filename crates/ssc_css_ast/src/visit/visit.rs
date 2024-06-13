@@ -164,9 +164,12 @@ pub mod walk {
     /* ----------  Block ---------- */
 
     pub fn walk_block<'a, V: Visit<'a>>(visitor: &mut V, block: &Block<'a>) {
+        let kind = AstKind::Block(visitor.alloc(block));
+        visitor.enter_node(kind);
         for child in &block.children {
             visitor.visit_block_child(child);
         }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_block_child<'a, V: Visit<'a>>(visitor: &mut V, child: &BlockChild<'a>) {
