@@ -100,6 +100,7 @@ oxc_span        = "0.13.1"
 oxc_syntax      = "0.13.1"
 oxc_sourcemap   = "0.13.1"
 oxc_codegen     = "0.13.1"
+oxc_index       = "0.13.1"
 
 # Ssc
 ssc                 = { version = "0.1.0", path = "crates/ssc" }

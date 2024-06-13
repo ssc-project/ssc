@@ -1,12 +1,33 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use std::cell::Cell;
+
+use bitflags::bitflags;
 use oxc_allocator::Vec;
+use oxc_index::define_index_type;
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type AstNodeId = number;
+export type RuleFlags = {
+    GlobalBlock: 1,
+    LocalSelectors: 2,
+};
+export type RelativeSelectorFlags = {
+    Global: 1,
+    GlobalLike: 2,
+    Host: 4,
+    Root: 8,
+    Scoped: 16,
+};
+"#;
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -44,16 +65,10 @@ pub struct StyleRule<'a> {
     pub span: Span,
     pub prelude: SelectorList<'a>,
     pub block: Block<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: RuleMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct RuleMetadata {
-    // TODO: add `parent_rule`
-    pub has_local_selectors: bool,
-    pub is_global_block: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub parent_rule: Cell<Option<AstNodeId>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<RuleFlags>,
 }
 
 #[derive(Debug)]
@@ -72,15 +87,9 @@ pub struct ComplexSelector<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub children: Vec<'a, RelativeSelector<'a>>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: ComplexSelectorMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct ComplexSelectorMetadata {
-    // TODO: add `rule`
-    pub used: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub rule: Cell<Option<AstNodeId>>,
+    pub used: Cell<bool>,
 }
 
 #[derive(Debug)]
@@ -91,8 +100,8 @@ pub struct RelativeSelector<'a> {
     pub span: Span,
     pub combinator: Option<Combinator>,
     pub selectors: Vec<'a, SimpleSelector<'a>>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: RelativeSelectorMetadata,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<RelativeSelectorFlags>,
 }
 
 #[derive(Debug)]
@@ -218,16 +227,7 @@ pub enum SimpleSelector<'a> {
     NestingSelector(NestingSelector),
 }
 
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct RelativeSelectorMetadata {
-    pub is_global: bool,
-    pub is_host: bool,
-    pub root: bool,
-    pub scoped: bool,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Combinator {
@@ -237,7 +237,7 @@ pub struct Combinator {
     pub kind: CombinatorKind,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum CombinatorKind {
@@ -251,6 +251,18 @@ pub enum CombinatorKind {
     Column,
     #[cfg_attr(feature = "serialize", serde(rename = " "))]
     Descendant,
+}
+
+impl CombinatorKind {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::NextSibling => "+",
+            Self::LaterSibling => "~",
+            Self::Child => ">",
+            Self::Column => "||",
+            Self::Descendant => " ",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -279,4 +291,63 @@ pub struct Declaration<'a> {
     pub span: Span,
     pub property: Atom<'a>,
     pub value: Atom<'a>,
+}
+
+define_index_type! {
+    pub struct AstNodeId = usize;
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct RuleFlags: u8 {
+        const GlobalBlock    = 1 << 0;
+        const LocalSelectors = 1 << 1;
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct RelativeSelectorFlags: u8 {
+        const Global     = 1 << 0;
+        const GlobalLike = 1 << 1;
+        const Host       = 1 << 2;
+        const Root       = 1 << 3;
+        const Scoped     = 1 << 4;
+    }
+}
+
+impl RuleFlags {
+    #[inline]
+    pub fn has_global_block(&self) -> bool {
+        self.contains(Self::GlobalBlock)
+    }
+
+    #[inline]
+    pub fn has_local_selectors(&self) -> bool {
+        self.contains(Self::LocalSelectors)
+    }
+}
+
+impl RelativeSelectorFlags {
+    #[inline]
+    pub fn has_global(&self) -> bool {
+        self.contains(Self::Global)
+    }
+
+    pub fn has_global_like(&self) -> bool {
+        self.contains(Self::GlobalLike)
+    }
+
+    #[inline]
+    pub fn has_host(&self) -> bool {
+        self.contains(Self::Host)
+    }
+
+    #[inline]
+    pub fn has_root(&self) -> bool {
+        self.contains(Self::Root)
+    }
+
+    #[inline]
+    pub fn has_scoped(&self) -> bool {
+        self.contains(Self::Scoped)
+    }
 }

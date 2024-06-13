@@ -8,6 +8,7 @@
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
+mod span;
 mod trivia;
 pub mod visit;
 

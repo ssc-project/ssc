@@ -904,7 +904,9 @@ dependencies = [
 name = "ssc_css_ast"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "oxc_allocator",
+ "oxc_index",
  "oxc_span",
  "serde",
  "tsify",

@@ -1,4 +1,4 @@
-use std::mem;
+use std::{cell::Cell, mem};
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, Span};
@@ -88,7 +88,8 @@ impl<'a> AstBuilder<'a> {
             span,
             prelude,
             block,
-            metadata: RuleMetadata { has_local_selectors: false, is_global_block: false },
+            flags: Cell::new(RuleFlags::empty()),
+            parent_rule: Cell::new(None),
         }
     }
 
@@ -117,7 +118,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         children: Vec<'a, RelativeSelector<'a>>,
     ) -> ComplexSelector<'a> {
-        ComplexSelector { span, children, metadata: ComplexSelectorMetadata { used: false } }
+        ComplexSelector { span, children, rule: Cell::new(None), used: Cell::new(false) }
     }
 
     #[inline]
@@ -131,12 +132,7 @@ impl<'a> AstBuilder<'a> {
             span,
             combinator,
             selectors,
-            metadata: RelativeSelectorMetadata {
-                is_global: false,
-                is_host: false,
-                root: false,
-                scoped: false,
-            },
+            flags: Cell::new(RelativeSelectorFlags::empty()),
         }
     }
 
