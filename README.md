@@ -21,15 +21,16 @@ A lot of features still need to be implemented before it is ready for production
 
 Here's a feature roadmap:
 
-- [x] AST
 - [x] CSS AST
 - [x] CSS Parser
-- [x] CSS Printer (codegen)
+- [x] CSS Analyzer
 - [x] CSS Transformer
+- [x] CSS Printer (codegen)
+- [x] AST
 - [x] Parser
-- [x] Printer (codegen)
 - [ ] Analyzer
 - [ ] Transformer
+- [x] Printer (codegen)
 
 This roadmap just shows which part is implemented, none of the code is properly tested.
 
