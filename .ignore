@@ -1,0 +1,3 @@
+# For cargo-watch
+*/target/**/*
+*/node_modules/**/*
