@@ -444,15 +444,6 @@ pub struct Style<'a> {
     pub span: Span,
     pub attributes: Vec<'a, Attribute<'a>>,
     pub stylesheet: StyleSheet<'a>,
-    pub content: StyleContent<'a>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct StyleContent<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub styles: Atom<'a>,
 }
 
 #[derive(Debug)]

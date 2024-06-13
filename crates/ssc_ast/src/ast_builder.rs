@@ -100,15 +100,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         stylesheet: StyleSheet<'a>,
         attributes: Vec<'a, Attribute<'a>>,
-        content_span: Span,
-        content: Atom<'a>,
     ) -> Style<'a> {
-        Style {
-            span,
-            attributes,
-            stylesheet,
-            content: StyleContent { span: content_span, styles: content },
-        }
+        Style { span, attributes, stylesheet }
     }
 
     #[inline]
