@@ -30,7 +30,7 @@ fn main() {
 
     let mut stylesheet = ret.stylesheet;
     let hash = "svelte-nb87h768";
-    Transformer::new(hash).build(&mut stylesheet);
+    Transformer::new(&allocator, hash).build(&mut stylesheet);
 
     let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
         .build(&stylesheet)
