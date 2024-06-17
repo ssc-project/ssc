@@ -910,7 +910,9 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "ssc_css_ast",
+ "ssc_css_codegen",
  "ssc_css_parser",
+ "ssc_css_transformer",
 ]
 
 [[package]]

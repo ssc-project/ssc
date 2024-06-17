@@ -27,4 +27,6 @@ oxc_index       = { workspace = true }
 ssc_css_ast = { workspace = true }
 
 [dev-dependencies]
-ssc_css_parser = { workspace = true }
+ssc_css_parser      = { workspace = true }
+ssc_css_transformer = { workspace = true }
+ssc_css_codegen     = { workspace = true }
