@@ -283,6 +283,16 @@ pub enum BlockChild<'a> {
     AtRule(AtRule<'a>),
 }
 
+impl<'a> BlockChild<'a> {
+    pub fn rule(self) -> Option<Rule<'a>> {
+        match self {
+            Self::StyleRule(rule) => Some(Rule::StyleRule(rule)),
+            Self::AtRule(rule) => Some(Rule::AtRule(rule)),
+            Self::Declaration(_) => None,
+        }
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
