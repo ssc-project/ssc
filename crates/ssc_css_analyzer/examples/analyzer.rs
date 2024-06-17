@@ -6,7 +6,7 @@ use ssc_css_parser::Parser;
 
 // Instruction:
 // create a `test.css`,
-// run `cargo run -p ssc_css_analyzer --example transformer`
+// run `cargo run -p ssc_css_analyzer --example analyzer`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.css".to_string());
