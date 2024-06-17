@@ -30,13 +30,53 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_rules(&mut self, rules: &mut Vec<'a, Rule<'a>>) {
+        let mut appends = vec![];
+        let mut replaces = vec![];
+        let mut deletions = vec![];
+
+        for (i, rule) in rules.iter_mut().enumerate() {
+            if let Rule::StyleRule(rule) = rule {
+                if rule.flags.get().has_global_block() {
+                    let mut children = Vec::from_iter_in(
+                        rule.block.children.drain(..).filter_map(BlockChild::rule),
+                        self.allocator,
+                    );
+                    if children.is_empty() {
+                        deletions.push(i - deletions.len());
+                        continue;
+                    }
+                    replaces.push((i - deletions.len(), children.remove(0)));
+                    if !children.is_empty() {
+                        appends.push((i - deletions.len() + 1, children));
+                    }
+                    continue;
+                }
+            }
+            self.visit_rule(rule);
+        }
+
+        for i in deletions {
+            rules.remove(i);
+        }
+
+        for (i, replace) in replaces {
+            *rules.get_mut(i).unwrap() = replace;
+        }
+
+        for (i, append_rules) in appends {
+            for (j, rule) in append_rules.into_iter().enumerate() {
+                rules.insert(i + j, rule);
+            }
+        }
+    }
+
     fn visit_complex_selector(&mut self, selector: &mut ComplexSelector<'a>) {
         walk_complex_selector_mut(self, selector);
         let mut replaces = vec![];
         let mut appends = vec![];
         for (i, relative_selector) in selector.children.iter_mut().enumerate() {
             for j in 0..relative_selector.selectors.len() {
-                println!("j: {}, len: {}", j, relative_selector.selectors.len());
                 if let SimpleSelector::PseudoClassSelector(pseudo_selector) =
                     relative_selector.selectors.get_mut(j).unwrap()
                 {
