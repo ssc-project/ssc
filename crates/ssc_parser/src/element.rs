@@ -234,11 +234,14 @@ impl<'a> ParserImpl<'a> {
             self.expect_without_advance(Kind::Str)?;
             let span = self.cur_token().span();
             let value = self.cur_string();
-            AttributeValue::Sequence(self.ast.new_vec_single(AttributeSequenceValue::Text(
-                self.ast.text(span, Atom::from(value)),
-            )))
+            Some(self.ast.attribute_value(
+                span,
+                self.ast.new_vec_single(
+                    self.ast.attribute_sequence_text_value(span, Atom::from(value)),
+                ),
+            ))
         } else {
-            AttributeValue::Bool(true)
+            None
         };
 
         Ok(self.ast.attribute(self.end_span(span), name, value))
@@ -275,26 +278,19 @@ impl<'a> ParserImpl<'a> {
                 Ok(ElementAttribute::Attribute(self.ast.attribute(
                     span,
                     ident.name.clone(),
-                    AttributeValue::Sequence(self.ast.new_vec_single(
-                        AttributeSequenceValue::ExpressionTag(
-                            self.ast.expression_tag(
-                                span,
-                                Expression::Identifier(self.ast.alloc(ident)),
-                            ),
-                        ),
+                    Some(self.ast.attribute_value(
+                        span,
+                        self.ast.new_vec_single(self.ast.attribute_sequence_expression_value(
+                            span,
+                            Expression::Identifier(self.ast.alloc(ident)),
+                        )),
                     )),
                 )))
             }
         } else {
             let name = self.parse_identifier()?;
-            let (value, value_span) = if self.eat(Kind::Eq) {
-                let span = self.start_span();
-                let value = AttributeValue::Sequence(self.parse_attribute_value()?);
-                (value, self.end_span(span))
-            } else {
-                let start = self.cur_token().start;
-                (AttributeValue::Bool(true), Span::new(start, start))
-            };
+            let value = if self.eat(Kind::Eq) { Some(self.parse_attribute_value()?) } else { None };
+            let value_span = value.as_ref().map_or(self.end_span(span), |value| value.span);
 
             if let Some(colon_index) = name.as_str().chars().position(|ch| ch == ':') {
                 let directive_type = &name[..colon_index];
@@ -319,16 +315,16 @@ impl<'a> ParserImpl<'a> {
                     )));
                 }
 
-                let expression = if let AttributeValue::Sequence(mut seq) = value {
-                    let first = seq.remove(0);
+                let expression = if let Some(mut value) = value {
+                    let first = value.sequence.remove(0);
                     let expression = if let AttributeSequenceValue::ExpressionTag(tag) = first {
-                        if seq.is_empty() {
+                        if value.sequence.is_empty() {
                             tag.expression
                         } else {
-                            return Err(diagnostics::invalid_directive_value(value_span));
+                            return Err(diagnostics::invalid_directive_value(value.span));
                         }
                     } else {
-                        return Err(diagnostics::invalid_directive_value(value_span));
+                        return Err(diagnostics::invalid_directive_value(value.span));
                     };
                     Some(expression)
                 } else {
@@ -448,23 +444,30 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_attribute_value(&mut self) -> Result<Vec<'a, AttributeSequenceValue<'a>>> {
+    fn parse_attribute_value(&mut self) -> Result<AttributeValue<'a>> {
         let span = self.start_span();
         if self.eat(Kind::LCurly) {
             let expression = self.parse_js_expression()?;
             self.expect(Kind::RCurly)?;
-            Ok(self.ast.new_vec_single(AttributeSequenceValue::ExpressionTag(
-                self.ast.expression_tag(self.end_span(span), expression),
-            )))
+            let span = self.end_span(span);
+            Ok(self.ast.attribute_value(
+                span,
+                self.ast
+                    .new_vec_single(self.ast.attribute_sequence_expression_value(span, expression)),
+            ))
         } else if self.at(Kind::Str) {
             let raw = self.cur_string();
+            let cur_span = self.cur_token().span();
             self.bump_any();
             if raw.is_empty() {
-                return Ok(self.ast.new_vec_single(AttributeSequenceValue::Text(
-                    self.ast.text(self.end_span(span), self.ast.new_atom(raw)),
-                )));
+                return Ok(self.ast.attribute_value(
+                    self.end_span(span),
+                    self.ast.new_vec_single(
+                        self.ast.attribute_sequence_text_value(cur_span, Atom::from(raw)),
+                    ),
+                ));
             }
-            let mut list = self.ast.new_vec();
+            let mut seq = self.ast.new_vec();
 
             let mut cur_chunk_start = 0;
             let mut i = 0;
@@ -473,10 +476,10 @@ impl<'a> ParserImpl<'a> {
                 if ch == '{' {
                     let start = i;
                     if i != cur_chunk_start {
-                        list.push(AttributeSequenceValue::Text(self.ast.text(
+                        seq.push(self.ast.attribute_sequence_text_value(
                             Span::new(span.start + cur_chunk_start + 1, span.start + i + 1),
-                            self.ast.new_atom(&raw[(cur_chunk_start as usize)..(i as usize)]),
-                        )));
+                            Atom::from(&raw[(cur_chunk_start as usize)..(i as usize)]),
+                        ));
                     }
                     i += 1;
                     let parser = oxc_parser::Parser::new(
@@ -496,23 +499,23 @@ impl<'a> ParserImpl<'a> {
                         ));
                     }
                     cur_chunk_start = i;
-                    list.push(AttributeSequenceValue::ExpressionTag(self.ast.expression_tag(
+                    seq.push(self.ast.attribute_sequence_expression_value(
                         Span::new(span.start + start + 1, span.start + i + 1),
                         expression,
-                    )));
+                    ));
                 } else {
                     i += 1;
                 }
             }
 
             if cur_chunk_start != i {
-                list.push(AttributeSequenceValue::Text(self.ast.text(
+                seq.push(self.ast.attribute_sequence_text_value(
                     Span::new(span.start + cur_chunk_start + 1, span.start + i + 1),
-                    self.ast.new_atom(&raw[(cur_chunk_start as usize)..(i as usize)]),
-                )));
+                    Atom::from(&raw[(cur_chunk_start as usize)..(i as usize)]),
+                ));
             }
 
-            Ok(list)
+            Ok(self.ast.attribute_value(self.end_span(span), seq))
         } else {
             Err(self.unexpected())
         }
@@ -546,13 +549,13 @@ fn create_element<'a>(
             #[allow(unsafe_code)]
             // SAFETY: checked that this is an `Attribute` variant
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
-            let AttributeValue::Sequence(mut values) = this_attribute.value else {
+            let Some(mut value) = this_attribute.value else {
                 return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             };
-            if values.len() != 1 {
+            if value.sequence.len() != 1 {
                 return Err(diagnostics::svelte_component_invalid_this(this_attribute.span));
             }
-            let value = values.remove(0);
+            let value = value.sequence.remove(0);
             let expression = if let AttributeSequenceValue::ExpressionTag(tag) = value {
                 tag.expression
             } else {
@@ -577,13 +580,13 @@ fn create_element<'a>(
             #[allow(unsafe_code)]
             // SAFETY: checked that this is an `Attribute` variant
             let this_attribute = unsafe { this_attribute.attribute().unwrap_unchecked() };
-            let AttributeValue::Sequence(mut values) = this_attribute.value else {
+            let Some(mut value) = this_attribute.value else {
                 return Err(diagnostics::svelte_element_missing_this(span));
             };
-            if values.len() != 1 {
+            if value.sequence.len() != 1 {
                 return Err(diagnostics::svelte_element_missing_this(span));
             }
-            let value = values.remove(0);
+            let value = value.sequence.remove(0);
             let expression = match value {
                 AttributeSequenceValue::ExpressionTag(tag) => tag.expression,
                 AttributeSequenceValue::Text(text) => {

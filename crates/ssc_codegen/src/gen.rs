@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Box;
 use oxc_codegen::{Context, Gen as OxcGen, GenExpr};
 use oxc_syntax::precedence::Precedence;
 #[allow(clippy::wildcard_imports)]
@@ -99,17 +99,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Attribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
         p.add_source_mapping(self.span.start);
         p.print_str(self.name.as_bytes());
-        if let AttributeValue::Sequence(seq) = &self.value {
+        if let Some(value) = &self.value {
             p.print(b'=');
-            seq.gen(p);
+            value.gen(p);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, AttributeSequenceValue<'a>> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for AttributeValue<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>) {
-        let tag = if self.len() == 1 {
-            if let Some(AttributeSequenceValue::ExpressionTag(tag)) = self.first() {
+        let tag = if self.sequence.len() == 1 {
+            if let Some(AttributeSequenceValue::ExpressionTag(tag)) = self.sequence.first() {
                 Some(tag)
             } else {
                 None
@@ -122,7 +122,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, AttributeSequenceValue<'a>>
             tag.gen(p);
         } else {
             p.print(b'"');
-            for el in self {
+            for el in &self.sequence {
                 match el {
                     AttributeSequenceValue::Text(text) => {
                         p.print_str(text.data.as_bytes());
@@ -258,9 +258,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StyleDirective<'a> {
             p.print(b'|');
             p.print_str(modifier_name.as_bytes());
         }
-        if let AttributeValue::Sequence(seq) = &self.value {
+        if let Some(value) = &self.value {
             p.print_str(b"=");
-            seq.gen(p);
+            value.gen(p);
         }
     }
 }

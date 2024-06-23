@@ -550,15 +550,7 @@ pub struct Attribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
-    pub value: AttributeValue<'a>,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum AttributeValue<'a> {
-    Bool(bool), // true
-    Sequence(Vec<'a, AttributeSequenceValue<'a>>),
+    pub value: Option<AttributeValue<'a>>,
 }
 
 #[derive(Debug)]
@@ -567,6 +559,15 @@ pub enum AttributeValue<'a> {
 pub enum AttributeSequenceValue<'a> {
     Text(Text<'a>),
     ExpressionTag(ExpressionTag<'a>),
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct AttributeValue<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub sequence: Vec<'a, AttributeSequenceValue<'a>>,
 }
 
 #[derive(Debug)]
@@ -673,7 +674,7 @@ pub struct StyleDirective<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
-    pub value: AttributeValue<'a>,
+    pub value: Option<AttributeValue<'a>>,
     pub modifiers: Vec<'a, StyleDirectiveModifier>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub dynamic: Cell<bool>,

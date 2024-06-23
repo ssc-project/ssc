@@ -260,9 +260,36 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         name: Atom<'a>,
-        value: AttributeValue<'a>,
+        value: Option<AttributeValue<'a>>,
     ) -> Attribute<'a> {
         Attribute { span, name, value }
+    }
+
+    #[inline]
+    pub fn attribute_value(
+        &self,
+        span: Span,
+        sequence: Vec<'a, AttributeSequenceValue<'a>>,
+    ) -> AttributeValue<'a> {
+        AttributeValue { span, sequence }
+    }
+
+    #[inline]
+    pub fn attribute_sequence_text_value(
+        &self,
+        span: Span,
+        raw: Atom<'a>,
+    ) -> AttributeSequenceValue<'a> {
+        AttributeSequenceValue::Text(self.text(span, raw))
+    }
+
+    #[inline]
+    pub fn attribute_sequence_expression_value(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> AttributeSequenceValue<'a> {
+        AttributeSequenceValue::ExpressionTag(self.expression_tag(span, expression))
     }
 
     #[inline]
@@ -332,7 +359,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         name: Atom<'a>,
-        value: AttributeValue<'a>,
+        value: Option<AttributeValue<'a>>,
         modifiers: Vec<'a, StyleDirectiveModifier>,
     ) -> DirectiveAttribute<'a> {
         DirectiveAttribute::StyleDirective(StyleDirective {
