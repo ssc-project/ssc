@@ -23,7 +23,7 @@ pub use crate::{
 fn lifetime_variance() {
     use crate::ast;
 
-    fn _assert_program_variant_lifetime<'a: 'b, 'b>(root: ast::Root<'a>) -> ast::Root<'b> {
+    fn _assert_root_variant_lifetime<'a: 'b, 'b>(root: ast::Root<'a>) -> ast::Root<'b> {
         root
     }
 }

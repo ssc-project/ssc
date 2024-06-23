@@ -1,4 +1,4 @@
-use std::mem;
+use std::{cell::Cell, mem};
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_ast::ast::{
@@ -75,7 +75,7 @@ impl<'a> AstBuilder<'a> {
         module: Option<Script<'a>>,
         ts: bool,
     ) -> Root<'a> {
-        Root { span, options: None, fragment, css, instance, module, metadata: RootMetadata { ts } }
+        Root { span, options: None, fragment, css, instance, module, ts }
     }
 
     #[inline]
@@ -148,7 +148,7 @@ impl<'a> AstBuilder<'a> {
             name,
             attributes,
             fragment,
-            metadata: RegularElementMetadata { svg: false, has_spread: false, scoped: false },
+            flags: Cell::new(RegularElementFlags::empty()),
         })
     }
 
@@ -196,7 +196,7 @@ impl<'a> AstBuilder<'a> {
             attributes,
             fragment,
             expression,
-            metadata: SvelteElementMetadata { svg: false, scoped: false },
+            flags: Cell::new(SvelteElementFlags::empty()),
         })
     }
 
@@ -267,11 +267,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn spread_attribute(&self, span: Span, expression: Expression<'a>) -> SpreadAttribute<'a> {
-        SpreadAttribute {
-            span,
-            expression,
-            metadata: SpreadAttributeMetadata { contains_call_expression: false, dynamic: false },
-        }
+        SpreadAttribute { span, expression, flags: Cell::new(ExpressionTagFlags::empty()) }
     }
 
     #[inline]
@@ -291,7 +287,13 @@ impl<'a> AstBuilder<'a> {
         name: Atom<'a>,
         expression: BindDirectiveExpression<'a>,
     ) -> DirectiveAttribute<'a> {
-        DirectiveAttribute::BindDirective(BindDirective { span, name, expression })
+        DirectiveAttribute::BindDirective(BindDirective {
+            span,
+            name,
+            expression,
+            binding_group_name: Cell::new(None),
+            parent_block: Cell::new(None),
+        })
     }
 
     #[inline]
@@ -301,12 +303,7 @@ impl<'a> AstBuilder<'a> {
         name: Atom<'a>,
         expression: Expression<'a>,
     ) -> DirectiveAttribute<'a> {
-        DirectiveAttribute::ClassDirective(ClassDirective {
-            span,
-            name,
-            expression,
-            metadata: ClassDirectiveMetadata { dynamic: false },
-        })
+        DirectiveAttribute::ClassDirective(ClassDirective { span, name, expression })
     }
 
     #[inline]
@@ -343,7 +340,7 @@ impl<'a> AstBuilder<'a> {
             name,
             value,
             modifiers,
-            metadata: StyleDirectiveMetadata { dynamic: false },
+            dynamic: Cell::new(false),
         })
     }
 
@@ -379,11 +376,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn expression_tag(&self, span: Span, expression: Expression<'a>) -> ExpressionTag<'a> {
-        ExpressionTag {
-            span,
-            expression,
-            metadata: ExpressionTagMetadata { contains_call_expression: false, dynamic: false },
-        }
+        ExpressionTag { span, expression, flags: Cell::new(ExpressionTagFlags::empty()) }
     }
 
     #[inline]

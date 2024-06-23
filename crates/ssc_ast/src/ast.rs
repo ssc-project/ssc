@@ -1,19 +1,43 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use bitflags::bitflags;
 use oxc_allocator::Vec;
 use oxc_ast::ast::{
     ArrayExpression, ArrowFunctionExpression, BindingPattern, CallExpression, Expression,
     IdentifierName, IdentifierReference, MemberExpression, ObjectExpression, Program,
     VariableDeclaration,
 };
+use oxc_index::define_index_type;
 use oxc_span::{Atom, Span};
+use oxc_syntax::reference::ReferenceId;
 use rustc_hash::FxHashMap;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 use ssc_css_ast::ast::StyleSheet;
+use std::cell::Cell;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type BlockId = number;
+export type ExpressionTagFlags = {
+    Dynamic: 1,
+    CallExpression: 2,
+};
+export type RegularElementFlags = {
+    Svg: 1,
+    Mathml: 2,
+    Spread: 4,
+    Scoped: 8,
+};
+export type SvelteElementFlags = {
+    Svg: 1,
+    Scoped: 2,
+};
+"#;
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -26,8 +50,7 @@ pub struct Root<'a> {
     pub css: Option<Style<'a>>,
     pub instance: Option<Script<'a>>,
     pub module: Option<Script<'a>>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: RootMetadata,
+    pub ts: bool,
 }
 
 #[derive(Debug)]
@@ -76,15 +99,8 @@ pub struct ExpressionTag<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: ExpressionTagMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct ExpressionTagMetadata {
-    pub contains_call_expression: bool,
-    pub dynamic: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<ExpressionTagFlags>,
 }
 
 #[derive(Debug)]
@@ -249,16 +265,8 @@ pub struct RegularElement<'a> {
     pub name: Atom<'a>,
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: RegularElementMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct RegularElementMetadata {
-    pub svg: bool,
-    pub has_spread: bool,
-    pub scoped: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<RegularElementFlags>,
 }
 
 #[derive(Debug)]
@@ -301,15 +309,8 @@ pub struct SvelteElement<'a> {
     pub attributes: Vec<'a, ElementAttribute<'a>>,
     pub fragment: Fragment<'a>,
     pub expression: Expression<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: SvelteElementMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct SvelteElementMetadata {
-    pub svg: bool,
-    pub scoped: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<SvelteElementFlags>,
 }
 
 #[derive(Debug)]
@@ -543,12 +544,6 @@ pub enum ScriptContext {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct RootMetadata {
-    pub ts: bool,
-}
-
-#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Attribute<'a> {
@@ -581,15 +576,8 @@ pub struct SpreadAttribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: SpreadAttributeMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct SpreadAttributeMetadata {
-    pub contains_call_expression: bool,
-    pub dynamic: bool,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub flags: Cell<ExpressionTagFlags>,
 }
 
 #[derive(Debug)]
@@ -624,8 +612,9 @@ pub struct BindDirective<'a> {
     pub span: Span,
     pub name: Atom<'a>,
     pub expression: BindDirectiveExpression<'a>,
-    // TODO: figure this out
-    // pub metadata: BindDirectiveMetadata<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub binding_group_name: Cell<Option<ReferenceId>>,
+    pub parent_block: Cell<Option<BlockId>>,
 }
 
 #[derive(Debug)]
@@ -637,13 +626,6 @@ pub enum BindDirectiveExpression<'a> {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct BindDirectiveMetadata<'a> {
-    pub binding_group_name: IdentifierReference<'a>,
-    pub parent_each_blocks: Vec<'a, &'a EachBlock<'a>>,
-}
-
-#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ClassDirective<'a> {
@@ -651,14 +633,6 @@ pub struct ClassDirective<'a> {
     pub span: Span,
     pub name: Atom<'a>,
     pub expression: Expression<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: ClassDirectiveMetadata,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct ClassDirectiveMetadata {
-    pub dynamic: bool,
 }
 
 #[derive(Debug)]
@@ -701,8 +675,8 @@ pub struct StyleDirective<'a> {
     pub name: Atom<'a>,
     pub value: AttributeValue<'a>,
     pub modifiers: Vec<'a, StyleDirectiveModifier>,
-    #[cfg_attr(feature = "serialize", serde(skip_serializing))]
-    pub metadata: StyleDirectiveMetadata,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub dynamic: Cell<bool>,
 }
 
 #[derive(Debug)]
@@ -710,12 +684,6 @@ pub struct StyleDirective<'a> {
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum StyleDirectiveModifier {
     Important,
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct StyleDirectiveMetadata {
-    pub dynamic: bool,
 }
 
 #[derive(Debug)]
@@ -747,4 +715,76 @@ pub struct UseDirective<'a> {
     pub span: Span,
     pub name: Atom<'a>,
     pub expression: Option<Expression<'a>>,
+}
+
+define_index_type! {
+    pub struct BlockId = usize;
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct ExpressionTagFlags: u8 {
+        const Dynamic        = 1 << 0;
+        const CallExpression = 1 << 1;
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct RegularElementFlags: u8 {
+        const Svg    = 1 << 0;
+        const Mathml = 1 << 1;
+        const Spread = 1 << 2;
+        const Scoped = 1 << 3;
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct SvelteElementFlags: u8 {
+        const Svg    = 1 << 0;
+        const Scoped = 1 << 2;
+    }
+}
+
+impl ExpressionTagFlags {
+    #[inline]
+    pub fn has_dynamic(&self) -> bool {
+        self.contains(Self::Dynamic)
+    }
+
+    #[inline]
+    pub fn has_call_expression(&self) -> bool {
+        self.contains(Self::CallExpression)
+    }
+}
+
+impl RegularElementFlags {
+    #[inline]
+    pub fn has_svg(&self) -> bool {
+        self.contains(Self::Svg)
+    }
+
+    #[inline]
+    pub fn has_mathml(&self) -> bool {
+        self.contains(Self::Mathml)
+    }
+
+    #[inline]
+    pub fn has_spread(&self) -> bool {
+        self.contains(Self::Spread)
+    }
+
+    #[inline]
+    pub fn has_scoped(&self) -> bool {
+        self.contains(Self::Scoped)
+    }
+}
+
+impl SvelteElementFlags {
+    #[inline]
+    pub fn has_svg(&self) -> bool {
+        self.contains(Self::Svg)
+    }
+
+    #[inline]
+    pub fn has_scoped(&self) -> bool {
+        self.contains(Self::Scoped)
+    }
 }
