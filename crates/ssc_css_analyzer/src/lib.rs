@@ -1,8 +1,10 @@
 mod diagnostics;
+mod hash;
 pub mod node;
 
 use std::mem;
 
+use hash::hash;
 use node::{AstNode, AstNodes};
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::{Atom, GetSpan};
@@ -25,6 +27,7 @@ pub struct Analyzer<'a> {
 #[derive(Debug)]
 pub struct Analysis<'a> {
     pub keyframes: Vec<Atom<'a>>,
+    pub hash: String,
     pub nodes: AstNodes<'a>,
 }
 
@@ -85,7 +88,11 @@ impl<'a> Analyzer<'a> {
         self.visit_stylesheet(stylesheet);
         let errors = self.take_errors();
         AnalyzerReturn {
-            analysis: Analysis { keyframes: self.keyframes, nodes: self.nodes },
+            analysis: Analysis {
+                keyframes: self.keyframes,
+                nodes: self.nodes,
+                hash: format!("svelte-{}", hash(stylesheet.source.as_str())),
+            },
             errors,
         }
     }

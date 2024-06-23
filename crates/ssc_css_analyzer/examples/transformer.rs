@@ -34,7 +34,7 @@ fn main() {
         println!("{error:?}");
     }
 
-    Transformer::new(&allocator, "svelte-wf3o84").build(stylesheet);
+    Transformer::new(&allocator, &ret.analysis.hash).build(stylesheet);
 
     let ret =
         Codegen::<false>::new(&name, &source_text, CodegenOptions::default()).build(stylesheet);
