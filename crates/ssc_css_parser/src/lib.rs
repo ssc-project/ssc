@@ -42,7 +42,7 @@ pub mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 use ssc_css_ast::{ast::StyleSheet, AstBuilder, Trivias};
 
 pub use crate::lexer::Kind; // re-export for codegen
@@ -230,7 +230,8 @@ impl<'a> ParserImpl<'a> {
             Ok(stylesheet) => (stylesheet, false),
             Err(error) => {
                 self.error(self.overlong_error().unwrap_or(error));
-                let stylesheet = self.ast.stylesheet(Span::default(), self.ast.new_vec());
+                let stylesheet =
+                    self.ast.stylesheet(Span::default(), self.ast.new_vec(), Atom::from(""));
                 (stylesheet, true)
             }
         };
@@ -247,7 +248,13 @@ impl<'a> ParserImpl<'a> {
 
         let children = self.parse_rules()?;
 
-        Ok(self.ast.stylesheet(self.end_span(span), children))
+        let span = self.end_span(span);
+
+        Ok(self.ast.stylesheet(
+            span,
+            children,
+            Atom::from(&self.source_text[(span.start as usize)..(span.end as usize)]),
+        ))
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.

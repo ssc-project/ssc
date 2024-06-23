@@ -62,8 +62,13 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn stylesheet(&self, span: Span, children: Vec<'a, Rule<'a>>) -> StyleSheet<'a> {
-        StyleSheet { span, children }
+    pub fn stylesheet(
+        &self,
+        span: Span,
+        children: Vec<'a, Rule<'a>>,
+        source: Atom<'a>,
+    ) -> StyleSheet<'a> {
+        StyleSheet { span, children, source }
     }
 
     #[inline]

@@ -36,6 +36,8 @@ pub struct StyleSheet<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub children: Vec<'a, Rule<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub source: Atom<'a>,
 }
 
 #[derive(Debug)]
