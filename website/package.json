@@ -1,0 +1,41 @@
+{
+  "name": "ssc-website",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm run wasm-dev && concurrently 'vite' 'cd .. && cargo watch --workdir website -s \"pnpm run wasm-dev\"'",
+    "wasm-dev": "wasm-pack build --out-dir ../../npm/ssc-wasm --target web --dev --scope ssc ../crates/ssc_wasm",
+    "build": "pnpm run wasm-build && vite build --base=https://ssc-project.github.io/ssc/",
+    "wasm-build": "wasm-pack build --out-dir ../../npm/ssc-wasm --target web --release --scope ssc ../crates/ssc_wasm"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.16.2",
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-rust": "^6.0.1",
+    "@codemirror/language": "^6.10.2",
+    "@codemirror/lint": "^6.8.0",
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/view": "^6.27.0",
+    "@ddietr/codemirror-themes": "^1.4.2",
+    "@lezer/json": "^1.0.2",
+    "@replit/codemirror-lang-svelte": "^6.0.0",
+    "@replit/codemirror-vscode-keymap": "^6.0.2",
+    "codemirror": "^6.0.1",
+    "lodash.throttle": "^4.1.1",
+    "lzma": "^2.3.2"
+  },
+  "devDependencies": {
+    "@lezer/common": "^1.2.1",
+    "@ssc/ssc_wasm": "link:../npm/ssc-wasm",
+    "concurrently": "^8.2.2",
+    "vite": "^5.2.13",
+    "wasm-pack": "^0.12.1"
+  },
+  "engines": {
+    "node": ">=20.14.0",
+    "pnpm": ">=9.2.0"
+  },
+  "packageManager": "pnpm@9.2.0"
+}
