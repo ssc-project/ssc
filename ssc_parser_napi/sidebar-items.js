@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["parse_async","parse_sync","parse_without_return"],"struct":["Comment","ParseResult","Root"]};

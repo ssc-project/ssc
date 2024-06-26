@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["oxc_parser","ssc","ssc_analyzer","ssc_ast","ssc_codegen","ssc_css_analyzer","ssc_css_ast","ssc_css_codegen","ssc_css_parser","ssc_css_transformer","ssc_parser","ssc_parser_napi","ssc_parser_wasm","ssc_transformer","ssc_wasm"];
