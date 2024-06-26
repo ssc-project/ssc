@@ -234,6 +234,7 @@ impl<'a> ParserImpl<'a> {
             self.expect_without_advance(Kind::Str)?;
             let span = self.cur_token().span();
             let value = self.cur_string();
+            self.bump_any();
             Some(self.ast.attribute_value(
                 span,
                 self.ast.new_vec_single(
