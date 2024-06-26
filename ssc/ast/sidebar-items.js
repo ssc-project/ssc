@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AstKind","AstType"],"mod":["ast","visit"],"struct":["AstBuilder","Comment","Trivias"],"trait":["Visit","VisitMut"],"type":["TriviasMap"]};

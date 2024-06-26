@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DiagnosticService","GraphicalReportHandler","GraphicalTheme","LabeledSpan","NamedSource","OxcDiagnostic","OxcDiagnosticInner"],"type":["DiagnosticSender","DiagnosticTuple","Error","Result","Severity"]};

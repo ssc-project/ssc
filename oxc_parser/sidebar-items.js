@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_LEN"],"enum":["Kind"],"struct":["Parser","ParserReturn"]};

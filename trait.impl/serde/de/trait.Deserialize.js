@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"ssc_ast":[["impl&lt;'de&gt; <a class=\"trait\" href=\"https://docs.rs/serde/1.0.203/serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ssc_ast/ast/struct.BlockId.html\" title=\"struct ssc_ast::ast::BlockId\">BlockId</a>"]],
+"ssc_css_ast":[["impl&lt;'de&gt; <a class=\"trait\" href=\"https://docs.rs/serde/1.0.203/serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"ssc_css_ast/ast/struct.AstNodeId.html\" title=\"struct ssc_css_ast::ast::AstNodeId\">AstNodeId</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

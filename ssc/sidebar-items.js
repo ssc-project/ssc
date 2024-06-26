@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["allocator","ast","codegen","diagnostics","parser","span"]};

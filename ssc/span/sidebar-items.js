@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ATOM_MAX_INLINE_LEN","SPAN","VALID_EXTENSIONS"],"enum":["Language","LanguageVariant","ModuleKind"],"struct":["Atom","CompactStr","SourceType","Span"],"trait":["GetSpan"]};
