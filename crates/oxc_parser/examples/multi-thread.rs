@@ -1,30 +1,33 @@
 //! Parse files in parallel and then `Send` them to the main thread for processing.
-
+#![allow(clippy::print_stdout)]
 #![allow(clippy::future_not_send)] // clippy warns `Allocator` is not `Send`
 #![allow(clippy::redundant_pub_crate)] // comes from  `ouroboros`'s macro
-#![allow(clippy::print_stdout)]
 
 // Instruction:
-// run `cargo run -p ssc_parser --example multi-thread`
+// run `cargo run -p oxc_parser --example multi-thread`
+// or `cargo watch -x "run -p oxc_parser --example multi-thread"`
 
-use std::sync::mpsc;
+use std::{
+    sync::{mpsc, Arc},
+    thread,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use oxc_allocator::Allocator;
-use ssc_ast::ast::Root;
-use ssc_parser::Parser;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::{sync::Arc, thread};
+use oxc_ast::ast::Program;
+use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 /// Wrap the AST for unsafe `Send` and `Sync`
-struct BumpaloRoot<'a>(Root<'a>);
+struct BumpaloProgram<'a>(Program<'a>);
 
 #[allow(clippy::non_send_fields_in_send_ty)]
 #[allow(unsafe_code)]
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
-unsafe impl<'a> Send for BumpaloRoot<'a> {}
+unsafe impl<'a> Send for BumpaloProgram<'a> {}
 #[allow(unsafe_code)]
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
-unsafe impl<'a> Sync for BumpaloRoot<'a> {}
+unsafe impl<'a> Sync for BumpaloProgram<'a> {}
 
 /// `ouroboros` is used to "bind" the allocator and AST together to remove the lifetime.
 #[ouroboros::self_referencing]
@@ -34,7 +37,7 @@ struct AST {
     source_text: Arc<str>,
     #[borrows(allocator, source_text)]
     #[covariant]
-    ast: &'this BumpaloRoot<'this>,
+    ast: &'this BumpaloProgram<'this>,
 }
 
 /// Example output:
@@ -48,11 +51,7 @@ struct AST {
 /// ```
 fn main() {
     let (ast_tx, ast_rx) = mpsc::channel::<AST>();
-    let sources = (0..3)
-        .map(|i| {
-            Arc::from(format!("<style>p {{ border-radius: {i}px }}</style><p>Hello x {i}</p>"))
-        })
-        .collect::<Vec<_>>();
+    let sources = (0..3).map(|i| Arc::from(format!("const a = {i};"))).collect::<Vec<_>>();
 
     // Construct AST from different threads
     for (index, source_text) in sources.iter().enumerate() {
@@ -65,8 +64,8 @@ fn main() {
                 allocator: Allocator::default(),
                 source_text,
                 ast_builder: |allocator, source_text| {
-                    let ret = Parser::new(allocator, source_text).parse();
-                    allocator.alloc(BumpaloRoot(ret.root))
+                    let ret = Parser::new(allocator, source_text, SourceType::default()).parse();
+                    allocator.alloc(BumpaloProgram(ret.program))
                 },
             }
             .build();

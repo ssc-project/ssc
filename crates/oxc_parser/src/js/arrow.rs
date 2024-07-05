@@ -45,7 +45,7 @@ impl<'a> ParserImpl<'a> {
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
         match self.cur_kind() {
             Kind::LParen | Kind::LAngle | Kind::Async => {
-                self.is_parenthesized_arrow_function_expression_worker()
+                self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
             _ => Tristate::False,
         }
@@ -84,8 +84,8 @@ impl<'a> ParserImpl<'a> {
                             _ => Tristate::False,
                         };
                     }
-                    // If encounter "([" or "({", this could be the start of a
-                    // binding pattern. Examples:
+                    // If encounter "([" or "({", this could be the start of a binding pattern.
+                    // Examples:
                     //      ([ x ]) => { }
                     //      ({ x }) => { }
                     //      ([ x ])
@@ -108,9 +108,8 @@ impl<'a> ParserImpl<'a> {
                 }
                 let third = self.nth_kind(offset + 2);
 
-                // Check for "(xxx yyy", where xxx is a modifier and yyy is an
-                // identifier. This isn't actually allowed, but
-                // we want to treat it as a lambda so we can provide
+                // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
+                // isn't actually allowed, but we want to treat it as a lambda so we can provide
                 // a good error message.
                 if second.is_modifier_kind()
                     && second != Kind::Async
@@ -123,9 +122,8 @@ impl<'a> ParserImpl<'a> {
                 }
 
                 // If we had "(" followed by something that's not an identifier,
-                // then this definitely doesn't look like a lambda.  "this" is
-                // not valid, but we want to parse it and then
-                // give a semantic error.
+                // then this definitely doesn't look like a lambda.  "this" is not
+                // valid, but we want to parse it and then give a semantic error.
                 if !second.is_binding_identifier() && second != Kind::This {
                     return Tristate::False;
                 }
@@ -134,8 +132,7 @@ impl<'a> ParserImpl<'a> {
                     // If we have something like "(a:", then we must have a
                     // type-annotated parameter in an arrow function expression.
                     Kind::Colon => Tristate::True,
-                    // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it
-                    // is definitely a lambda.
+                    // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
                     Kind::Question => {
                         let fourth = self.nth_kind(offset + 3);
                         if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
@@ -143,8 +140,7 @@ impl<'a> ParserImpl<'a> {
                         }
                         Tristate::False
                     }
-                    // If we have "(a," or "(a=" or "(a)" this *could* be an
-                    // arrow function
+                    // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
                     Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
                     // It is definitely not an arrow function
                     _ => Tristate::False,
@@ -159,10 +155,13 @@ impl<'a> ParserImpl<'a> {
 
                 // JSX overrides
                 if self.source_type.is_jsx() {
-                    return match self.nth_kind(offset + 2) {
+                    // <const Ident extends Ident>
+                    //  ^^^^^ Optional
+                    offset += if second == Kind::Const { 3 } else { 2 };
+                    return match self.nth_kind(offset) {
                         Kind::Extends => {
-                            let third = self.nth_kind(offset + 3);
-                            if matches!(third, Kind::Eq | Kind::RAngle) {
+                            let third = self.nth_kind(offset + 1);
+                            if matches!(third, Kind::Eq | Kind::RAngle | Kind::Slash) {
                                 Tristate::False
                             } else if third.is_binding_identifier() {
                                 Tristate::Maybe
@@ -184,17 +183,14 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Async) {
             let first_token = self.peek_token();
             let first = first_token.kind;
-            // If the "async" is followed by "=>" token then it is not a
-            // beginning of an async arrow-function but instead a
-            // simple arrow-function which will be parsed inside
-            // "parseAssignmentExpressionOrHigher"
+            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
             if first_token.is_on_new_line || first == Kind::Arrow {
                 return Tristate::False;
             }
             // Check for un-parenthesized AsyncArrowFunction
             if first.is_binding_identifier() {
-                // Arrow before newline is checked in
-                // `parse_simple_arrow_function_expression`
+                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
                 if self.nth_at(2, Kind::Arrow) {
                     return Tristate::True;
                 }
@@ -262,7 +258,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
-        let return_type = self.parse_ts_return_type_annotation()?;
+        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false)?;
 
         self.ctx = self.ctx.and_await(has_await);
 
@@ -317,8 +313,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
     /// `ArrowFunction`[In, Yield, Await] :
-    ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] =>
-    /// `ConciseBody`[?In]
+    ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
     fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a>>> {
         let (type_parameters, params, return_type, r#async, span) =
             self.parse_parenthesized_arrow_function_head()?;
@@ -333,7 +328,7 @@ impl<'a> ParserImpl<'a> {
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return Ok(None);
         }
-        if let Ok((type_parameters, params, return_type, r#async, span)) =
+        if let Some((type_parameters, params, return_type, r#async, span)) =
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self

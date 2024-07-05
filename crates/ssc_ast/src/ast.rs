@@ -23,6 +23,7 @@ use tsify::Tsify;
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type BlockId = number;
+export type SlotElementId = number;
 export type ExpressionTagFlags = {
     Dynamic: 1,
     CallExpression: 2,
@@ -720,6 +721,10 @@ pub struct UseDirective<'a> {
 
 define_index_type! {
     pub struct BlockId = usize;
+}
+
+define_index_type! {
+    pub struct SlotElementId = usize;
 }
 
 bitflags! {

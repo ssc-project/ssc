@@ -28,13 +28,13 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_paren_expression(&mut self) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
-        let expression = self.parse_expression()?;
+        let expression = self.parse_expr()?;
         self.expect(Kind::RParen)?;
         Ok(expression)
     }
 
     /// Section [Expression](https://tc39.es/ecma262/#sec-ecmascript-language-expressions)
-    pub(crate) fn parse_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_expr(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
 
         let has_decorator = self.ctx.has_decorator();
@@ -113,13 +113,13 @@ impl<'a> ParserImpl<'a> {
         (self.end_span(span), Atom::from(name))
     }
 
-    pub(crate) fn check_identifier(&mut self, span: Span, name: &Atom) {
+    pub(crate) fn check_identifier(&mut self, span: Span, name: &str) {
         // It is a Syntax Error if this production has an [Await] parameter.
-        if self.ctx.has_await() && name.as_str() == "await" {
+        if self.ctx.has_await() && name == "await" {
             self.error(diagnostics::identifier_async("await", span));
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
-        if self.ctx.has_yield() && name.as_str() == "yield" {
+        if self.ctx.has_yield() && name == "yield" {
             self.error(diagnostics::identifier_generator("yield", span));
         }
     }
@@ -164,11 +164,8 @@ impl<'a> ParserImpl<'a> {
             return self.parse_function_expression(span, r#async);
         }
 
-        match &self.cur_kind() {
-            Kind::Ident => self.parse_identifier_expression(), /* fast path,
-                                                                 * keywords are
-                                                                 * checked at
-                                                                 * the end */
+        match self.cur_kind() {
+            Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
             // ArrayLiteral
@@ -200,9 +197,7 @@ impl<'a> ParserImpl<'a> {
                 Ok(self.ast.literal_regexp_expression(literal))
             }
             // JSXElement, JSXFragment
-            Kind::LAngle if self.source_type.is_jsx() => {
-                self.parse_jsx_expression()
-            }
+            Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
         }
     }
@@ -391,7 +386,7 @@ impl<'a> ParserImpl<'a> {
             Kind::TemplateHead => {
                 quasis.push(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
-                let expr = self.context(Context::In, Context::empty(), Self::parse_expression)?;
+                let expr = self.context(Context::In, Context::empty(), Self::parse_expr)?;
                 expressions.push(expr);
                 self.re_lex_template_substitution_tail();
                 loop {
@@ -406,11 +401,8 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
-                            let expr = self.context(
-                                Context::In,
-                                Context::empty(),
-                                Self::parse_expression,
-                            )?;
+                            let expr =
+                                self.context(Context::In, Context::empty(), Self::parse_expr)?;
                             expressions.push(expr);
                             self.re_lex_template_substitution_tail();
                         }
@@ -422,7 +414,10 @@ impl<'a> ParserImpl<'a> {
         Ok(TemplateLiteral { span: self.end_span(span), quasis, expressions })
     }
 
-    fn parse_template_literal_expression(&mut self, tagged: bool) -> Result<Expression<'a>> {
+    pub(crate) fn parse_template_literal_expression(
+        &mut self,
+        tagged: bool,
+    ) -> Result<Expression<'a>> {
         self.parse_template_literal(tagged)
             .map(|template_literal| self.ast.template_literal_expression(template_literal))
     }
@@ -439,8 +434,8 @@ impl<'a> ParserImpl<'a> {
         // OptionalChain :
         //   ?. TemplateLiteral
         //   OptionalChain TemplateLiteral
-        // It is a Syntax Error if any source text is matched by this
-        // production. <https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors>
+        // It is a Syntax Error if any source text is matched by this production.
+        // <https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors>
         if in_optional_chain {
             self.error(diagnostics::optional_chain_tagged_template(quasi.span));
         }
@@ -457,8 +452,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         // `cooked = None` when template literal has invalid escape sequence
-        // This is matched by `is_valid_escape_sequence` in
-        // `Lexer::read_template_literal`
+        // This is matched by `is_valid_escape_sequence` in `Lexer::read_template_literal`
         let cooked = self.cur_template_string();
 
         let cur_src = self.cur_src();
@@ -536,8 +530,8 @@ impl<'a> ParserImpl<'a> {
         in_optional_chain: &mut bool,
     ) -> Result<Expression<'a>> {
         let span = self.start_span();
-        self.parse_primary_expression()
-            .and_then(|lhs| self.parse_member_expression_rest(span, lhs, in_optional_chain))
+        let lhs = self.parse_primary_expression()?;
+        self.parse_member_expression_rest(span, lhs, in_optional_chain)
     }
 
     /// Section 13.3 Super Call
@@ -607,8 +601,8 @@ impl<'a> ParserImpl<'a> {
                     self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)?
                 }
                 Kind::LAngle | Kind::ShiftLeft => {
-                    if let Ok(Some(arguments)) =
-                        self.try_parse(Self::parse_ts_type_arguments_in_expression)
+                    if let Some(Some(arguments)) =
+                        self.try_parse(Self::parse_type_arguments_in_expression)
                     {
                         lhs = self.ast.ts_instantiation_expression(
                             self.end_span(lhs_span),
@@ -658,7 +652,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
     ) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
-        let property = self.context(Context::In, Context::empty(), Self::parse_expression)?;
+        let property = self.context(Context::In, Context::empty(), Self::parse_expr)?;
         self.expect(Kind::RBrack)?;
         Ok(self.ast.computed_member_expression(self.end_span(lhs_span), lhs, property, optional))
     }
@@ -719,8 +713,7 @@ impl<'a> ParserImpl<'a> {
             *in_optional_chain = if optional_call { true } else { *in_optional_chain };
 
             if optional_call {
-                if let Ok(Some(args)) = self.try_parse(Self::parse_ts_type_arguments_in_expression)
-                {
+                if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
                     type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
@@ -894,8 +887,7 @@ impl<'a> ParserImpl<'a> {
 
             // Omit the In keyword for the grammar in 13.10 Relational Operators
             // RelationalExpression[In, Yield, Await] :
-            // [+In] RelationalExpression[+In, ?Yield, ?Await] in
-            // ShiftExpression[?Yield, ?Await]
+            // [+In] RelationalExpression[+In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
             if kind == Kind::In && !self.ctx.has_in() {
                 break;
             }
@@ -943,9 +935,7 @@ impl<'a> ParserImpl<'a> {
     /// Section 13.14 Conditional Expression
     /// `ConditionalExpression`[In, Yield, Await] :
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await]
-    ///     `ShortCircuitExpression`[?In, ?Yield, ?Await] ?
-    /// `AssignmentExpression`[+In, ?Yield, ?Await] :
-    /// `AssignmentExpression`[?In, ?Yield, ?Await]
+    ///     `ShortCircuitExpression`[?In, ?Yield, ?Await] ? `AssignmentExpression`[+In, ?Yield, ?Await] : `AssignmentExpression`[?In, ?Yield, ?Await]
     fn parse_conditional_expression_rest(
         &mut self,
         lhs_span: Span,
@@ -1082,8 +1072,7 @@ impl<'a> ParserImpl<'a> {
                 return true;
             }
             // The following expressions are ambiguous
-            // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u,
-            // await ``, await of []
+            // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u, await ``, await of []
             if matches!(
                 peek_token.kind,
                 Kind::Of | Kind::LParen | Kind::LBrack | Kind::Slash | Kind::RegExp

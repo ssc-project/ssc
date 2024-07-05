@@ -76,9 +76,8 @@ macro_rules! handle_string_literal {
 macro_rules! handle_string_literal_escape {
     ($lexer:ident, $delimiter:expr, $table:ident, $after_opening_quote:ident) => {{
         // Create arena string to hold unescaped string.
-        // We don't know how long string will end up being. Take a guess that
-        // total length will be double what we've seen so far, or
-        // `MIN_ESCAPED_STR_LEN` minimum.
+        // We don't know how long string will end up being. Take a guess that total length
+        // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
         let mut str = String::with_capacity_in(capacity, $lexer.allocator);
@@ -99,21 +98,16 @@ macro_rules! handle_string_literal_escape {
                 $lexer.error(diagnostics::invalid_escape_sequence(range));
             }
 
-            // Consume bytes until reach end of string, line break, or another
-            // escape
+            // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
             while let Some(b) = $lexer.source.peek_byte() {
                 match b {
                     b if !$table.matches(b) => {
                         // SAFETY: A byte is available, as we just peeked it.
-                        // This may put `source`'s position on a UTF-8
-                        // continuation byte, which violates
-                        // `Source`'s invariant temporarily, but the guarantees
-                        // of `SafeByteMatchTable`
-                        // mean `!table.matches(b)` on this branch prevents
-                        // exiting this loop until
-                        // `source` is positioned on a UTF-8 character boundary
-                        // again.
+                        // This may put `source`'s position on a UTF-8 continuation byte, which violates
+                        // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
+                        // mean `!table.matches(b)` on this branch prevents exiting this loop until
+                        // `source` is positioned on a UTF-8 character boundary again.
                         $lexer.source.next_byte_unchecked();
                         continue;
                     }
@@ -123,28 +117,23 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
 
                         // Consume closing quote.
-                        // SAFETY: Caller guarantees delimiter is ASCII, so
-                        // consuming it cannot move
+                        // SAFETY: Caller guarantees delimiter is ASCII, so consuming it cannot move
                         // `lexer.source` off a UTF-8 character boundary
                         $lexer.source.next_byte_unchecked();
                         break 'outer;
                     }
                     b'\\' => {
-                        // Another escape found. Push last chunk to `str`, and
-                        // loop back to handle escape.
+                        // Another escape found. Push last chunk to `str`, and loop back to handle escape.
                         let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
                         str.push_str(chunk);
                         continue 'outer;
                     }
                     _ => {
-                        // Line break. This is impossible in valid JS, so cold
-                        // path.
+                        // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
                             debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
-                            $lexer.error(diagnostics::unterminated_string(
-                                $lexer.unterminated_range(),
-                            ));
+                            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                             Kind::Undetermined
                         });
                     }
@@ -171,8 +160,7 @@ impl<'a> Lexer<'a> {
     /// Next character must be `"`.
     pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
         // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-        // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a
-        // `SafeByteMatchTable`.
+        // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
         unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
@@ -181,15 +169,13 @@ impl<'a> Lexer<'a> {
     /// Next character must be `'`.
     pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
         // SAFETY: Caller guarantees next char is `'`, which is ASCII.
-        // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a
-        // `SafeByteMatchTable`.
+        // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
         unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Save the string if it is escaped
-    /// This reduces the overall memory consumption while keeping the `Token`
-    /// size small Strings without escaped values can be retrieved as is
-    /// from the token span
+    /// This reduces the overall memory consumption while keeping the `Token` size small
+    /// Strings without escaped values can be retrieved as is from the token span
     pub(super) fn save_string(&mut self, has_escape: bool, s: &'a str) {
         if !has_escape {
             return;

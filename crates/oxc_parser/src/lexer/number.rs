@@ -5,7 +5,6 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::Num as _;
-use static_assertions::const_assert_eq;
 
 use super::kind::Kind;
 
@@ -68,8 +67,11 @@ fn parse_binary(s: &str) -> f64 {
         debug_assert!(c == b'0' || c == b'1');
         c & 1
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'1'), 1);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'1'), 1);
+    }
 
     debug_assert!(!s.is_empty());
 
@@ -91,8 +93,11 @@ fn parse_octal(s: &str) -> f64 {
         debug_assert!(c >= b'0' && c <= b'7');
         c & 7
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'7'), 7);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'7'), 7);
+    }
 
     debug_assert!(!s.is_empty());
 
@@ -113,8 +118,8 @@ fn parse_hex(s: &str) -> f64 {
     // and from `A-F` or `a-f` to its value with `(c & 15) + 9`.
     // We could use `(c & 7) + 9` for `A-F`, but we use `(c & 15) + 9`
     // so that both branches share the same `c & 15` operation.
-    // This is produces more slightly more assembly than explicitly matching all
-    // possibilities, but only because compiler unrolls the loop.
+    // This is produces more slightly more assembly than explicitly matching all possibilities,
+    // but only because compiler unrolls the loop.
     // https://godbolt.org/z/5fsdv8rGo
     const fn byte_to_value(c: u8) -> u8 {
         debug_assert!(
@@ -126,12 +131,15 @@ fn parse_hex(s: &str) -> f64 {
             (c & 15) + 9 // A-F or a-f
         }
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'9'), 9);
-    const_assert_eq!(byte_to_value(b'A'), 10);
-    const_assert_eq!(byte_to_value(b'F'), 15);
-    const_assert_eq!(byte_to_value(b'a'), 10);
-    const_assert_eq!(byte_to_value(b'f'), 15);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'9'), 9);
+        static_assertions::const_assert_eq!(byte_to_value(b'A'), 10);
+        static_assertions::const_assert_eq!(byte_to_value(b'F'), 15);
+        static_assertions::const_assert_eq!(byte_to_value(b'a'), 10);
+        static_assertions::const_assert_eq!(byte_to_value(b'f'), 15);
+    }
 
     debug_assert!(!s.is_empty());
 
@@ -230,10 +238,8 @@ mod test {
             ("-1", -1),
             ("000000000000", 0),
             ("-000000000000", 0),
-            ("9007199254740991", 9007199254740991), /* max safe integer,
-                                                     * 2^53 - 1 */
-            ("-9007199254740990", -9007199254740990), /* min safe integer,
-                                                       * -(2^53 - 1) */
+            ("9007199254740991", 9007199254740991), // max safe integer, 2^53 - 1
+            ("-9007199254740990", -9007199254740990), // min safe integer, -(2^53 - 1)
         ];
         let binary = vec![
             ("0b0", 0b0),
@@ -246,10 +252,10 @@ mod test {
         let hex: Vec<(&str, i64)> = vec![
             ("0x0", 0x0),
             ("0X0", 0x0),
-            ("0xFF", 0xff),
+            ("0xFF", 0xFF),
             ("0xc", 0xc), // :)
             ("0xdeadbeef", 0xdeadbeef),
-            ("0xFfEeDdCcBbAa", 0xffeeddccbbaa),
+            ("0xFfEeDdCcBbAa", 0xFfEeDdCcBbAa),
         ];
 
         assert_all_ints_eq(decimal, Kind::Decimal, false);
@@ -270,8 +276,8 @@ mod test {
             ("-1_000_000", -1_000_000),
             ("000000000000", 0),
             ("-000000000000", 0),
-            ("9_007_199_254_740_991", 9_007_199_254_740_991), /* max safe integer, 2^53 - 1 */
-            ("-9_007_199_254_740_990", -9_007_199_254_740_990), /* min safe integer, -(2^53 - 1) */
+            ("9_007_199_254_740_991", 9_007_199_254_740_991), // max safe integer, 2^53 - 1
+            ("-9_007_199_254_740_990", -9_007_199_254_740_990), // min safe integer, -(2^53 - 1)
             // still works for illegal tokens
             ("1___000_000", 1_000_000),
             ("1_", 1),
@@ -308,11 +314,11 @@ mod test {
             // still works without separators
             ("0x0", 0x0),
             ("0X0", 0x0),
-            ("0xFF", 0xff),
-            ("0xFF_AA_11", 0xffaa11),
+            ("0xFF", 0xFF),
+            ("0xFF_AA_11", 0xFFAA11),
             ("0xdead_beef", 0xdead_beef),
-            ("0xFf_Ee_Dd_Cc_Bb_Aa", 0xffee_ddcc_bbaa),
-            ("0xFfEe_DdCc_BbAa", 0xffee_ddcc_bbaa),
+            ("0xFf_Ee_Dd_Cc_Bb_Aa", 0xFfEe_DdCc_BbAa),
+            ("0xFfEe_DdCc_BbAa", 0xFfEe_DdCc_BbAa),
             // still works for illegal tokens
             ("0x1_0000__0000", 0x100_000_000),
             ("0x1_", 0x1),

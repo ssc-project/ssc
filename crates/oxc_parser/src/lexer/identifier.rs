@@ -30,22 +30,19 @@ impl<'a> Lexer<'a> {
     /// Handle identifier with ASCII start character.
     /// Returns text of the identifier, minus its first char.
     ///
-    /// Start character should not be consumed from `self.source` prior to
-    /// calling this.
+    /// Start character should not be consumed from `self.source` prior to calling this.
     ///
-    /// This function is the "fast path" for the most common identifiers in JS
-    /// code - purely consisting of ASCII characters: `a`-`z`, `A`-`Z`,
-    /// `0`-`9`, `_`, `$`. JS syntax also allows Unicode identifiers and
-    /// escapes (e.g. `\u{FF}`) in identifiers, but they are very rare in
-    /// practice. So this fast path will handle 99% of JS code.
+    /// This function is the "fast path" for the most common identifiers in JS code -
+    /// purely consisting of ASCII characters: `a`-`z`, `A`-`Z`, `0`-`9`, `_`, `$`.
+    /// JS syntax also allows Unicode identifiers and escapes (e.g. `\u{FF}`) in identifiers,
+    /// but they are very rare in practice. So this fast path will handle 99% of JS code.
     ///
-    /// When Unicode or an escape is encountered, this function de-opts to paths
-    /// which handle those cases, but those paths are marked `#[cold]` to
-    /// keep the ASCII fast path as fast as possible.
+    /// When Unicode or an escape is encountered, this function de-opts to paths which handle those
+    /// cases, but those paths are marked `#[cold]` to keep the ASCII fast path as fast as possible.
     ///
-    /// The fast path uses pointers and unsafe code to minimize bounds checks
-    /// etc. The functions it delegates to for uncommon cases are both more
-    /// complex, and less critical, so they stick to safe code only.
+    /// The fast path uses pointers and unsafe code to minimize bounds checks etc.
+    /// The functions it delegates to for uncommon cases are both more complex, and less critical,
+    /// so they stick to safe code only.
     ///
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
@@ -75,34 +72,31 @@ impl<'a> Lexer<'a> {
         // as fast as possible.
         if !next_byte.is_ascii() {
             return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so
-                // subtracting 1 makes `start_pos` `source`'s
-                // position as it was at start of this function
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
                 &self.identifier_tail_unicode(start_pos)[1..]
             });
         }
         if next_byte == b'\\' {
             return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so
-                // subtracting 1 makes `start_pos` `source`'s
-                // position as it was at start of this function
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
                 &self.identifier_backslash(start_pos, false)[1..]
             });
         }
 
         // Return identifier minus its first char.
-        // SAFETY: `after_first` was position of `lexer.source` at start of this
-        // search. Searching only proceeds in forwards direction, so
-        // `lexer.source.position()` cannot be before `after_first`.
+        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
+        // Searching only proceeds in forwards direction, so `lexer.source.position()`
+        // cannot be before `after_first`.
         unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
     }
 
-    /// Handle rest of identifier after first byte of a multi-byte Unicode char
-    /// found. Any number of characters can have already been consumed from
-    /// `self.source` prior to it. `self.source` should be positioned at
-    /// start of Unicode character.
+    /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
+    /// Any number of characters can have already been consumed from `self.source` prior to it.
+    /// `self.source` should be positioned at start of Unicode character.
     fn identifier_tail_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
         let c = self.peek().unwrap();
         if is_identifier_part_unicode(c) {
@@ -116,9 +110,8 @@ impl<'a> Lexer<'a> {
 
     /// Handle identifier after first char (which was Unicode) is dealt with.
     ///
-    /// First char should have been consumed from `self.source` prior to calling
-    /// this. `start_pos` should be position of the start of the identifier
-    /// (before first char was consumed).
+    /// First char should have been consumed from `self.source` prior to calling this.
+    /// `start_pos` should be position of the start of the identifier (before first char was consumed).
     pub(super) fn identifier_tail_after_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
         // Identifier contains a Unicode chars, so probably contains more.
         // So just iterate over chars now, instead of bytes.
@@ -154,9 +147,8 @@ impl<'a> Lexer<'a> {
     /// `start_pos` must be position of start of identifier.
     fn identifier_backslash(&mut self, start_pos: SourcePosition, is_start: bool) -> &'a str {
         // Create arena string to hold unescaped identifier.
-        // We don't know how long identifier will end up being. Take a guess
-        // that total length will be double what we've seen so far, or
-        // `MIN_ESCAPED_STR_LEN` minimum.
+        // We don't know how long identifier will end up being. Take a guess that total length
+        // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = self.source.str_from_pos_to_current(start_pos);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
         let mut str = String::with_capacity_in(capacity, self.allocator);
@@ -170,10 +162,9 @@ impl<'a> Lexer<'a> {
 
     /// Process rest of identifier after a `\` found.
     ///
-    /// `self.source` should be positioned *on* the `\` (i.e. `\` has not been
-    /// consumed yet). `str` should contain the identifier up to before the
-    /// escape. `is_start` should be `true` if this is first char in the
-    /// identifier, `false` otherwise.
+    /// `self.source` should be positioned *on* the `\` (i.e. `\` has not been consumed yet).
+    /// `str` should contain the identifier up to before the escape.
+    /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
     fn identifier_on_backslash(&mut self, mut str: String<'a>, mut is_start: bool) -> &'a str {
         'outer: loop {
             // Consume `\`
@@ -216,10 +207,9 @@ impl<'a> Lexer<'a> {
     /// Entry point for a private identifier. i.e. after `#`.
     /// `#` must be consumed before calling this.
     ///
-    /// Like `identifier_name_handler`, this contains a fast path for
-    /// identifiers which are pure ASCII. Unicode characters and escapes are
-    /// handled on paths marked `#[cold]` to keep the common ASCII fast path
-    /// as fast as possible.
+    /// Like `identifier_name_handler`, this contains a fast path for identifiers which are pure ASCII.
+    /// Unicode characters and escapes are handled on paths marked `#[cold]` to keep the common ASCII
+    /// fast path as fast as possible.
     pub fn private_identifier(&mut self) -> Kind {
         // Handle EOF directly after `#`
         let start_pos = self.source.position();
@@ -257,9 +247,8 @@ impl<'a> Lexer<'a> {
         // as fast as possible.
         if !next_byte.is_ascii() {
             return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so
-                // subtracting 1 makes `start_pos` `source`'s
-                // position as it was at start of this function
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
                 self.identifier_tail_unicode(start_pos);
                 Kind::PrivateIdentifier
@@ -267,9 +256,8 @@ impl<'a> Lexer<'a> {
         }
         if next_byte == b'\\' {
             return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so
-                // subtracting 1 makes `start_pos` `source`'s
-                // position as it was at start of this function
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
                 self.identifier_backslash(start_pos, false);
                 Kind::PrivateIdentifier
@@ -279,8 +267,7 @@ impl<'a> Lexer<'a> {
         Kind::PrivateIdentifier
     }
 
-    /// Handle private identifier whose first byte is not an ASCII identifier
-    /// start byte.
+    /// Handle private identifier whose first byte is not an ASCII identifier start byte.
     #[cold]
     fn private_identifier_not_ascii_id(&mut self) -> Kind {
         let b = self.source.peek_byte().unwrap();
@@ -293,8 +280,7 @@ impl<'a> Lexer<'a> {
                 return Kind::PrivateIdentifier;
             }
         } else if b == b'\\' {
-            // Assume Unicode characters are more common than `\` escapes, so
-            // this branch as cold
+            // Assume Unicode characters are more common than `\` escapes, so this branch as cold
             return cold_branch(|| {
                 self.identifier_backslash_handler();
                 Kind::PrivateIdentifier

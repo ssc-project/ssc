@@ -21,12 +21,14 @@ non_ascii_idents                       = "warn"
 unit-bindings                          = "warn"
 
 [workspace.lints.clippy]
-all        = { level = "warn" }
+all        = { level = "warn", priority = -1 }
 empty_docs = { level = "allow", priority = 1 } # from `Tsify`
 # restriction
 dbg_macro     = "warn"
 todo          = "warn"
 unimplemented = "warn"
+print_stdout  = "warn" # must be opt-in
+print_stderr  = "warn" # must be opt-in
 # I like the explicitness of this rule as it removes confusion around `clone`.
 # This increases readability, avoids `clone` mindlessly and heap allocating on accident.
 clone_on_ref_ptr = "warn"
@@ -92,15 +94,15 @@ napi-derive = "2"
 napi-build  = "2"
 
 # Oxc
-oxc_allocator   = "0.13.1"
-oxc_ast         = "0.13.1"
-oxc_diagnostics = "0.13.1"
-oxc_parser      = { version = "0.13.1", path = "crates/oxc_parser" }
-oxc_span        = "0.13.1"
-oxc_syntax      = "0.13.1"
-oxc_sourcemap   = "0.13.1"
-oxc_codegen     = "0.13.1"
-oxc_index       = "0.13.1"
+oxc_allocator   = "0.16.3"
+oxc_ast         = "0.16.3"
+oxc_diagnostics = "0.16.3"
+oxc_parser      = { version = "0.16.3", path = "crates/oxc_parser" }
+oxc_span        = "0.16.3"
+oxc_syntax      = "0.16.3"
+oxc_sourcemap   = "0.16.3"
+oxc_codegen     = "0.16.3"
+oxc_index       = "0.16.3"
 
 # Ssc
 ssc                 = { version = "0.1.0", path = "crates/ssc" }

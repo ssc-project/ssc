@@ -6,10 +6,8 @@ use crate::diagnostics;
 ///
 /// SAFETY:
 /// * Lexer must not be at end of file.
-/// * `byte` must be next byte of source code, corresponding to current position
-///   of `lexer.source`.
-/// * Only `BYTE_HANDLERS` for ASCII characters may use the
-///   `ascii_byte_handler!()` macro.
+/// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
+/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
 pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
     BYTE_HANDLERS[byte as usize](lexer)
 }
@@ -41,11 +39,9 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 
 /// Macro for defining a byte handler.
 ///
-/// Use `ascii_byte_handler!` macro for ASCII characters, which adds
-/// optimizations for ASCII.
+/// Use `ascii_byte_handler!` macro for ASCII characters, which adds optimizations for ASCII.
 ///
-/// Handlers are defined as functions instead of closures, so they have names in
-/// flame graphs.
+/// Handlers are defined as functions instead of closures, so they have names in flame graphs.
 ///
 /// ```
 /// byte_handler!(UNI(lexer) {
@@ -79,20 +75,17 @@ macro_rules! byte_handler {
 #[allow(clippy::unnecessary_safety_comment)]
 /// Macro for defining byte handler for an ASCII character.
 ///
-/// In addition to defining a `const` for the handler, it also asserts that
-/// lexer is not at end of file, and that next char is ASCII.
-/// Where the handler is for an ASCII character, these assertions are
-/// self-evidently true.
+/// In addition to defining a `const` for the handler, it also asserts that lexer
+/// is not at end of file, and that next char is ASCII.
+/// Where the handler is for an ASCII character, these assertions are self-evidently true.
 ///
-/// These assertions produce no runtime code, but hint to the compiler that it
-/// can assume that next char is ASCII, and it uses that information to optimize
-/// the rest of the handler. e.g. `lexer.consume_char()` becomes just a single
-/// assembler instruction. Without the assertions, the compiler is unable to
-/// deduce the next char is ASCII, due to the indirection of the `BYTE_HANDLERS`
-/// jump table.
+/// These assertions produce no runtime code, but hint to the compiler that it can assume that
+/// next char is ASCII, and it uses that information to optimize the rest of the handler.
+/// e.g. `lexer.consume_char()` becomes just a single assembler instruction.
+/// Without the assertions, the compiler is unable to deduce the next char is ASCII, due to
+/// the indirection of the `BYTE_HANDLERS` jump table.
 ///
-/// These assertions are unchecked (i.e. won't panic) and will cause UB if
-/// they're incorrect.
+/// These assertions are unchecked (i.e. won't panic) and will cause UB if they're incorrect.
 ///
 /// # SAFETY
 /// Only use this macro to define byte handlers for ASCII characters.
@@ -140,14 +133,14 @@ macro_rules! ascii_byte_handler {
 }
 
 #[allow(clippy::unnecessary_safety_comment)]
-/// Macro for defining byte handler for an ASCII character which is start of an
-/// identifier (`a`-`z`, `A`-`Z`, `$` or `_`).
+/// Macro for defining byte handler for an ASCII character which is start of an identifier
+/// (`a`-`z`, `A`-`Z`, `$` or `_`).
 ///
-/// Macro calls `Lexer::identifier_name_handler` to get the text of the
-/// identifier, minus its first character.
+/// Macro calls `Lexer::identifier_name_handler` to get the text of the identifier,
+/// minus its first character.
 ///
-/// `Lexer::identifier_name_handler` is an unsafe function, but if byte being
-/// consumed is ASCII, its requirements are met.
+/// `Lexer::identifier_name_handler` is an unsafe function, but if byte being consumed is ASCII,
+/// its requirements are met.
 ///
 /// # SAFETY
 /// Only use this macro to define byte handlers for ASCII characters.
@@ -681,21 +674,17 @@ ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char
 });
 
 // Non-ASCII characters.
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for
-// non-ASCII chars.
+// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII chars.
 byte_handler!(UNI(lexer) {
     lexer.unicode_char_handler()
 });
 
-// UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8
-// sequence)
-// + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 -
-//   0xFF).
-// `handle_byte()` should only be called with 1st byte of a valid UTF-8
-// character, so something has gone wrong if we get here.
+// UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
+// + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
+// `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
+// so something has gone wrong if we get here.
 // https://datatracker.ietf.org/doc/html/rfc3629
-// NB: Must not use `ascii_byte_handler!` macro, as this handler is for
-// non-ASCII bytes.
+// NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
 byte_handler!(UER(_lexer) {
     unreachable!();
 });

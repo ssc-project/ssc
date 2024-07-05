@@ -2,6 +2,7 @@
 
 #![allow(clippy::future_not_send)] // clippy warns `Allocator` is not `Send`
 #![allow(clippy::redundant_pub_crate)] // comes from  `ouroboros`'s macro
+#![allow(clippy::print_stdout)]
 
 // Instruction:
 // run `cargo run -p ssc_css_parser --example multi-thread`

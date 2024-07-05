@@ -1,6 +1,4 @@
-use oxc_ast::ast::{
-    ChainElement, Expression, Modifiers, VariableDeclaration, VariableDeclarationKind,
-};
+use oxc_ast::ast::{ChainElement, Expression, VariableDeclaration, VariableDeclarationKind};
 use oxc_diagnostics::Result;
 use ssc_ast::ast::*;
 
@@ -27,7 +25,7 @@ impl<'a> ParserImpl<'a> {
                         span: content_span,
                         kind: VariableDeclarationKind::Const,
                         declarations: self.ast.new_vec_single(declaration),
-                        modifiers: Modifiers::empty(),
+                        declare: false,
                     },
                 ))
             } else if self.eat(Kind::Debug) {

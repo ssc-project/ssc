@@ -71,8 +71,7 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // For Identifiers, surrogate pair is an invalid grammar, e.g. `var
-        // \uD800\uDEA7`.
+        // For Identifiers, surrogate pair is an invalid grammar, e.g. `var \uD800\uDEA7`.
         let ch = match value {
             SurrogatePair::Astral(..) | SurrogatePair::HighLow(..) => {
                 let range = Span::new(start, self.offset());
@@ -121,9 +120,8 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // For strings and templates, surrogate pairs are valid grammar, e.g.
-        // `"\uD83D\uDE00" === 😀` values are interpreted as is if they
-        // fall out of range
+        // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`
+        // values are interpreted as is if they fall out of range
         match value {
             SurrogatePair::CodePoint(code_point) | SurrogatePair::Astral(code_point) => {
                 if let Ok(ch) = char::try_from(code_point) {
@@ -176,7 +174,7 @@ impl<'a> Lexer<'a> {
         let mut value = self.hex_digit()?;
         while let Some(next) = self.hex_digit() {
             value = (value << 4) | next;
-            if value > 0x0010_ffff {
+            if value > 0x0010_FFFF {
                 return None;
             }
         }
@@ -189,9 +187,8 @@ impl<'a> Lexer<'a> {
     ///   * `https://mathiasbynens.be/notes/javascript-identifiers-es6`
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
-        // The first code unit of a surrogate pair is always in the range from
-        // 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        let is_pair = (0xd800..=0xdbff).contains(&high)
+        // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
+        let is_pair = (0xD800..=0xDBFF).contains(&high)
             && self.peek() == Some('\\')
             && self.peek2() == Some('u');
         if !is_pair {
@@ -203,14 +200,13 @@ impl<'a> Lexer<'a> {
 
         let low = self.hex_4_digits()?;
 
-        // The second code unit of a surrogate pair is always in the range from
-        // 0xDC00 to 0xDFFF, and is called a low surrogate or a trail surrogate.
-        if !(0xdc00..=0xdfff).contains(&low) {
+        // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF, and is called a low surrogate or a trail surrogate.
+        if !(0xDC00..=0xDFFF).contains(&low) {
             return Some(SurrogatePair::HighLow(high, low));
         }
 
         // `https://tc39.es/ecma262/#sec-utf16decodesurrogatepair`
-        let astral_code_point = (high - 0xd800) * 0x400 + low - 0xdc00 + 0x10000;
+        let astral_code_point = (high - 0xD800) * 0x400 + low - 0xDC00 + 0x10000;
 
         Some(SurrogatePair::Astral(astral_code_point))
     }
@@ -303,14 +299,12 @@ impl<'a> Lexer<'a> {
                 }
                 '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
                     self.consume_char();
-                    // error raised within the parser by
-                    // `diagnostics::template_literal`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 // NotEscapeSequence :: DecimalDigit but not 0
                 '1'..='9' if in_template => {
-                    // error raised within the parser by
-                    // `diagnostics::template_literal`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 other => {

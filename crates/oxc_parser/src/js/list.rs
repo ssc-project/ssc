@@ -4,12 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    diagnostics,
-    lexer::Kind,
-    list::{NormalList, SeparatedList},
-    ParserImpl,
-};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, modifiers::ModifierFlags, ParserImpl};
 
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {
@@ -215,8 +210,27 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     // read everything as expression and map to it to either
     // ParenthesizedExpression or ArrowFormalParameters later
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let element = p.parse_assignment_expression_or_higher()?;
-        self.elements.push(element);
+        let element = p.parse_assignment_expression_or_higher();
+        self.elements.push(element?);
+        Ok(())
+    }
+
+    fn parse_list(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
+        p.expect(self.open())?;
+
+        let mut first = true;
+
+        while !p.at(self.close()) && !p.at(Kind::Eof) {
+            if first {
+                first = false;
+            } else {
+                p.expect(self.separator())?;
+            }
+
+            self.parse_element(p)?;
+        }
+
+        p.expect(self.close())?;
         Ok(())
     }
 }
@@ -248,8 +262,15 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
         let modifiers = p.parse_class_element_modifiers(true);
         let accessibility = modifiers.accessibility();
-        let readonly = modifiers.readonly();
-        let r#override = modifiers.r#override();
+        let readonly = modifiers.contains_readonly();
+        let r#override = modifiers.contains_override();
+        p.verify_modifiers(
+            &modifiers,
+            ModifierFlags::ACCESSIBILITY
+                .union(ModifierFlags::READONLY)
+                .union(ModifierFlags::OVERRIDE),
+            diagnostics::cannot_appear_on_a_parameter,
+        );
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
@@ -345,9 +366,8 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         // export { type}              // name: `type`
         // export { type type }        // name: `type`    type-export: `true`
         // export { type as }          // name: `as`      type-export: `true`
-        // export { type as as }       // name: `type`    type-export: `false`
-        // (aliased to `as`) export { type as as as }    // name: `as`
-        // type-export: `true`, aliased to `as`
+        // export { type as as }       // name: `type`    type-export: `false` (aliased to `as`)
+        // export { type as as as }    // name: `as`      type-export: `true`, aliased to `as`
         let mut export_kind = ImportOrExportKind::Value;
         if p.ts_enabled() && p.at(Kind::Type) {
             if p.peek_at(Kind::As) {
@@ -371,66 +391,6 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
         let element =
             ExportSpecifier { span: p.end_span(specifier_span), local, exported, export_kind };
-        self.elements.push(element);
-        Ok(())
-    }
-}
-
-pub struct ClassElements<'a> {
-    pub elements: Vec<'a, ClassElement<'a>>,
-}
-
-impl<'a> ClassElements<'a> {
-    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
-    }
-}
-
-impl<'a> NormalList<'a> for ClassElements<'a> {
-    fn open(&self) -> Kind {
-        Kind::LCurly
-    }
-
-    fn close(&self) -> Kind {
-        Kind::RCurly
-    }
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        // skip empty class element `;`
-        while p.at(Kind::Semicolon) {
-            p.bump_any();
-        }
-        if p.at(self.close()) {
-            return Ok(());
-        }
-        let element = p.parse_class_element()?;
-
-        self.elements.push(element);
-        Ok(())
-    }
-}
-
-pub struct SwitchCases<'a> {
-    pub elements: Vec<'a, SwitchCase<'a>>,
-}
-
-impl<'a> SwitchCases<'a> {
-    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
-    }
-}
-
-impl<'a> NormalList<'a> for SwitchCases<'a> {
-    fn open(&self) -> Kind {
-        Kind::LCurly
-    }
-
-    fn close(&self) -> Kind {
-        Kind::RCurly
-    }
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let element = p.parse_switch_case()?;
         self.elements.push(element);
         Ok(())
     }

@@ -19,12 +19,10 @@ impl<'a> Lexer<'a> {
 
     /// Read template literal component.
     ///
-    /// This function handles the common case where template contains no escapes
-    /// or `\r` characters and so does not require saving to
-    /// `lexer.escaped_templates`. If an escape or `\r` is found, control is
-    /// passed to `template_literal_escaped` which builds the unescaped
-    /// string. This division keeps the path for common case as fast as
-    /// possible.
+    /// This function handles the common case where template contains no escapes or `\r` characters
+    /// and so does not require saving to `lexer.escaped_templates`.
+    /// If an escape or `\r` is found, control is passed to `template_literal_escaped` which builds
+    /// the unescaped string. This division keeps the path for common case as fast as possible.
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut ret = substitute;
 
@@ -95,14 +93,12 @@ impl<'a> Lexer<'a> {
         substitute: Kind,
         tail: Kind,
     ) -> Kind {
-        // Create arena string to hold modified template literal, containing up
-        // to before `\r`. SAFETY: Caller guarantees `pos` is not before
-        // `self.source.position()`.
+        // Create arena string to hold modified template literal, containing up to before `\r`.
+        // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let str = self.template_literal_create_string(pos);
 
         // Skip `\r`.
-        // SAFETY: Caller guarantees byte at `pos` is `\r`, so `pos + 1` is a
-        // UTF-8 char boundary.
+        // SAFETY: Caller guarantees byte at `pos` is `\r`, so `pos + 1` is a UTF-8 char boundary.
         pos = pos.add(1);
 
         // If at EOF, exit. This illegal in valid JS, so cold branch.
@@ -118,11 +114,10 @@ impl<'a> Lexer<'a> {
         let chunk_start = pos;
 
         // If next char is `\n`, start next search after it.
-        // `\n` is first char of next chunk, so it'll get added to `str` when
-        // chunk is pushed. SAFETY: Have checked not at EOF.
+        // `\n` is first char of next chunk, so it'll get added to `str` when chunk is pushed.
+        // SAFETY: Have checked not at EOF.
         if pos.read() == b'\n' {
-            // SAFETY: `\n` is ASCII, so advancing past it leaves `pos` on a
-            // UTF-8 char boundary
+            // SAFETY: `\n` is ASCII, so advancing past it leaves `pos` on a UTF-8 char boundary
             pos = pos.add(1);
         }
 
@@ -140,15 +135,13 @@ impl<'a> Lexer<'a> {
         substitute: Kind,
         tail: Kind,
     ) -> Kind {
-        // Create arena string to hold modified template literal, containing up
-        // to before `\`. SAFETY: Caller guarantees `pos` is not before
-        // `self.source.position()`.
+        // Create arena string to hold modified template literal, containing up to before `\`.
+        // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let mut str = self.template_literal_create_string(pos);
 
         // Decode escape sequence into `str`.
-        // `read_string_escape_sequence` expects `self.source` to be positioned
-        // after `\`. SAFETY: Caller guarantees next byte is `\`, which
-        // is ASCII, so `pos + 1` is UTF-8 char boundary.
+        // `read_string_escape_sequence` expects `self.source` to be positioned after `\`.
+        // SAFETY: Caller guarantees next byte is `\`, which is ASCII, so `pos + 1` is UTF-8 char boundary.
         let after_backslash = pos.add(1);
         self.source.set_position(after_backslash);
 
@@ -168,16 +161,14 @@ impl<'a> Lexer<'a> {
         )
     }
 
-    /// Create arena string for modified template literal, containing the
-    /// template literal up to `pos`. # SAFETY
+    /// Create arena string for modified template literal, containing the template literal up to `pos`.
+    /// # SAFETY
     /// `pos` must not be before `self.source.position()`
     unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'a> {
         // Create arena string to hold modified template literal.
-        // We don't know how long template literal will end up being. Take a
-        // guess that total length will be double what we've seen so
-        // far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
-        // SAFETY: Caller guarantees `pos` is not before
-        // `self.source.position()`.
+        // We don't know how long template literal will end up being. Take a guess that total length
+        // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
+        // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = self.source.str_from_current_to_pos_unchecked(pos);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
         let mut str = String::with_capacity_in(capacity, self.allocator);
@@ -315,8 +306,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
-    /// See Section 12, the parser needs to re-tokenize on
-    /// `TemplateSubstitutionTail`,
+    /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
         self.token.start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
@@ -337,12 +327,10 @@ impl<'a> Lexer<'a> {
         let raw = &self.source.whole()[token.start as usize..token.end as usize];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
-                &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}"
-                                       // and trailing "`"
+                &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
             }
             Kind::TemplateHead | Kind::TemplateMiddle => {
-                &raw[1..raw.len() - 2] // omit leading "`" or "}" and trailing
-                                       // "${"
+                &raw[1..raw.len() - 2] // omit leading "`" or "}" and trailing "${"
             }
             _ => raw,
         })

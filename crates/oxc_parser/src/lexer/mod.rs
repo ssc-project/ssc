@@ -88,17 +88,14 @@ pub struct Lexer<'a> {
 
     pub(crate) trivia_builder: TriviaBuilder,
 
-    /// Data store for escaped strings, indexed by [Token::start] when
-    /// [Token::escaped] is true
+    /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
     pub escaped_strings: FxHashMap<u32, &'a str>,
 
-    /// Data store for escaped templates, indexed by [Token::start] when
-    /// [Token::escaped] is true `None` is saved when the string contains
-    /// an invalid escape sequence.
+    /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
+    /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
 
-    /// `memchr` Finder for end of multi-line comments. Created lazily when
-    /// first used.
+    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
@@ -106,8 +103,8 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     /// Create new `Lexer`.
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can
-    /// exist on a single thread at one time.
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
+    /// on a single thread at one time.
     pub(super) fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
@@ -124,9 +121,7 @@ impl<'a> Lexer<'a> {
             source_type,
             token,
             errors: vec![],
-            lookahead: VecDeque::with_capacity(4), /* 4 is the maximum
-                                                    * lookahead for
-                                                    * TypeScript */
+            lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
@@ -155,9 +150,7 @@ impl<'a> Lexer<'a> {
             source_type,
             token,
             errors: vec![],
-            lookahead: VecDeque::with_capacity(4), /* 4 is the maximum
-                                                    * lookahead for
-                                                    * TypeScript */
+            lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
@@ -166,9 +159,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for
-    /// benchmarks. This function must NOT be exposed in public API as it
-    /// breaks safety invariants.
+    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
+    /// This function must NOT be exposed in public API as it breaks safety invariants.
     #[cfg(feature = "benchmarking")]
     pub fn new_for_benchmarks(
         allocator: &'a Allocator,
@@ -194,8 +186,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Rewinds the lexer to the same state as when the passed in `checkpoint`
-    /// was created.
+    /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
         self.source.set_position(checkpoint.position);
@@ -224,14 +215,12 @@ impl<'a> Lexer<'a> {
             self.lookahead.push_back(Lookahead { position: self.source.position(), token: peeked });
         }
 
-        // Call to `finish_next` in loop above leaves `self.token =
-        // Token::default()`. Only circumstance in which `self.token`
-        // wouldn't have been default at start of this function is if we
-        // were at very start of file, before any tokens have been read, when
-        // `token.is_on_new_line` is `true`. But `lookahead` isn't called before
-        // the first token is read, so that's not possible. So no need
-        // to restore `self.token` here. It's already in same state as
-        // it was at start of this function.
+        // Call to `finish_next` in loop above leaves `self.token = Token::default()`.
+        // Only circumstance in which `self.token` wouldn't have been default at start of this
+        // function is if we were at very start of file, before any tokens have been read, when
+        // `token.is_on_new_line` is `true`. But `lookahead` isn't called before the first token is
+        // read, so that's not possible. So no need to restore `self.token` here.
+        // It's already in same state as it was at start of this function.
 
         self.source.set_position(position);
 
@@ -348,6 +337,8 @@ impl<'a> Lexer<'a> {
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
+/// "Cold trampoline function", suggested in:
+/// <https://users.rust-lang.org/t/is-cold-the-only-reliable-way-to-hint-to-branch-predictor/106509/2>
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()

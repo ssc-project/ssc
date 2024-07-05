@@ -3,18 +3,15 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo))
-//!   for fast AST drop
+//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
 //! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
 //! * No other heap allocations are done except the above two
 //! * [oxc_span::Span] offsets uses `u32` instead of `usize`
-//! * Scope binding, symbol resolution and complicated syntax errors are not
-//!   done in the parser,
+//! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
 //! # Conformance
-//! The parser parses all of Test262 and most of Babel and TypeScript parser
-//! conformance tests.
+//! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
 //!
 //! See [oxc coverage](https://github.com/Boshen/oxc/tree/main/tasks/coverage) for details
 //! ```
@@ -30,11 +27,17 @@
 //!
 //! # Usage
 //!
-//! The parser has a minimal API with three inputs and one return struct
-//! ([ParserReturn]).
+//! The parser has a minimal API with three inputs and one return struct ([ParserReturn]).
 //!
 //! ```rust
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
+//! ```
+//!
+//! # Example
+//! <https://github.com/Boshen/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
+//!
+//! ```rust
+#![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
 //! # Visitor
@@ -43,9 +46,9 @@
 //!
 //! # Visiting without a visitor
 //!
-//! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing
-//! tree with untyped nodes, the nodes can be iterated through a sequential
-//! loop.
+//! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
+//! the nodes can be iterated through a sequential loop.
+//!
 //! ```rust
 //! for node in semantic.nodes().iter() {
 //!     match node.kind() {
@@ -57,10 +60,12 @@
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
+#![allow(rustdoc::bare_urls)]
 
 mod context;
 mod cursor;
 mod list;
+mod modifiers;
 mod state;
 
 mod js;
@@ -78,12 +83,19 @@ pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstBuilder, Trivias};
+use oxc_ast::{
+    ast::{
+        BindingPattern, Expression, IdentifierReference, Program, VariableDeclarationKind,
+        VariableDeclarator,
+    },
+    AstBuilder, Trivias,
+};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
 pub use crate::lexer::Kind; // re-export for codegen
 use crate::{
+    js::{VariableDeclarationContext, VariableDeclarationParent},
     lexer::{Lexer, Token},
     state::ParserState,
 };
@@ -91,8 +103,7 @@ use crate::{
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
 // Length is constrained by 2 factors:
-// 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX`
-//    bytes.
+// 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
 // https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
 pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
@@ -107,8 +118,7 @@ pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 ///
 /// The parser always return a valid AST.
 /// When `panicked = true`, then program will always be empty.
-/// When `errors.len() > 0`, then program may or may not be empty due to error
-/// recovery.
+/// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
@@ -123,8 +133,8 @@ struct ParserOptions {
     /// Emit `ParenthesizedExpression` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
-    /// (non-standard) `ParenthesizedExpression` nodes that have a single
-    /// `expression` property containing the expression inside parentheses.
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
     ///
     /// Default: true
     pub preserve_parens: bool,
@@ -165,9 +175,8 @@ impl<'a> Parser<'a> {
 
     /// Emit `ParenthesizedExpression` in AST.
     ///
-    /// If this option is true, parenthesized expressions are represented by
-    /// (non-standard) `ParenthesizedExpression` nodes that have a single
-    /// expression property containing the expression inside parentheses.
+    /// If this option is true, parenthesized expressions are represented by (non-standard)
+    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
     #[must_use]
     pub fn preserve_parens(mut self, allow: bool) -> Self {
         self.options.preserve_parens = allow;
@@ -176,33 +185,22 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
-    use oxc_ast::ast::{
-        BindingPattern, Expression, IdentifierReference, VariableDeclarationKind,
-        VariableDeclarator,
-    };
-
-    use self::js::{VariableDeclarationContext, VariableDeclarationParent};
-
     use super::*;
 
-    /// `UniquePromise` is a way to use the type system to enforce the invariant
-    /// that only a single `ParserImpl`, `Lexer` and `lexer::Source` can
-    /// exist at any time on a thread. This constraint is required to
-    /// guarantee the soundness of some methods of these types
+    /// `UniquePromise` is a way to use the type system to enforce the invariant that only
+    /// a single `ParserImpl`, `Lexer` and `lexer::Source` can exist at any time on a thread.
+    /// This constraint is required to guarantee the soundness of some methods of these types
     /// e.g. `Source::set_position`.
     ///
-    /// `ParserImpl::new`, `Lexer::new` and `lexer::Source::new` all require a
-    /// `UniquePromise` to be provided to them. `UniquePromise::new` is not
-    /// visible outside this module, so only `Parser::parse` can create one,
-    /// and it only calls `ParserImpl::new` once. This enforces the
-    /// invariant throughout the entire parser.
+    /// `ParserImpl::new`, `Lexer::new` and `lexer::Source::new` all require a `UniquePromise`
+    /// to be provided to them. `UniquePromise::new` is not visible outside this module, so only
+    /// `Parser::parse` can create one, and it only calls `ParserImpl::new` once.
+    /// This enforces the invariant throughout the entire parser.
     ///
-    /// `UniquePromise` is a zero-sized type and has no runtime cost. It's
-    /// purely for the type-checker.
+    /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
     ///
-    /// `UniquePromise::new_for_tests` is a backdoor for unit tests and
-    /// benchmarks, so they can create a `ParserImpl` or `Lexer`, and
-    /// manipulate it directly, for testing/benchmarking purposes.
+    /// `UniquePromise::new_for_tests` is a backdoor for unit tests and benchmarks, so they can create a
+    /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
     pub(crate) struct UniquePromise {
         _dummy: (),
     }
@@ -213,10 +211,9 @@ mod parser_parse {
             Self { _dummy: () }
         }
 
-        /// Backdoor for tests/benchmarks to create a `UniquePromise` (see
-        /// above). This function must NOT be exposed outside of tests
-        /// and benchmarks, as it allows circumventing safety invariants
-        /// of the parser.
+        /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
+        /// This function must NOT be exposed outside of tests and benchmarks,
+        /// as it allows circumventing safety invariants of the parser.
         #[cfg(any(test, feature = "benchmarking"))]
         pub fn new_for_tests() -> Self {
             Self { _dummy: () }
@@ -253,8 +250,28 @@ mod parser_parse {
             parser.parse()
         }
 
+        /// Parse `Expression`
+        ///
         /// # Errors
-        pub fn parse_expression_from_position(self, pos: u32) -> Result<Expression<'a>> {
+        ///
+        /// * Syntax Error
+        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            parser.parse_expression()
+        }
+
+        /// # Errors
+        pub fn parse_expression_from_position(
+            self,
+            pos: u32,
+        ) -> std::result::Result<Expression<'a>, OxcDiagnostic> {
             let unique = UniquePromise::new();
             let mut parser = ParserImpl::new_from_position(
                 self.allocator,
@@ -265,7 +282,7 @@ mod parser_parse {
                 unique,
             );
             parser.bump_any();
-            parser.parse_expression()
+            parser.parse_expression().map_err(|mut errors| errors.remove(0))
         }
 
         /// # Errors
@@ -362,8 +379,8 @@ struct ParserImpl<'a> {
 impl<'a> ParserImpl<'a> {
     /// Create a new `ParserImpl`.
     ///
-    /// Requiring a `UniquePromise` to be provided guarantees only 1
-    /// `ParserImpl` can exist on a single thread at one time.
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
+    /// on a single thread at one time.
     #[inline]
     pub fn new(
         allocator: &'a Allocator,
@@ -409,20 +426,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for
-    /// unit tests. This function must NOT be exposed in public API as it
-    /// breaks safety invariants.
-    #[cfg(test)]
-    fn new_for_tests(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, options, unique)
-    }
-
     /// Main entry point
     ///
     /// Returns an empty `Program` on unrecoverable error,
@@ -448,6 +451,17 @@ impl<'a> ParserImpl<'a> {
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
+    }
+
+    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        // initialize cur_token and prev_token by moving onto the first token
+        self.bump_any();
+        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        Ok(expr)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -488,8 +502,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
-    /// Original parsing error is not real - `Lexer::new` substituted "\0" as
-    /// the source text.
+    /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
     fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
             return Some(diagnostics::overlong_source());
@@ -499,8 +512,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Return error info at current token
     /// # Panics
-    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is
-    ///     returned
+    ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
     fn unexpected(&mut self) -> OxcDiagnostic {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
@@ -517,6 +529,10 @@ impl<'a> ParserImpl<'a> {
         self.errors.push(error);
     }
 
+    fn errors_count(&self) -> usize {
+        self.errors.len() + self.lexer.errors.len()
+    }
+
     fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
     }
@@ -526,18 +542,27 @@ impl<'a> ParserImpl<'a> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::CommentKind;
+    use oxc_ast::{ast::Expression, CommentKind};
 
     use super::*;
 
     #[test]
-    fn smoke_test() {
+    fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn parse_expression_smoke_test() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "a";
+        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        assert!(matches!(expr, Expression::Identifier(_)));
     }
 
     #[test]
@@ -571,7 +596,7 @@ mod test {
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
-            ("@decorator 'use strict';", 1),
+            (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
@@ -588,8 +613,7 @@ mod test {
             ("// line comment", CommentKind::SingleLine),
             ("/* line comment */", CommentKind::MultiLine),
             (
-                "type Foo = ( /* Require properties which are not generated \
-                 automatically. */ 'bar')",
+                "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
                 CommentKind::MultiLine,
             ),
         ];
@@ -613,8 +637,7 @@ mod test {
     }
 
     // Source with length MAX_LEN + 1 fails to parse.
-    // Skip this test on 32-bit systems as impossible to allocate a string
-    // longer than `isize::MAX`.
+    // Skip this test on 32-bit systems as impossible to allocate a string longer than `isize::MAX`.
     #[cfg(target_pointer_width = "64")]
     #[test]
     fn overlong_source() {
@@ -642,14 +665,12 @@ mod test {
     }
 
     // Source with length MAX_LEN parses OK.
-    // This test takes over 1 minute on an M1 Macbook Pro unless compiled in
-    // release mode. `not(debug_assertions)` is a proxy for detecting
-    // release mode.
+    // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
+    // `not(debug_assertions)` is a proxy for detecting release mode.
     #[cfg(not(debug_assertions))]
     #[test]
     fn legal_length_source() {
-        // Build a string MAX_LEN bytes long which doesn't take too long to
-        // parse
+        // Build a string MAX_LEN bytes long which doesn't take too long to parse
         let head = "const x = 1;\n/*";
         let foot = "*/\nconst y = 2;\n";
         let mut source = "x".repeat(MAX_LEN);

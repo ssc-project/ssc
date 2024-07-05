@@ -1,24 +1,19 @@
 //! Structs and macros for searching source for combinations of byte values.
 //!
-//! * `ByteMatchTable` and `SafeByteMatchTable` are lookup table types for byte
-//!   values.
-//! * `byte_match_table!` and `safe_byte_match_table!` macros create those
-//!   tables at compile time.
-//! * `byte_search!` macro searches source text for first byte matching a byte
-//!   table.
+//! * `ByteMatchTable` and `SafeByteMatchTable` are lookup table types for byte values.
+//! * `byte_match_table!` and `safe_byte_match_table!` macros create those tables at compile time.
+//! * `byte_search!` macro searches source text for first byte matching a byte table.
 
 /// Batch size for searching
 pub const SEARCH_BATCH_SIZE: usize = 32;
 
 /// Byte matcher lookup table.
 ///
-/// Create table at compile time as a `static` or `const` with
-/// `byte_match_table!` macro. Test bytes against table with
-/// `ByteMatchTable::matches`. Or use `byte_search!` macro to search for first
-/// matching byte in source.
+/// Create table at compile time as a `static` or `const` with `byte_match_table!` macro.
+/// Test bytes against table with `ByteMatchTable::matches`.
+/// Or use `byte_search!` macro to search for first matching byte in source.
 ///
-/// If the match pattern satisfies constraints of `SafeByteMatchTable`, use that
-/// instead.
+/// If the match pattern satisfies constraints of `SafeByteMatchTable`, use that instead.
 ///
 /// # Examples
 /// ```
@@ -64,9 +59,8 @@ impl ByteMatchTable {
 
     /// Declare that using this table for searching.
     /// An unsafe function here, whereas for `SafeByteMatchTable` it's safe.
-    /// `byte_search!` macro calls `.use_table()` on whatever table it's
-    /// provided, which makes using the macro unsafe for `ByteMatchTable`,
-    /// but safe for `SafeByteMatchTable`.
+    /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
+    /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
     #[allow(clippy::unused_self)]
     #[inline]
     pub const unsafe fn use_table(&self) {}
@@ -116,34 +110,33 @@ pub(crate) use byte_match_table;
 
 /// Safe byte matcher lookup table.
 ///
-/// Create table at compile time as a `static` or `const` with
-/// `safe_byte_match_table!` macro. Test bytes against table with
-/// `SafeByteMatchTable::matches`. Or use `byte_search!` macro to search for
-/// first matching byte in source.
+/// Create table at compile time as a `static` or `const` with `safe_byte_match_table!` macro.
+/// Test bytes against table with `SafeByteMatchTable::matches`.
+/// Or use `byte_search!` macro to search for first matching byte in source.
 ///
-/// Only difference between this and `ByteMatchTable` is that for
-/// `SafeByteMatchTable`, it must be guaranteed that `byte_search!` macro using
-/// this table will always end up with `lexer.source` positioned on a UTF-8
-/// character boundary.
+/// Only difference between this and `ByteMatchTable` is that for `SafeByteMatchTable`,
+/// it must be guaranteed that `byte_search!` macro using this table will always end up with
+/// `lexer.source` positioned on a UTF-8 character boundary.
 ///
 /// Usage of `byte_search!` macro with a `SafeByteMatchTable` table is safe,
 /// and does not require an `unsafe {}` block (unlike `ByteMatchTable`).
 ///
 /// To make this guarantee, one of the following must be true:
 ///
-/// 1. Table contains `true` for all byte values 192 - 247 i.e. first byte of
-///    any multi-byte Unicode character matches. (NB: 248 - 255 cannot occur in
-///    UTF-8 strings) e.g. `safe_byte_match_table!(|b| b >= 192)`
-///    `safe_byte_match_table!(|b| !b.is_ascii())`
+/// 1. Table contains `true` for all byte values 192 - 247
+///    i.e. first byte of any multi-byte Unicode character matches.
+///    (NB: 248 - 255 cannot occur in UTF-8 strings)
+///    e.g. `safe_byte_match_table!(|b| b >= 192)`
+///         `safe_byte_match_table!(|b| !b.is_ascii())`
 ///
-/// 2. Table contains `false` for all byte values 128 - 191 i.e. the
-///    continuation bytes of any multi-byte Unicode chars will be consumed in
-///    full. e.g. `safe_byte_match_table!(|b| b < 128 || b >= 192)`
-///    `safe_byte_match_table!(|b| b.is_ascii())` `safe_byte_match_table!(|b| b
-///    == ' ' || b == '\t')`
+/// 2. Table contains `false` for all byte values 128 - 191
+///    i.e. the continuation bytes of any multi-byte Unicode chars will be consumed in full.
+///    e.g. `safe_byte_match_table!(|b| b < 128 || b >= 192)`
+///         `safe_byte_match_table!(|b| b.is_ascii())`
+///         `safe_byte_match_table!(|b| b == ' ' || b == '\t')`
 ///
-/// This is statically checked by `SafeByteMatchTable::new`, and will fail to
-/// compile if match pattern does not satisfy one of the above.
+/// This is statically checked by `SafeByteMatchTable::new`, and will fail to compile if match
+/// pattern does not satisfy one of the above.
 ///
 /// # Examples
 /// ```
@@ -208,9 +201,8 @@ impl SafeByteMatchTable {
 
     /// Declare that using this table for searching.
     /// A safe function here, whereas for `ByteMatchTable` it's unsafe.
-    /// `byte_search!` macro calls `.use_table()` on whatever table it's
-    /// provided, which makes using the macro unsafe for `ByteMatchTable`,
-    /// but safe for `SafeByteMatchTable`.
+    /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
+    /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
     #[allow(clippy::unused_self)]
     #[inline]
     pub const fn use_table(&self) {}
@@ -242,8 +234,8 @@ impl SafeByteMatchTable {
 macro_rules! safe_byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::SafeByteMatchTable;
-        // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b ==
-        // 0)` is expanded to `SafeByteMatchTable([0 == 0, ... ])`
+        // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b == 0)`
+        // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
         #[allow(clippy::eq_op)]
         const TABLE: SafeByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
             SafeByteMatchTable::new([#($res,)*])
@@ -253,17 +245,14 @@ macro_rules! safe_byte_match_table {
 }
 pub(crate) use safe_byte_match_table;
 
-/// Macro to search for first byte matching a `ByteMatchTable` or
-/// `SafeByteMatchTable`.
+/// Macro to search for first byte matching a `ByteMatchTable` or `SafeByteMatchTable`.
 ///
 /// Search processes source in batches of `SEARCH_BATCH_SIZE` bytes for speed.
-/// When not enough bytes remaining in source for a batch, search source byte by
-/// byte.
+/// When not enough bytes remaining in source for a batch, search source byte by byte.
 ///
-/// This is a macro rather than a function because searching is a bit faster
-/// when all the code is in a single function, and some parts (e.g.
-/// `continue_if`) can be statically removed by the compiler if they're not
-/// used.
+/// This is a macro rather than a function because searching is a bit faster when all the code
+/// is in a single function, and some parts (e.g. `continue_if`) can be statically removed by
+/// the compiler if they're not used.
 ///
 /// Used as follows:
 ///
@@ -320,8 +309,7 @@ pub(crate) use safe_byte_match_table;
 /// }
 /// ```
 ///
-/// Can also add a block to decide whether to continue searching for some
-/// matches:
+/// Can also add a block to decide whether to continue searching for some matches:
 ///
 /// ```
 /// impl<'a> Lexer<'a> {
@@ -362,18 +350,16 @@ pub(crate) use safe_byte_match_table;
 ///
 /// # SAFETY
 ///
-/// This macro will consume bytes from `lexer.source` according to the
-/// `ByteMatchTable` or `SafeByteMatchTable` provided.
+/// This macro will consume bytes from `lexer.source` according to the `ByteMatchTable`
+/// or `SafeByteMatchTable` provided.
 ///
-/// Using `byte_search!` with a `SafeByteMatchTable` is guaranteed to end up
-/// with `lexer.source` positioned on a UTF-8 character boundary when entering
-/// `handle_match`. Therefore it's safe to use `byte_search!` with a
-/// `SafeByteMatchTable`.
+/// Using `byte_search!` with a `SafeByteMatchTable` is guaranteed to end up with `lexer.source`
+/// positioned on a UTF-8 character boundary when entering `handle_match`.
+/// Therefore it's safe to use `byte_search!` with a `SafeByteMatchTable`.
 ///
-/// `ByteMatchTable` makes no such guarantee, and using `byte_search!` with a
-/// `ByteMatchTable` is unsafe. It is caller's responsibility to ensure that
-/// `lexer.source` is moved onto a UTF-8 character boundary. This is similar to
-/// the contract's of `Source`'s unsafe methods.
+/// `ByteMatchTable` makes no such guarantee, and using `byte_search!` with a `ByteMatchTable` is unsafe.
+/// It is caller's responsibility to ensure that `lexer.source` is moved onto a UTF-8 character boundary.
+/// This is similar to the contract's of `Source`'s unsafe methods.
 macro_rules! byte_search {
     // Simple version.
     // `start` is calculated from current position of `lexer.source`.
@@ -435,51 +421,42 @@ macro_rules! byte_search {
         handle_eof: $eof_handler:expr,
     ) => {{
         // SAFETY:
-        // If `$table` is a `SafeByteMatchTable`, it's guaranteed that
-        // `lexer.source` will be positioned on a UTF-8 character
-        // boundary before `handle_match` is called. If `$table` is a
-        // `ByteMatchTable`, no such guarantee is given, but call to
-        // `$table.use_table()` here makes using this macro unsafe, and it's the
-        // user's responsibility to uphold this invariant.
-        // Therefore we can assume this is taken care of one way or another, and
-        // wrap the calls to unsafe functions in this function with
-        // `unsafe {}`.
+        // If `$table` is a `SafeByteMatchTable`, it's guaranteed that `lexer.source`
+        // will be positioned on a UTF-8 character boundary before `handle_match` is called.
+        // If `$table` is a `ByteMatchTable`, no such guarantee is given, but call to
+        // `$table.use_table()` here makes using this macro unsafe, and it's the user's
+        // responsibility to uphold this invariant.
+        // Therefore we can assume this is taken care of one way or another, and wrap the calls
+        // to unsafe functions in this function with `unsafe {}`.
         $table.use_table();
 
         let mut $pos = $start;
-        #[allow(unused_unsafe)]
-        // Silence warnings if macro called in unsafe code
+        #[allow(unused_unsafe)] // Silence warnings if macro called in unsafe code
         'outer: loop {
             let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
                 //
-                // `'inner: loop {}` is not a real loop - it always exits on
-                // first turn. Only using `loop {}` so that can
-                // use `break 'inner` to get out of it.
-                // This allows complex logic of `$should_continue` and
-                // `$match_handler` to be outside the `for`
-                // loop, keeping it as minimal as possible, to encourage
+                // `'inner: loop {}` is not a real loop - it always exits on first turn.
+                // Only using `loop {}` so that can use `break 'inner` to get out of it.
+                // This allows complex logic of `$should_continue` and `$match_handler` to be
+                // outside the `for` loop, keeping it as minimal as possible, to encourage
                 // compiler to unroll it.
                 //
                 // SAFETY:
-                // `$pos.addr() <= lexer.source.end_for_batch_search_addr()`
-                // check above ensures there are at least
-                // `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
-                // So calls to `$pos.read()` and `$pos.add(1)` in this loop
-                // cannot go out of bounds.
+                // `$pos.addr() <= lexer.source.end_for_batch_search_addr()` check above ensures
+                // there are at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
+                // So calls to `$pos.read()` and `$pos.add(1)` in this loop cannot go out of bounds.
                 'inner: loop {
                     for _i in 0..crate::lexer::search::SEARCH_BATCH_SIZE {
-                        // SAFETY: `$pos` cannot go out of bounds in this loop
-                        // (see above)
+                        // SAFETY: `$pos` cannot go out of bounds in this loop (see above)
                         let byte = unsafe { $pos.read() };
                         if $table.matches(byte) {
                             break 'inner byte;
                         }
 
                         // No match - continue searching batch.
-                        // SAFETY: `$pos` cannot go out of bounds in this loop
-                        // (see above). Also see above
-                        // about UTF-8 character boundaries invariant.
+                        // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
+                        // Also see above about UTF-8 character boundaries invariant.
                         $pos = unsafe { $pos.add(1) };
                     }
                     // No match in batch - search next batch
@@ -487,21 +464,18 @@ macro_rules! byte_search {
                 }
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
-                // Same as above, `'inner: loop {}` is not a real loop here -
-                // always exits on first turn.
+                // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
                 let end_addr = $lexer.source.end_addr();
                 'inner: loop {
                     while $pos.addr() < end_addr {
-                        // SAFETY: `pos` is not at end of source, so safe to
-                        // read a byte
+                        // SAFETY: `pos` is not at end of source, so safe to read a byte
                         let byte = unsafe { $pos.read() };
                         if $table.matches(byte) {
                             break 'inner byte;
                         }
 
                         // No match - continue searching
-                        // SAFETY: `pos` is not at end of source, so safe to
-                        // advance 1 byte.
+                        // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                         // See above about UTF-8 character boundaries invariant.
                         $pos = unsafe { $pos.add(1) };
                     }
@@ -510,8 +484,7 @@ macro_rules! byte_search {
                     // Advance `lexer.source`'s position to end of file.
                     $lexer.source.set_position($pos);
 
-                    // Avoid lint errors if `$eof_handler` contains `return`
-                    // statement
+                    // Avoid lint errors if `$eof_handler` contains `return` statement
                     #[allow(unused_variables, unreachable_code, clippy::diverging_sub_expression)]
                     {
                         let eof_ret = $eof_handler;
@@ -523,17 +496,15 @@ macro_rules! byte_search {
             // Found match. Check if should continue.
             if $should_continue {
                 // Not a match after all - continue searching.
-                // SAFETY: `pos` is not at end of source, so safe to advance 1
-                // byte. See above about UTF-8 character
-                // boundaries invariant.
+                // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                // See above about UTF-8 character boundaries invariant.
                 $pos = unsafe { $pos.add(1) };
                 continue;
             }
 
             // Match confirmed.
-            // Advance `lexer.source`'s position up to `$pos`, consuming
-            // unmatched bytes. SAFETY: See above about UTF-8
-            // character boundaries invariant.
+            // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
+            // SAFETY: See above about UTF-8 character boundaries invariant.
             $lexer.source.set_position($pos);
 
             break $byte;

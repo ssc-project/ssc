@@ -3,8 +3,7 @@ use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
-    // Duplicated comments can be added from rewind, use `BTreeMap` to ensure
-    // uniqueness
+    // Duplicated comments can be added from rewind, use `BTreeMap` to ensure uniqueness
     comments: Vec<(u32, Comment)>,
     irregular_whitespaces: Vec<Span>,
 }
@@ -26,9 +25,8 @@ impl TriviaBuilder {
     }
 
     fn add_comment(&mut self, start: u32, comment: Comment) {
-        // The comments array is an ordered vec, only add the comment if its not
-        // added before, to avoid situations where the parser needs to
-        // rewind and reinsert the comment.
+        // The comments array is an ordered vec, only add the comment if its not added before,
+        // to avoid situations where the parser needs to rewind and reinsert the comment.
         if let Some(comment) = self.comments.last_mut() {
             if start <= comment.0 {
                 return;

@@ -46,12 +46,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Script<'a> {
             attr.gen(p);
         }
         p.print(b'>');
-        let options = oxc_codegen::CodegenOptions {
-            enable_source_map: false,
-            enable_typescript: p.options.enable_typescript,
-        };
-        let source =
-            oxc_codegen::Codegen::<MINIFY>::new("", "", options).build(&self.program).source_text;
+        let source = oxc_codegen::Codegen::<MINIFY>::new().build(&self.program).source_text;
         if !source.is_empty() {
             p.print_soft_newline();
             p.indent();
@@ -129,11 +124,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AttributeValue<'a> {
                     }
                     AttributeSequenceValue::ExpressionTag(tag) => {
                         p.print(b'{');
-                        let options = oxc_codegen::CodegenOptions {
-                            enable_source_map: false,
-                            enable_typescript: p.options.enable_typescript,
-                        };
-                        let mut codegen = oxc_codegen::Codegen::<true>::new("", "", options);
+                        let mut codegen = oxc_codegen::Codegen::<true>::new();
                         tag.expression.gen_expr(
                             &mut codegen,
                             Precedence::lowest(),
@@ -835,22 +826,14 @@ fn print_if_block<const MINIFY: bool>(block: &IfBlock<'_>, p: &mut Codegen<{ MIN
 }
 
 fn print_oxc_gen_expr<const MINIFY: bool, T: GenExpr<MINIFY>>(x: &T, p: &mut Codegen<{ MINIFY }>) {
-    let options = oxc_codegen::CodegenOptions {
-        enable_source_map: false,
-        enable_typescript: p.options.enable_typescript,
-    };
-    let mut codegen = oxc_codegen::Codegen::<MINIFY>::new("", "", options);
+    let mut codegen = oxc_codegen::Codegen::<MINIFY>::new();
     x.gen_expr(&mut codegen, Precedence::lowest(), Context::default());
     let source = codegen.into_source_text();
     p.print_str(source.as_bytes());
 }
 
 fn print_oxc_gen<const MINIFY: bool, T: OxcGen<MINIFY>>(x: &T, p: &mut Codegen<{ MINIFY }>) {
-    let options = oxc_codegen::CodegenOptions {
-        enable_source_map: false,
-        enable_typescript: p.options.enable_typescript,
-    };
-    let mut codegen = oxc_codegen::Codegen::<MINIFY>::new("", "", options);
+    let mut codegen = oxc_codegen::Codegen::<MINIFY>::new();
     x.gen(&mut codegen, Context::default());
     let source = codegen.into_source_text();
     p.print_str(source.as_bytes());

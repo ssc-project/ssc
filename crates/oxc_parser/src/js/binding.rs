@@ -9,8 +9,7 @@ use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 impl<'a> ParserImpl<'a> {
     /// `BindingElement`
     ///     `SingleNameBinding`
-    ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield,
-    /// ?Await]opt
+    ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
     pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
         let span = self.start_span();
         let pattern = self.parse_binding_pattern(true)?;
@@ -31,7 +30,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.binding_pattern(kind, type_annotation, optional))
     }
 
-    pub(super) fn parse_binding_pattern_kind(&mut self) -> Result<BindingPatternKind<'a>> {
+    pub(crate) fn parse_binding_pattern_kind(&mut self) -> Result<BindingPatternKind<'a>> {
         match self.cur_kind() {
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),

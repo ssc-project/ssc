@@ -7,7 +7,9 @@ use super::{
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
     FunctionKind,
 };
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use crate::{
+    diagnostics, lexer::Kind, list::SeparatedList, modifiers::Modifiers, Context, ParserImpl,
+};
 
 impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
@@ -82,8 +84,7 @@ impl<'a> ParserImpl<'a> {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
                     Kind::Star => specifiers.push(self.parse_import_namespace_specifier()?),
-                    // import defaultExport, { export1 [ , [...] ] } from
-                    // "module-name";
+                    // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
                         let mut import_specifiers = self.parse_import_specifiers()?;
                         specifiers.append(&mut import_specifiers);
@@ -219,7 +220,7 @@ impl<'a> ParserImpl<'a> {
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
-        let specifiers =
+        let mut specifiers =
             self.context(Context::empty(), self.ctx, ExportNamedSpecifiers::parse)?.elements;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
@@ -230,10 +231,9 @@ impl<'a> ParserImpl<'a> {
 
         // ExportDeclaration : export NamedExports ;
         if source.is_none() {
-            for specifier in &specifiers {
+            for specifier in specifiers.iter_mut() {
                 match &specifier.local {
-                    // It is a Syntax Error if ReferencedBindings of
-                    // NamedExports contains any StringLiterals.
+                    // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
                         self.error(diagnostics::export_named_string(
                             &specifier.local.to_string(),
@@ -241,24 +241,28 @@ impl<'a> ParserImpl<'a> {
                             literal.span,
                         ));
                     }
-                    // For each IdentifierName n in ReferencedBindings of
-                    // NamedExports: It is a Syntax Error if
-                    // StringValue of n is a ReservedWord or the StringValue of
-                    // n is one of "implements",
-                    // "interface", "let", "package", "private", "protected",
-                    // "public", or "static".
-                    ModuleExportName::Identifier(id) => {
-                        let match_result = Kind::match_keyword(&id.name);
+                    // For each IdentifierName n in ReferencedBindings of NamedExports:
+                    // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
+                    // is one of "implements", "interface", "let", "package", "private", "protected", "public", or "static".
+                    ModuleExportName::IdentifierName(ident) => {
+                        let match_result = Kind::match_keyword(&ident.name);
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
                             self.error(diagnostics::export_reserved_word(
                                 &specifier.local.to_string(),
                                 &specifier.exported.to_string(),
-                                id.span,
+                                ident.span,
                             ));
                         }
+
+                        // `local` becomes a reference for `export { local }`.
+                        specifier.local = ModuleExportName::IdentifierReference(
+                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                        );
                     }
+                    // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
+                    ModuleExportName::IdentifierReference(_) => unreachable!(),
                 }
             }
         }
@@ -285,12 +289,12 @@ impl<'a> ParserImpl<'a> {
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let modifiers = if self.ts_enabled() {
-            self.eat_modifiers_before_declaration().1
+            self.eat_modifiers_before_declaration()?
         } else {
             Modifiers::empty()
         };
 
-        let declaration = self.parse_declaration(decl_span, modifiers)?;
+        let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
         Ok(self.ast.export_named_declaration(
             span,
@@ -316,19 +320,19 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(decl_span, /* modifiers */ Modifiers::empty())
+                .parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
-                let (_, modifiers) = self.eat_modifiers_before_declaration();
-                self.parse_class_declaration(decl_span, modifiers)
+                let modifiers = self.eat_modifiers_before_declaration()?;
+                self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(decl_span, Modifiers::empty()).map(|decl| {
+                self.parse_ts_interface_declaration(decl_span, &Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
@@ -348,7 +352,7 @@ impl<'a> ParserImpl<'a> {
                 decl
             }
         };
-        let exported = ModuleExportName::Identifier(exported);
+        let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
         Ok(self.ast.export_default_declaration(span, declaration, exported))
     }
@@ -405,7 +409,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             let local = self.parse_binding_identifier()?;
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
-            (ModuleExportName::Identifier(imported), local)
+            (ModuleExportName::IdentifierName(imported), local)
         };
         Ok(self.ast.alloc(ImportSpecifier {
             span: self.end_span(specifier_span),
@@ -423,14 +427,13 @@ impl<'a> ParserImpl<'a> {
             Kind::Str => {
                 let literal = self.parse_literal_string()?;
                 // ModuleExportName : StringLiteral
-                // It is a Syntax Error if IsStringWellFormedUnicode(the SV of
-                // StringLiteral) is false.
+                // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }
-            _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
+            _ => Ok(ModuleExportName::IdentifierName(self.parse_identifier_name()?)),
         }
     }
 

@@ -13,8 +13,7 @@ impl<'a> Lexer<'a> {
         // Indentation is common after a line break.
         // Consume it, along with any further line breaks.
         // Irregular line breaks and whitespace are not consumed.
-        // They're uncommon, so leave them for the next call to `handle_byte` to
-        // take care of.
+        // They're uncommon, so leave them for the next call to `handle_byte` to take care of.
         byte_search! {
             lexer: self,
             table: NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE,

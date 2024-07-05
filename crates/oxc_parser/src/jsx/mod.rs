@@ -5,7 +5,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
 
@@ -52,9 +52,8 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXSelfClosingElement`
     ///   `JSXOpeningElement` `JSXChildren_opt` `JSXClosingElement`
     /// `in_jsx_child`:
-    ///     used for telling `JSXClosingElement` to parse the next jsx child or
-    /// not     true when inside jsx element, false when at top level
-    /// expression
+    ///     used for telling `JSXClosingElement` to parse the next jsx child or not
+    ///     true when inside jsx element, false when at top level expression
     fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXElement<'a>>> {
         let span = self.start_span();
         let opening_element = self.parse_jsx_opening_element(span, in_jsx_child)?;
@@ -63,9 +62,19 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.parse_jsx_children()?
         };
-        let closing_element = (!opening_element.self_closing)
-            .then(|| self.parse_jsx_closing_element(in_jsx_child))
-            .transpose()?;
+        let closing_element = if opening_element.self_closing {
+            None
+        } else {
+            let closing_element = self.parse_jsx_closing_element(in_jsx_child)?;
+            if !Self::jsx_element_name_eq(&opening_element.name, &closing_element.name) {
+                self.error(diagnostics::jsx_element_no_match(
+                    opening_element.name.span(),
+                    closing_element.name.span(),
+                    opening_element.name.span().source_text(self.source_text),
+                ));
+            }
+            Some(closing_element)
+        };
         Ok(self.ast.jsx_element(self.end_span(span), opening_element, closing_element, children))
     }
 
@@ -79,11 +88,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LAngle)?;
         let name = self.parse_jsx_element_name()?;
         // <Component<TsType> for tsx
-        let type_parameters = if self.ts_enabled() {
-            self.context(Context::default(), self.ctx, Self::parse_ts_type_arguments)?
-        } else {
-            None
-        };
+        let type_parameters =
+            if self.ts_enabled() { self.try_parse_type_arguments()? } else { None };
         let attributes = self.parse_jsx_attributes()?;
         let self_closing = self.eat(Kind::Slash);
         if !self_closing || in_jsx_child {
@@ -256,7 +262,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
         self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
-            let expr = p.parse_expression();
+            let expr = p.parse_expr();
             if let Ok(Expression::SequenceExpression(seq)) = &expr {
                 return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
             }
@@ -365,8 +371,7 @@ impl<'a> ParserImpl<'a> {
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
         }
-        // Currently at a valid normal Ident or Keyword, keep on lexing for `-`
-        // in `<component-name />`
+        // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
         self.continue_lex_jsx_identifier();
         self.bump_any();
         let span = self.end_span(span);
@@ -379,5 +384,40 @@ impl<'a> ParserImpl<'a> {
         let value = Atom::from(self.cur_string());
         self.bump_any();
         self.ast.jsx_text(self.end_span(span), value)
+    }
+
+    fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {
+        match (lhs, rhs) {
+            (JSXElementName::Identifier(lhs), JSXElementName::Identifier(rhs)) => {
+                lhs.name == rhs.name
+            }
+            (JSXElementName::NamespacedName(lhs), JSXElementName::NamespacedName(rhs)) => {
+                lhs.namespace.name == rhs.namespace.name && lhs.property.name == rhs.property.name
+            }
+            (JSXElementName::MemberExpression(lhs), JSXElementName::MemberExpression(rhs)) => {
+                Self::jsx_member_expression_eq(lhs, rhs)
+            }
+            _ => false,
+        }
+    }
+
+    fn jsx_member_expression_eq(
+        lhs: &JSXMemberExpression<'a>,
+        rhs: &JSXMemberExpression<'a>,
+    ) -> bool {
+        if lhs.property.name != rhs.property.name {
+            return false;
+        }
+        match (&lhs.object, &rhs.object) {
+            (
+                JSXMemberExpressionObject::Identifier(lhs),
+                JSXMemberExpressionObject::Identifier(rhs),
+            ) => lhs.name == rhs.name,
+            (
+                JSXMemberExpressionObject::MemberExpression(lhs),
+                JSXMemberExpressionObject::MemberExpression(rhs),
+            ) => Self::jsx_member_expression_eq(lhs, rhs),
+            _ => false,
+        }
     }
 }

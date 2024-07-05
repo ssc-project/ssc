@@ -10,9 +10,9 @@ use super::{
 use crate::diagnostics;
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
-const LS_OR_PS_FIRST: u8 = 0xe2;
-const LS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xa8];
-const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xa9];
+const LS_OR_PS_FIRST: u8 = 0xE2;
+const LS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA8];
+const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
 
 static LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
@@ -80,8 +80,7 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
-        // If `is_on_new_line` is already set, go directly to faster search
-        // which only looks for `*/`
+        // If `is_on_new_line` is already set, go directly to faster search which only looks for `*/`
         if self.token.is_on_new_line {
             return self.skip_multi_line_comment_after_line_break(self.source.position());
         }
@@ -156,13 +155,11 @@ impl<'a> Lexer<'a> {
 
     fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition) -> Kind {
         // Can use `memchr` here as only searching for 1 pattern.
-        // Cache `Finder` instance on `Lexer` as there's a significant cost to
-        // creating it. `Finder::new` isn't a const function, so can't
-        // make it a `static`, and `lazy_static!` has a cost each time
-        // it's deref-ed. Creating `Finder` unconditionally in `Lexer::new`
-        // would be efficient for files containing multi-line comments, but
-        // would impose pointless cost on files which don't. So this is
-        // the fastest solution.
+        // Cache `Finder` instance on `Lexer` as there's a significant cost to creating it.
+        // `Finder::new` isn't a const function, so can't make it a `static`, and `lazy_static!`
+        // has a cost each time it's deref-ed. Creating `Finder` unconditionally in `Lexer::new`
+        // would be efficient for files containing multi-line comments, but would impose pointless
+        // cost on files which don't. So this is the fastest solution.
         if self.multi_line_comment_end_finder.is_none() {
             self.multi_line_comment_end_finder = Some(Finder::new("*/"));
         }
@@ -170,8 +167,7 @@ impl<'a> Lexer<'a> {
 
         let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
         if let Some(index) = finder.find(remaining) {
-            // SAFETY: `pos + index + 2` is end of `*/`, so a valid
-            // `SourcePosition`
+            // SAFETY: `pos + index + 2` is end of `*/`, so a valid `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });
             self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
             Kind::Skip
