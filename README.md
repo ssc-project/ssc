@@ -3,6 +3,7 @@
 [![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
 [![Code size][code-size-badge]][code-size-url]
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fssc-project%2Fssc.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fssc-project%2Fssc?ref=badge_shield)
 
 </div>
 
@@ -44,3 +45,6 @@ SSC is free and open-source software licensed under the [MIT License](./LICENSE)
 [ci-url]: https://github.com/ssc-project/ssc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [code-size-badge]: https://img.shields.io/github/languages/code-size/ssc-project/ssc
 [code-size-url]: https://github.com/ssc-project/ssc
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fssc-project%2Fssc.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fssc-project%2Fssc?ref=badge_large)
