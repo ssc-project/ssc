@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+- 4a656c3 lexer: Incorrect lexing of large hex/octal/binary literals (#4072) (DonIsaac)
+- 28eeee0 parser: Fix asi error diagnostic pointing at invalid text causing crash (#4163) (Boshen)
+
+### Refactor
+
+
+## [0.19.0] - 2024-07-09
+
+- b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+- d347aed ast: [**BREAKING**] Generate `ast_builder.rs`. (#3890) (rzvxa)
+
+### Features
+
+- 3a0f2aa parser: Check for illegal modifiers in modules and namespaces (#4126) (DonIsaac)
+
+## [0.17.1] - 2024-07-06
+
+### Performance
+
+- 7fe2a2f parser: Do not copy comments (#4067) (overlookmotel)
+
+## [0.17.0] - 2024-07-05
+
+- e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
+
+### Refactor
+
+- 243c9f3 parser: Use function instead of trait to parse list with rest element (#4028) (Boshen)
+- 1dacb1f parser: Use function instead of trait to parse delimited lists (#4014) (Boshen)
+
 ## [0.16.3] - 2024-07-02
 
 ### Refactor

@@ -33,6 +33,7 @@ assert-unchecked  = { workspace = true }
 rustc-hash        = { workspace = true }
 seq-macro         = { workspace = true }
 static_assertions = { workspace = true }
+miette            = { workspace = true }
 
 memchr = { workspace = true }
 

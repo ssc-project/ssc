@@ -31,6 +31,7 @@ mod element;
 mod fragment;
 mod identifier;
 mod js;
+mod span_offset;
 mod tag;
 mod text;
 

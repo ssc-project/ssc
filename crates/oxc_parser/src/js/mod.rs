@@ -3,7 +3,6 @@
 #![allow(clippy::missing_errors_doc)]
 
 mod grammar;
-pub mod list;
 
 mod arrow;
 mod binding;
@@ -44,7 +43,7 @@ pub struct VariableDeclarationContext {
 }
 
 impl VariableDeclarationContext {
-    pub(crate) fn new(parent: VariableDeclarationParent) -> Self {
+    pub fn new(parent: VariableDeclarationParent) -> Self {
         Self { parent }
     }
 }

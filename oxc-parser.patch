@@ -1,0 +1,135 @@
+diff --git a/crates/oxc_parser/src/js/binding.rs b/crates/oxc_parser/src/js/binding.rs
+index 5cb43912..feac2434 100644
+--- a/crates/oxc_parser/src/js/binding.rs
++++ b/crates/oxc_parser/src/js/binding.rs
+@@ -8,7 +8,7 @@ impl<'a> ParserImpl<'a> {
+     /// `BindingElement`
+     ///     `SingleNameBinding`
+     ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
+-    pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
++    pub(crate) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
+         let span = self.start_span();
+         let pattern = self.parse_binding_pattern(true)?;
+         self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, pattern))
+diff --git a/crates/oxc_parser/src/js/declaration.rs b/crates/oxc_parser/src/js/declaration.rs
+index a7ab890d..56315eb5 100644
+--- a/crates/oxc_parser/src/js/declaration.rs
++++ b/crates/oxc_parser/src/js/declaration.rs
+@@ -86,7 +86,7 @@ impl<'a> ParserImpl<'a> {
+         ))
+     }
+ 
+-    fn parse_variable_declarator(
++    pub(crate) fn parse_variable_declarator(
+         &mut self,
+         decl_ctx: VariableDeclarationContext,
+         kind: VariableDeclarationKind,
+diff --git a/crates/oxc_parser/src/js/mod.rs b/crates/oxc_parser/src/js/mod.rs
+index 41133dab..6b3a7e89 100644
+--- a/crates/oxc_parser/src/js/mod.rs
++++ b/crates/oxc_parser/src/js/mod.rs
+@@ -43,7 +43,7 @@ pub struct VariableDeclarationContext {
+ }
+ 
+ impl VariableDeclarationContext {
+-    pub(crate) fn new(parent: VariableDeclarationParent) -> Self {
++    pub fn new(parent: VariableDeclarationParent) -> Self {
+         Self { parent }
+     }
+ }
+diff --git a/crates/oxc_parser/src/lib.rs b/crates/oxc_parser/src/lib.rs
+index bb83000f..55ad8636 100644
+--- a/crates/oxc_parser/src/lib.rs
++++ b/crates/oxc_parser/src/lib.rs
+@@ -60,6 +60,7 @@
+ //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
+ 
+ #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
++#![allow(rustdoc::bare_urls)]
+ 
+ mod context;
+ mod cursor;
+@@ -88,6 +89,7 @@ use oxc_ast::{
+ use oxc_diagnostics::{OxcDiagnostic, Result};
+ use oxc_span::{ModuleKind, SourceType, Span};
+ 
++pub use self::js::{VariableDeclarationContext, VariableDeclarationParent};
+ pub use crate::lexer::Kind; // re-export for codegen
+ use crate::{
+     lexer::{Lexer, Token},
+@@ -179,6 +181,10 @@ impl<'a> Parser<'a> {
+ }
+ 
+ mod parser_parse {
++    use oxc_ast::ast::{
++        BindingPattern, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
++    };
++
+     use super::*;
+ 
+     /// `UniquePromise` is a way to use the type system to enforce the invariant that only
+@@ -247,6 +253,64 @@ mod parser_parse {
+             );
+             parser.parse_expression()
+         }
++
++        /// Parse `IdentifierReference`
++        ///
++        /// # Errors
++        ///
++        /// * Syntax Error
++        pub fn parse_identifier_reference(self) -> Result<IdentifierReference<'a>> {
++            let unique = UniquePromise::new();
++            let mut parser = ParserImpl::new(
++                self.allocator,
++                self.source_text,
++                self.source_type,
++                self.options,
++                unique,
++            );
++            parser.bump_any();
++            parser.parse_identifier_reference()
++        }
++
++        /// Parse `VariableDeclarator`
++        ///
++        /// # Errors
++        ///
++        /// * Syntax Error
++        pub fn parse_variable_declarator(
++            self,
++            decl_ctx: VariableDeclarationContext,
++            kind: VariableDeclarationKind,
++        ) -> Result<VariableDeclarator<'a>> {
++            let unique = UniquePromise::new();
++            let mut parser = ParserImpl::new(
++                self.allocator,
++                self.source_text,
++                self.source_type,
++                self.options,
++                unique,
++            );
++            parser.bump_any();
++            parser.parse_variable_declarator(decl_ctx, kind)
++        }
++
++        /// Parse `BindingPattern`
++        ///
++        /// # Errors
++        ///
++        /// * Syntax Error
++        pub fn parse_binding_pattern(self) -> Result<BindingPattern<'a>> {
++            let unique = UniquePromise::new();
++            let mut parser = ParserImpl::new(
++                self.allocator,
++                self.source_text,
++                self.source_type,
++                self.options,
++                unique,
++            );
++            parser.bump_any();
++            parser.parse_binding_pattern_with_initializer()
++        }
+     }
+ }
+ use parser_parse::UniquePromise;

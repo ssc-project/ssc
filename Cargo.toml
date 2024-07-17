@@ -87,6 +87,7 @@ ouroboros          = "0.18.3"
 tsify              = "0.4.5"
 wasm-bindgen       = "0.2"
 serde-wasm-bindgen = "0.6.5"
+miette             = "7.2.0"
 tokio              = "1"
 
 napi        = "2"
@@ -94,15 +95,15 @@ napi-derive = "2"
 napi-build  = "2"
 
 # Oxc
-oxc_allocator   = "0.16.3"
-oxc_ast         = "0.16.3"
-oxc_diagnostics = "0.16.3"
-oxc_parser      = { version = "0.16.3", path = "crates/oxc_parser" }
-oxc_span        = "0.16.3"
-oxc_syntax      = "0.16.3"
-oxc_sourcemap   = "0.16.3"
-oxc_codegen     = "0.16.3"
-oxc_index       = "0.16.3"
+oxc_allocator   = "0.20.0"
+oxc_ast         = "0.20.0"
+oxc_diagnostics = "0.20.0"
+oxc_parser      = { version = "0.20.0", path = "crates/oxc_parser" }
+oxc_span        = "0.20.0"
+oxc_syntax      = "0.20.0"
+oxc_sourcemap   = "0.20.0"
+oxc_codegen     = "0.20.0"
+oxc_index       = "0.20.0"
 
 # Ssc
 ssc                 = { version = "0.1.0", path = "crates/ssc" }

@@ -1,12 +1,15 @@
 #![allow(clippy::cast_possible_truncation)]
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::{Expression, MemberExpression, StringLiteral};
+use oxc_ast::{
+    ast::{Expression, MemberExpression, StringLiteral},
+    VisitMut,
+};
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use ssc_ast::{ast::*, AstBuilder};
 
-use crate::{diagnostics, Kind, ParserImpl};
+use crate::{diagnostics, span_offset::SpanOffset, Kind, ParserImpl};
 
 macro_rules! parse_modifiers {
     ($ident: ident ($start: expr) in ($alloc: expr) {$($value: literal => $mod: expr),* $(,)?}) => {
@@ -125,14 +128,15 @@ impl<'a> ParserImpl<'a> {
                 break self.cur_token().start;
             }
         };
+        let offset = SpanOffset(source_start);
         let ret = oxc_parser::Parser::new(
             self.allocator,
-            &self.source_text[..(source_end as usize)],
+            &self.source_text[(source_start as usize)..(source_end as usize)],
             SourceType::default().with_typescript(self.ts),
         )
-        .parse_from_position(source_start);
+        .parse();
         for error in ret.errors {
-            self.error(error);
+            self.error(offset.transform_diagnostic(error));
         }
         self.expect(Kind::LAngle)?;
         self.expect(Kind::Slash)?;
@@ -483,12 +487,17 @@ impl<'a> ParserImpl<'a> {
                         ));
                     }
                     i += 1;
+                    let span_start = span.start + i + 1;
+                    let mut offset = SpanOffset(span_start);
                     let parser = oxc_parser::Parser::new(
                         self.allocator,
-                        self.source_text,
+                        &self.source_text[span_start as usize..],
                         SourceType::default().with_typescript(self.ts),
                     );
-                    let expression = parser.parse_expression_from_position(span.start + i + 1)?;
+                    let mut expression = parser
+                        .parse_expression()
+                        .map_err(|mut errs| offset.transform_diagnostic(errs.remove(0)))?;
+                    offset.visit_expression(&mut expression);
                     i = expression.span().end - span.start - 1;
                     if raw.as_bytes()[i as usize] == b'}' {
                         i += 1;

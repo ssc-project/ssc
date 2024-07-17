@@ -1,22 +1,32 @@
 #![allow(unsafe_code)]
 
-use oxc_ast::ast::{
-    BindingPattern, Expression, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
+use oxc_ast::{
+    ast::{
+        BindingPattern, Expression, IdentifierReference, VariableDeclarationKind,
+        VariableDeclarator,
+    },
+    VisitMut,
 };
 use oxc_diagnostics::Result;
+use oxc_parser::{VariableDeclarationContext, VariableDeclarationParent};
 use oxc_span::{GetSpan, SourceType};
 
-use crate::{Kind, ParserImpl};
+use crate::{span_offset::SpanOffset, Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_js_expression(&mut self) -> Result<Expression<'a>> {
+        let span_start = self.cur_token().start;
+        let mut offset = SpanOffset(span_start);
         let parser = oxc_parser::Parser::new(
             self.allocator,
-            self.source_text,
+            &self.source_text[span_start as usize..],
             SourceType::default().with_typescript(self.ts),
         );
         let start_pos = self.lexer.source.position();
-        let expression = parser.parse_expression_from_position(self.cur_token().start)?;
+        let mut expression = parser
+            .parse_expression()
+            .map_err(|mut errs| offset.transform_diagnostic(errs.remove(0)))?;
+        offset.visit_expression(&mut expression);
         // SAFETY: the Oxc parser must return an expression with valid span
         self.lexer.source.set_position(unsafe {
             if expression.span().end >= self.lexer.offset() {
@@ -40,14 +50,18 @@ impl<'a> ParserImpl<'a> {
             }
         }
         self.rewind(checkpoint);
-        let source_text = &self.source_text[..(end as usize)];
+        let span_start = self.cur_token().start;
+        let mut offset = SpanOffset(span_start);
         let parser = oxc_parser::Parser::new(
             self.allocator,
-            source_text,
+            &self.source_text[span_start as usize..end as usize],
             SourceType::default().with_typescript(self.ts),
         );
         let start_pos = self.lexer.source.position();
-        let expression = parser.parse_expression_from_position(self.cur_token().start)?;
+        let mut expression = parser
+            .parse_expression()
+            .map_err(|mut errs| offset.transform_diagnostic(errs.remove(0)))?;
+        offset.visit_expression(&mut expression);
         // SAFETY: the Oxc parser must return an expression with valid span
         self.lexer.source.set_position(unsafe {
             if expression.span().end >= self.lexer.offset() {
@@ -61,13 +75,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_js_identifier(&mut self) -> Result<IdentifierReference<'a>> {
+        let identifier_start = self.cur_token().start;
+        let mut offset = SpanOffset(identifier_start);
         let parser = oxc_parser::Parser::new(
             self.allocator,
-            self.source_text,
+            &self.source_text[identifier_start as usize..],
             SourceType::default().with_typescript(self.ts),
         );
         let start_pos = self.lexer.source.position();
-        let identifier = parser.parse_identifier_from_position(self.cur_token().start)?;
+        let mut identifier =
+            parser.parse_identifier_reference().map_err(|err| offset.transform_diagnostic(err))?;
+        offset.visit_identifier_reference(&mut identifier);
         // SAFETY: the Oxc parser must return an expression with valid span
         self.lexer.source.set_position(unsafe {
             if identifier.span.end >= self.lexer.offset() {
@@ -84,14 +102,21 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         kind: VariableDeclarationKind,
     ) -> Result<VariableDeclarator<'a>> {
+        let span_start = self.cur_token().start;
+        let mut offset = SpanOffset(span_start);
         let parser = oxc_parser::Parser::new(
             self.allocator,
-            self.source_text,
+            &self.source_text[span_start as usize..],
             SourceType::default().with_typescript(self.ts),
         );
         let start_pos = self.lexer.source.position();
-        let variable_declarator =
-            parser.parse_variable_declarator_from_position(self.cur_token().start, kind)?;
+        let mut variable_declarator = parser
+            .parse_variable_declarator(
+                VariableDeclarationContext::new(VariableDeclarationParent::Clause),
+                kind,
+            )
+            .map_err(|err| offset.transform_diagnostic(err))?;
+        offset.visit_variable_declarator(&mut variable_declarator);
         // SAFETY: the Oxc parser must return an expression with valid span
         self.lexer.source.set_position(unsafe {
             if variable_declarator.span.end >= self.lexer.offset() {
@@ -105,13 +130,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_js_binding_pattern(&mut self) -> Result<BindingPattern<'a>> {
+        let span_start = self.cur_token().start;
+        let mut offset = SpanOffset(span_start);
         let parser = oxc_parser::Parser::new(
             self.allocator,
-            self.source_text,
+            &self.source_text[span_start as usize..],
             SourceType::default().with_typescript(self.ts),
         );
         let start_pos = self.lexer.source.position();
-        let binding_pattern = parser.parse_binding_pattern_from_position(self.cur_token().start)?;
+        let mut binding_pattern =
+            parser.parse_binding_pattern().map_err(|err| offset.transform_diagnostic(err))?;
+        offset.visit_binding_pattern(&mut binding_pattern);
         // SAFETY: the Oxc parser must return an expression with valid span
         self.lexer.source.set_position(unsafe {
             if binding_pattern.span().end >= self.lexer.offset() {

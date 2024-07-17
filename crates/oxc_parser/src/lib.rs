@@ -64,7 +64,6 @@
 
 mod context;
 mod cursor;
-mod list;
 mod modifiers;
 mod state;
 
@@ -84,18 +83,15 @@ pub mod lexer;
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{
-        BindingPattern, Expression, IdentifierReference, Program, VariableDeclarationKind,
-        VariableDeclarator,
-    },
+    ast::{Expression, Program},
     AstBuilder, Trivias,
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
+pub use self::js::{VariableDeclarationContext, VariableDeclarationParent};
 pub use crate::lexer::Kind; // re-export for codegen
 use crate::{
-    js::{VariableDeclarationContext, VariableDeclarationParent},
     lexer::{Lexer, Token},
     state::ParserState,
 };
@@ -185,6 +181,10 @@ impl<'a> Parser<'a> {
 }
 
 mod parser_parse {
+    use oxc_ast::ast::{
+        BindingPattern, IdentifierReference, VariableDeclarationKind, VariableDeclarator,
+    };
+
     use super::*;
 
     /// `UniquePromise` is a way to use the type system to enforce the invariant that only
@@ -237,19 +237,6 @@ mod parser_parse {
             parser.parse()
         }
 
-        pub fn parse_from_position(self, pos: u32) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser = ParserImpl::new_from_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                pos,
-                unique,
-            );
-            parser.parse()
-        }
-
         /// Parse `Expression`
         ///
         /// # Errors
@@ -267,82 +254,69 @@ mod parser_parse {
             parser.parse_expression()
         }
 
+        /// Parse `IdentifierReference`
+        ///
         /// # Errors
-        pub fn parse_expression_from_position(
-            self,
-            pos: u32,
-        ) -> std::result::Result<Expression<'a>, OxcDiagnostic> {
+        ///
+        /// * Syntax Error
+        pub fn parse_identifier_reference(self) -> Result<IdentifierReference<'a>> {
             let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_from_position(
+            let mut parser = ParserImpl::new(
                 self.allocator,
                 self.source_text,
                 self.source_type,
                 self.options,
-                pos,
-                unique,
-            );
-            parser.bump_any();
-            parser.parse_expression().map_err(|mut errors| errors.remove(0))
-        }
-
-        /// # Errors
-        pub fn parse_identifier_from_position(self, pos: u32) -> Result<IdentifierReference<'a>> {
-            let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_from_position(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                pos,
                 unique,
             );
             parser.bump_any();
             parser.parse_identifier_reference()
         }
 
+        /// Parse `VariableDeclarator`
+        ///
         /// # Errors
-        pub fn parse_variable_declarator_from_position(
+        ///
+        /// * Syntax Error
+        pub fn parse_variable_declarator(
             self,
-            pos: u32,
+            decl_ctx: VariableDeclarationContext,
             kind: VariableDeclarationKind,
         ) -> Result<VariableDeclarator<'a>> {
             let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_from_position(
+            let mut parser = ParserImpl::new(
                 self.allocator,
                 self.source_text,
                 self.source_type,
                 self.options,
-                pos,
                 unique,
             );
             parser.bump_any();
-            parser.parse_variable_declarator(
-                VariableDeclarationContext::new(VariableDeclarationParent::Clause),
-                kind,
-            )
+            parser.parse_variable_declarator(decl_ctx, kind)
         }
 
+        /// Parse `BindingPattern`
+        ///
         /// # Errors
-        pub fn parse_binding_pattern_from_position(self, pos: u32) -> Result<BindingPattern<'a>> {
+        ///
+        /// * Syntax Error
+        pub fn parse_binding_pattern(self) -> Result<BindingPattern<'a>> {
             let unique = UniquePromise::new();
-            let mut parser = ParserImpl::new_from_position(
+            let mut parser = ParserImpl::new(
                 self.allocator,
                 self.source_text,
                 self.source_type,
                 self.options,
-                pos,
                 unique,
             );
             parser.bump_any();
-            parser.parse_binding_pattern(true)
+            parser.parse_binding_pattern_with_initializer()
         }
     }
 }
 use parser_parse::UniquePromise;
 
 /// Implementation of parser.
-/// `Parser` is just a public wrapper, the guts of the implementation is in this
-/// type.
+/// `Parser` is just a public wrapper, the guts of the implementation is in this type.
 struct ParserImpl<'a> {
     lexer: Lexer<'a>,
 
@@ -403,29 +377,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    #[inline]
-    pub fn new_from_position(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-        pos: u32,
-        unique: UniquePromise,
-    ) -> Self {
-        Self {
-            lexer: Lexer::new_from_position(allocator, source_text, source_type, pos, unique),
-            source_type,
-            source_text,
-            errors: vec![],
-            token: Token::default(),
-            prev_token_end: 0,
-            state: ParserState::default(),
-            ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
-            preserve_parens: options.preserve_parens,
-        }
-    }
-
     /// Main entry point
     ///
     /// Returns an empty `Program` on unrecoverable error,
@@ -441,9 +392,9 @@ impl<'a> ParserImpl<'a> {
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
-                    self.ast.new_vec(),
+                    self.ast.vec(),
                     None,
-                    self.ast.new_vec(),
+                    self.ast.vec(),
                 );
                 (program, true)
             }
@@ -621,7 +572,7 @@ mod test {
             let ret = Parser::new(&allocator, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();
             assert_eq!(comments.len(), 1, "{source}");
-            assert_eq!(comments.first().unwrap().0, kind, "{source}");
+            assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }
     }
 
