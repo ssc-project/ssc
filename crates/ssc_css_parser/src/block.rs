@@ -5,9 +5,9 @@ use crate::{Kind, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_block(&mut self) -> Result<Block<'a>> {
+        let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let mut children = self.ast.new_vec();
-        let span = self.start_span();
 
         while !self.at(Kind::Eof) {
             if self.at(Kind::RCurly) {
