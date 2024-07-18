@@ -981,3 +981,104 @@ impl<'a> VisitMut<'a> for SpanOffset {
         walk_ts_namespace_export_declaration(self, it);
     }
 }
+
+mod css {
+    use super::SpanOffset;
+    use oxc_span::Span;
+    use ssc_css_ast::{ast::*, visit::walk_mut::*};
+
+    impl<'a> ssc_css_ast::VisitMut<'a> for SpanOffset {
+        fn visit_stylesheet(&mut self, stylesheet: &mut StyleSheet<'a>) {
+            stylesheet.span =
+                Span::new(stylesheet.span.start + self.0, stylesheet.span.end + self.0);
+            walk_stylesheet_mut(self, stylesheet);
+        }
+
+        fn visit_at_rule(&mut self, rule: &mut AtRule<'a>) {
+            rule.span = Span::new(rule.span.start + self.0, rule.span.end + self.0);
+            walk_at_rule_mut(self, rule);
+        }
+
+        fn visit_style_rule(&mut self, rule: &mut StyleRule<'a>) {
+            rule.span = Span::new(rule.span.start + self.0, rule.span.end + self.0);
+            walk_style_rule_mut(self, rule);
+        }
+
+        fn visit_block(&mut self, block: &mut Block<'a>) {
+            block.span = Span::new(block.span.start + self.0, block.span.end + self.0);
+            walk_block_mut(self, block);
+        }
+
+        fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
+            decl.span = Span::new(decl.span.start + self.0, decl.span.end + self.0);
+            walk_declaration_mut(self, decl);
+        }
+
+        fn visit_selector_list(&mut self, selector_list: &mut SelectorList<'a>) {
+            selector_list.span =
+                Span::new(selector_list.span.start + self.0, selector_list.span.end + self.0);
+            walk_selector_list_mut(self, selector_list);
+        }
+
+        fn visit_complex_selector(&mut self, selector: &mut ComplexSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_complex_selector_mut(self, selector);
+        }
+
+        fn visit_relative_selector(&mut self, selector: &mut RelativeSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_relative_selector_mut(self, selector);
+        }
+
+        fn visit_type_selector(&mut self, selector: &mut TypeSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_type_selector_mut(self, selector);
+        }
+
+        fn visit_id_selector(&mut self, selector: &mut IdSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_id_selector_mut(self, selector);
+        }
+
+        fn visit_class_selector(&mut self, selector: &mut ClassSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_class_selector_mut(self, selector);
+        }
+
+        fn visit_attribute_selector(&mut self, selector: &mut AttributeSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_attribute_selector_mut(self, selector);
+        }
+
+        fn visit_pseudo_element_selector(&mut self, selector: &mut PseudoElementSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_pseudo_element_selector_mut(self, selector);
+        }
+
+        fn visit_pseudo_class_selector(&mut self, selector: &mut PseudoClassSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_pseudo_class_selector_mut(self, selector);
+        }
+
+        fn visit_percentage_selector(&mut self, selector: &mut PercentageSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_percentage_selector_mut(self, selector);
+        }
+
+        fn visit_nth_selector(&mut self, selector: &mut NthSelector<'a>) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_nth_selector_mut(self, selector);
+        }
+
+        fn visit_nesting_selector(&mut self, selector: &mut NestingSelector) {
+            selector.span = Span::new(selector.span.start + self.0, selector.span.end + self.0);
+            walk_nesting_selector_mut(self, selector);
+        }
+
+        fn visit_combinator(&mut self, combinator: &mut Combinator) {
+            combinator.span =
+                Span::new(combinator.span.start + self.0, combinator.span.end + self.0);
+            walk_combinator_mut(self, combinator);
+        }
+    }
+}

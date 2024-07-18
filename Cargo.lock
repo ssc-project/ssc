@@ -1023,6 +1023,7 @@ dependencies = [
  "seq-macro",
  "serde_json",
  "ssc_ast",
+ "ssc_css_ast",
  "ssc_css_parser",
  "static_assertions",
 ]

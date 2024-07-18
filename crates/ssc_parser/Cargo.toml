@@ -27,6 +27,7 @@ oxc_syntax      = { workspace = true }
 oxc_parser      = { workspace = true }
 
 ssc_ast        = { workspace = true }
+ssc_css_ast    = { workspace = true }
 ssc_css_parser = { workspace = true }
 
 assert-unchecked  = { workspace = true }

@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use ssc_ast::{ast::*, AstBuilder};
+use ssc_css_ast::VisitMut as _;
 
 use crate::{diagnostics, span_offset::SpanOffset, Kind, ParserImpl};
 
@@ -176,11 +177,15 @@ impl<'a> ParserImpl<'a> {
                 break self.cur_token().start;
             }
         };
-        let ret =
-            ssc_css_parser::Parser::new(self.allocator, &self.source_text[..(source_end as usize)])
-                .parse_from_position(source_start);
+        let mut offset = SpanOffset(source_start);
+        let mut ret = ssc_css_parser::Parser::new(
+            self.allocator,
+            &self.source_text[(source_start as usize)..(source_end as usize)],
+        )
+        .parse();
+        offset.visit_stylesheet(&mut ret.stylesheet);
         for error in ret.errors {
-            self.error(error);
+            self.error(offset.transform_diagnostic(error));
         }
         self.expect(Kind::LAngle)?;
         self.expect(Kind::Slash)?;
