@@ -142,13 +142,6 @@ mod parser_parse {
             let parser = ParserImpl::new(self.allocator, self.source_text, unique);
             parser.parse()
         }
-
-        pub fn parse_from_position(self, pos: u32) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
-            let parser =
-                ParserImpl::new_from_position(self.allocator, self.source_text, pos, unique);
-            parser.parse()
-        }
     }
 }
 use parser_parse::UniquePromise;
@@ -185,23 +178,6 @@ impl<'a> ParserImpl<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, unique: UniquePromise) -> Self {
         Self {
             lexer: Lexer::new(allocator, source_text, unique),
-            source_text,
-            errors: vec![],
-            token: Token::default(),
-            prev_token_end: 0,
-            ast: AstBuilder::new(allocator),
-        }
-    }
-
-    #[inline]
-    pub fn new_from_position(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        pos: u32,
-        unique: UniquePromise,
-    ) -> Self {
-        Self {
-            lexer: Lexer::new_from_position(allocator, source_text, pos, unique),
             source_text,
             errors: vec![],
             token: Token::default(),
