@@ -129,13 +129,14 @@ impl<'a> ParserImpl<'a> {
                 break self.cur_token().start;
             }
         };
-        let offset = SpanOffset(source_start);
-        let ret = oxc_parser::Parser::new(
+        let mut offset = SpanOffset(source_start);
+        let mut ret = oxc_parser::Parser::new(
             self.allocator,
             &self.source_text[(source_start as usize)..(source_end as usize)],
             SourceType::default().with_typescript(self.ts),
         )
         .parse();
+        offset.visit_program(&mut ret.program);
         for error in ret.errors {
             self.error(offset.transform_diagnostic(error));
         }
