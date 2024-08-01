@@ -52,7 +52,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: samypr100/setup-dev-drive@v2
+      - uses: samypr100/setup-dev-drive@v3
         with:
           workspace-copy: true
           drive-size: 8GB
