@@ -127,7 +127,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AttributeValue<'a> {
                         let mut codegen = oxc_codegen::Codegen::<true>::new();
                         tag.expression.gen_expr(
                             &mut codegen,
-                            Precedence::lowest(),
+                            Precedence::Lowest,
                             Context::default(),
                         );
                         let source = codegen.into_source_text();
@@ -827,7 +827,7 @@ fn print_if_block<const MINIFY: bool>(block: &IfBlock<'_>, p: &mut Codegen<{ MIN
 
 fn print_oxc_gen_expr<const MINIFY: bool, T: GenExpr<MINIFY>>(x: &T, p: &mut Codegen<{ MINIFY }>) {
     let mut codegen = oxc_codegen::Codegen::<MINIFY>::new();
-    x.gen_expr(&mut codegen, Precedence::lowest(), Context::default());
+    x.gen_expr(&mut codegen, Precedence::Lowest, Context::default());
     let source = codegen.into_source_text();
     p.print_str(source.as_bytes());
 }

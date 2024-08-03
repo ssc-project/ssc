@@ -15,10 +15,10 @@ repository   = "https://github.com/ssc-project/ssc"
 rust-version = "1.74"
 
 [workspace.lints.rust]
-unsafe_code                            = "warn"
 absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents                       = "warn"
 unit-bindings                          = "warn"
+unexpected_cfgs                        = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
 
 [workspace.lints.clippy]
 all        = { level = "warn", priority = -1 }
@@ -95,15 +95,15 @@ napi-derive = "2"
 napi-build  = "2"
 
 # Oxc
-oxc_allocator   = "0.20.0"
-oxc_ast         = "0.20.0"
-oxc_diagnostics = "0.20.0"
-oxc_parser      = { version = "0.20.0", path = "crates/oxc_parser" }
-oxc_span        = "0.20.0"
-oxc_syntax      = "0.20.0"
-oxc_sourcemap   = "0.20.0"
-oxc_codegen     = "0.20.0"
-oxc_index       = "0.20.0"
+oxc_allocator   = "0.23.0"
+oxc_ast         = "0.23.0"
+oxc_diagnostics = "0.23.0"
+oxc_parser      = { version = "0.23.0", path = "crates/oxc_parser" }
+oxc_span        = "0.23.0"
+oxc_syntax      = "0.23.0"
+oxc_sourcemap   = "0.23.0"
+oxc_codegen     = "0.23.0"
+oxc_index       = "0.23.0"
 
 # Ssc
 ssc                 = { version = "0.1.0", path = "crates/ssc" }

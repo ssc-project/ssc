@@ -621,7 +621,7 @@ impl<'a> VisitMut<'a> for SpanOffset {
         walk_method_definition(self, it);
     }
 
-    fn visit_function(&mut self, it: &mut Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
         it.span = Span::new(it.span.start + self.0, it.span.end + self.0);
         walk_function(self, it, flags);
     }
