@@ -28,9 +28,9 @@ fn main() {
         return;
     }
 
-    let stylesheet = allocator.alloc(ret.stylesheet);
+    let stylesheet: &mut _ = allocator.alloc(ret.stylesheet);
 
-    let ret = Analyzer::new().build(stylesheet);
+    let ret = Analyzer::new(&allocator).build(stylesheet);
     for error in ret.errors {
         let error = error.with_source_code(source_text.clone());
         println!("{error:?}");

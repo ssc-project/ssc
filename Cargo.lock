@@ -958,6 +958,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_span",
+ "ssc_analyzer",
  "ssc_ast",
  "ssc_codegen",
  "ssc_css_analyzer",
@@ -966,11 +967,19 @@ dependencies = [
  "ssc_css_parser",
  "ssc_css_transformer",
  "ssc_parser",
+ "ssc_transformer",
 ]
 
 [[package]]
 name = "ssc_analyzer"
 version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "ssc_ast",
+ "ssc_css_analyzer",
+ "ssc_parser",
+]
 
 [[package]]
 name = "ssc_ast"
@@ -1123,6 +1132,14 @@ dependencies = [
 [[package]]
 name = "ssc_transformer"
 version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_span",
+ "ssc_analyzer",
+ "ssc_ast",
+ "ssc_css_transformer",
+]
 
 [[package]]
 name = "ssc_wasm"

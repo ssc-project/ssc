@@ -32,6 +32,16 @@ pub mod codegen {
     pub use ssc_codegen::*;
 }
 
+pub mod transformer {
+    #[doc(inline)]
+    pub use ssc_transformer::*;
+}
+
+pub mod analyzer {
+    #[doc(inline)]
+    pub use ssc_analyzer::*;
+}
+
 #[cfg(feature = "css")]
 pub mod css_ast {
     #[doc(inline)]
@@ -59,5 +69,5 @@ pub mod css_transformer {
 #[cfg(feature = "css")]
 pub mod css_analyzer {
     #[doc(inline)]
-    pub use ssc_css_analyzer;
+    pub use ssc_css_analyzer::*;
 }

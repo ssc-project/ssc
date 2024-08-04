@@ -19,3 +19,11 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+
+ssc_ast          = { workspace = true }
+ssc_css_analyzer = { workspace = true }
+
+[dev-dependencies]
+ssc_parser = { workspace = true }

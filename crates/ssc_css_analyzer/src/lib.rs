@@ -6,6 +6,7 @@ use std::mem;
 
 use hash::hash;
 use node::{AstNode, AstNodes};
+use oxc_allocator::{Allocator, FromIn};
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::{Atom, GetSpan};
 #[allow(clippy::wildcard_imports)]
@@ -16,6 +17,7 @@ use ssc_css_ast::{
 };
 
 pub struct Analyzer<'a> {
+    allocator: &'a Allocator,
     errors: Vec<OxcDiagnostic>,
     keyframes: Vec<Atom<'a>>,
     current_node_id: AstNodeId,
@@ -27,7 +29,7 @@ pub struct Analyzer<'a> {
 #[derive(Debug)]
 pub struct Analysis<'a> {
     pub keyframes: Vec<Atom<'a>>,
-    pub hash: String,
+    pub hash: Atom<'a>,
     pub nodes: AstNodes<'a>,
 }
 
@@ -36,9 +38,10 @@ pub struct AnalyzerReturn<'a> {
     pub analysis: Analysis<'a>,
 }
 
-impl<'a> Default for Analyzer<'a> {
-    fn default() -> Self {
+impl<'a> Analyzer<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
         Self {
+            allocator,
             errors: vec![],
             keyframes: vec![],
             current_node_id: AstNodeId::new(0),
@@ -46,12 +49,6 @@ impl<'a> Default for Analyzer<'a> {
             block_stack: vec![],
             style_rule_stack: vec![],
         }
-    }
-}
-
-impl<'a> Analyzer<'a> {
-    pub fn new() -> Self {
-        Self::default()
     }
 
     fn take_errors(&mut self) -> Vec<Error> {
@@ -84,14 +81,17 @@ impl<'a> Analyzer<'a> {
         }
     }
 
-    pub fn build(mut self, stylesheet: &mut StyleSheet<'a>) -> AnalyzerReturn<'a> {
+    pub fn build(mut self, stylesheet: &StyleSheet<'a>) -> AnalyzerReturn<'a> {
         self.visit_stylesheet(stylesheet);
         let errors = self.take_errors();
         AnalyzerReturn {
             analysis: Analysis {
                 keyframes: self.keyframes,
                 nodes: self.nodes,
-                hash: format!("svelte-{}", hash(stylesheet.source.as_str())),
+                hash: Atom::from_in(
+                    format!("svelte-{}", hash(stylesheet.source.as_str())),
+                    self.allocator,
+                ),
             },
             errors,
         }

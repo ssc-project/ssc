@@ -2,15 +2,15 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use ssc_css_analyzer::Analyzer;
-use ssc_css_parser::Parser;
+use ssc_analyzer::Analyzer;
+use ssc_parser::Parser;
 
 // Instruction:
-// create a `test.css`,
-// run `cargo run -p ssc_css_analyzer --example analyzer`
+// create a `test.svelte`,
+// run `cargo run -p ssc_analyzer --example analyzer`
 
 fn main() {
-    let name = env::args().nth(1).unwrap_or_else(|| "test.css".to_string());
+    let name = env::args().nth(1).unwrap_or_else(|| "test.svelte".to_string());
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
@@ -25,9 +25,9 @@ fn main() {
         return;
     }
 
-    let stylesheet = &ret.stylesheet;
+    let root = &ret.root;
 
-    let ret = Analyzer::new(&allocator).build(stylesheet);
+    let ret = Analyzer::new(&allocator).build(root);
     if !ret.errors.is_empty() {
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
@@ -36,7 +36,7 @@ fn main() {
     }
 
     println!("AST:");
-    println!("{stylesheet:#?}");
+    println!("{root:#?}");
 
     println!("Analysis:");
     println!("{:#?}", ret.analysis);
