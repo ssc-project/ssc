@@ -95,15 +95,15 @@ napi-derive = "2"
 napi-build  = "2"
 
 # Oxc
-oxc_allocator   = "0.23.1"
-oxc_ast         = "0.23.1"
-oxc_diagnostics = "0.23.1"
-oxc_parser      = { version = "0.23.1", path = "crates/oxc_parser" }
-oxc_span        = "0.23.1"
-oxc_syntax      = "0.23.1"
-oxc_sourcemap   = "0.23.1"
-oxc_codegen     = "0.23.1"
-oxc_index       = "0.23.1"
+oxc_allocator   = "0.24.0"
+oxc_ast         = "0.24.0"
+oxc_diagnostics = "0.24.0"
+oxc_parser      = { version = "0.24.0", path = "crates/oxc_parser" }
+oxc_span        = "0.24.0"
+oxc_syntax      = "0.24.0"
+oxc_sourcemap   = "0.24.0"
+oxc_codegen     = "0.24.0"
+oxc_index       = "0.24.0"
 
 # Ssc
 ssc                 = { version = "0.1.0", path = "crates/ssc" }
