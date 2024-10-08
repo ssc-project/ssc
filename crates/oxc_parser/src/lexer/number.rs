@@ -137,7 +137,7 @@ const fn binary_byte_to_value(b: u8) -> u8 {
 /// 1 clock cycle on the ALU, while multiplication+addition uses the FPU and is
 /// much slower. Addtiionally, this loop often gets unrolled by rustc since
 /// these numbers are usually not long. On x84_64, FMUL has a latency of 4 clock
-/// cycles, which doesn't include addition. Some platorms support mul + add in a
+/// cycles, which doesn't include addition. Some platforms support mul + add in a
 /// single instruction, but many others do not.
 ///
 /// Unfortunately, this approach has the chance to overflow for excessively
