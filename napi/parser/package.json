@@ -14,7 +14,7 @@
   "engines": {
     "node": ">=14.*"
   },
-  "packageManager": "pnpm@9.7.0",
+  "packageManager": "pnpm@9.12.1",
   "napi": {
     "name": "parser",
     "triples": {
