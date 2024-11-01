@@ -9,7 +9,7 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0",
     "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
+    "tinybench": "^3.0.0"
   },
   "engines": {
     "node": ">=14.*"
