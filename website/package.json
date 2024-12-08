@@ -30,7 +30,7 @@
     "@lezer/common": "^1.2.1",
     "@ssc/ssc_wasm": "link:../npm/ssc-wasm",
     "concurrently": "^9.0.0",
-    "vite": "^5.2.13",
+    "vite": "^6.0.0",
     "wasm-pack": "^0.13.0"
   },
   "engines": {
