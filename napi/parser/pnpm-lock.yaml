@@ -16,7 +16,7 @@ importers:
         version: 1.5.4
       tinybench:
         specifier: ^3.0.0
-        version: 3.0.3
+        version: 3.0.7
 
 packages:
 
@@ -28,8 +28,8 @@ packages:
   es-module-lexer@1.5.4:
     resolution: {integrity: sha512-MVNK56NiMrOwitFB7cqDwq0CQutbw+0BvLshJSse0MUNU+y1FC3bUS/AQg7oUng+/wKrrki7JfmwtVHkVfPLlw==}
 
-  tinybench@3.0.3:
-    resolution: {integrity: sha512-uJx7Wn5Dp5qd2TBbbixMaFSxod6HvJxhA7rb55BJD27Gcsz+zoHRA/Gk8pBl91GiWbKtoGqU02XS8GOVJhe1KA==}
+  tinybench@3.0.7:
+    resolution: {integrity: sha512-soxV7Dp8eDKvPDv3c4qPJbUjLm1cZxFlsTaIH+FqalsazJzFrLG59dpiIN8OfgVcl11Hfj2b7apD73inCB67Mw==}
     engines: {node: '>=18.0.0'}
 
 snapshots:
@@ -38,4 +38,4 @@ snapshots:
 
   es-module-lexer@1.5.4: {}
 
-  tinybench@3.0.3: {}
+  tinybench@3.0.7: {}
